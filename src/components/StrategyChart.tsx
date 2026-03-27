@@ -208,6 +208,7 @@ export default function StrategyChart() {
   const markersRef = useRef<ReturnType<typeof createSeriesMarkers<Time>> | null>(null)
   const candlesRef = useRef<CandlestickData<Time>[]>([])
   const isFetchingRef = useRef(false)  // 과거 데이터 로딩 중복 방지
+  const signalResultRef = useRef<SignalResult>({ markers: [], trades: [] })  // 전체 시그널 결과
   const activeSymbolRef = useRef("BTCUSDT")
   const activeIntervalRef = useRef("1h")
   const [activeStrategy, setActiveStrategy] = useState("sigma-box")
@@ -316,6 +317,46 @@ export default function StrategyChart() {
       })
   }, [])
 
+  // 보이는 영역 기준 통계 업데이트
+  const applyStatsFromFiltered = useCallback((markers: SignalResult["markers"], trades: TradeResult[]) => {
+    setSignalCount({
+      buy: markers.filter((m) => m.shape === "arrowUp").length,
+      sell: markers.filter((m) => m.shape === "arrowDown").length,
+    })
+    setTradeList(trades)
+    const wins = trades.filter((t) => t.pnl >= 0).length
+    const losses = trades.filter((t) => t.pnl < 0).length
+    const totalPnl = trades.reduce((s, t) => s + t.pnl, 0)
+    setTradeStats({
+      trades: trades.length,
+      winRate: trades.length > 0 ? (wins / trades.length) * 100 : 0,
+      totalPnl,
+      avgPnl: trades.length > 0 ? totalPnl / trades.length : 0,
+      wins,
+      losses,
+    })
+  }, [])
+
+  const updateVisibleStats = useCallback(() => {
+    if (!chartRef.current) return
+    const timeRange = chartRef.current.timeScale().getVisibleRange()
+    const result = signalResultRef.current
+    if (!timeRange) {
+      applyStatsFromFiltered(result.markers, result.trades)
+      return
+    }
+    const from = timeRange.from as number
+    const to = timeRange.to as number
+    const visibleMarkers = result.markers.filter((m) => (m.time as number) >= from && (m.time as number) <= to)
+    const visibleTrades = result.trades.filter((t) => (t.sellTime as number) >= from && (t.sellTime as number) <= to)
+    applyStatsFromFiltered(visibleMarkers, visibleTrades)
+  }, [applyStatsFromFiltered])
+
+  const applyTradeStats = useCallback((result: SignalResult) => {
+    signalResultRef.current = result
+    updateVisibleStats()
+  }, [updateVisibleStats])
+
   // 차트 생성
   useEffect(() => {
     if (!chartContainerRef.current) return
@@ -361,12 +402,13 @@ export default function StrategyChart() {
 
     fetchCandles("BTCUSDT", "1h", "sigma-box")
 
-    // 차트 왼쪽 끝 도달 시 과거 데이터 자동 로딩
+    // 차트 영역 변경 시: 과거 데이터 로딩 + 보이는 영역 통계 업데이트
     const onVisibleRangeChange = () => {
       const logicalRange = chart.timeScale().getVisibleLogicalRange()
       if (logicalRange && logicalRange.from < 10) {
         fetchOlderCandles()
       }
+      updateVisibleStats()
     }
     chart.timeScale().subscribeVisibleLogicalRangeChange(onVisibleRangeChange)
 
@@ -382,27 +424,7 @@ export default function StrategyChart() {
       chart.timeScale().unsubscribeVisibleLogicalRangeChange(onVisibleRangeChange)
       chart.remove()
     }
-  }, [fetchCandles, fetchOlderCandles])
-
-  // 거래 통계 업데이트 헬퍼
-  const applyTradeStats = useCallback((result: SignalResult) => {
-    setSignalCount({
-      buy: result.markers.filter((m) => m.shape === "arrowUp").length,
-      sell: result.markers.filter((m) => m.shape === "arrowDown").length,
-    })
-    setTradeList(result.trades)
-    const wins = result.trades.filter((t) => t.pnl >= 0).length
-    const losses = result.trades.filter((t) => t.pnl < 0).length
-    const totalPnl = result.trades.reduce((s, t) => s + t.pnl, 0)
-    setTradeStats({
-      trades: result.trades.length,
-      winRate: result.trades.length > 0 ? (wins / result.trades.length) * 100 : 0,
-      totalPnl,
-      avgPnl: result.trades.length > 0 ? totalPnl / result.trades.length : 0,
-      wins,
-      losses,
-    })
-  }, [])
+  }, [fetchCandles, fetchOlderCandles, updateVisibleStats])
 
   // 전략 변경 시 마커 업데이트
   const updateStrategy = useCallback((strategyId: string) => {
