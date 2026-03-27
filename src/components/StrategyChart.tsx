@@ -90,6 +90,7 @@ interface SignalResult {
     color: string
     shape: "arrowUp" | "arrowDown"
     text: string
+    size: number
   }>
   trades: TradeResult[]
 }
@@ -172,7 +173,8 @@ function generateSignals(candles: CandlestickData<Time>[], strategyId: string): 
         position: "belowBar",
         color: "#10b981",
         shape: "arrowUp",
-        text: "Buy",
+        text: "◉ BUY",
+        size: 3,
       })
     } else if (inPosition && sellCondition) {
       const pnl = ((c.close - entryPrice) / entryPrice) * 100
@@ -189,7 +191,8 @@ function generateSignals(candles: CandlestickData<Time>[], strategyId: string): 
         position: "aboveBar",
         color: pnl >= 0 ? "#10b981" : "#ef4444",
         shape: "arrowDown",
-        text: `${pnl >= 0 ? "+" : ""}${pnl.toFixed(2)}%`,
+        text: `${pnl >= 0 ? "▲" : "▼"} ${pnl >= 0 ? "+" : ""}${pnl.toFixed(2)}%`,
+        size: 3,
       })
     }
   }
@@ -278,8 +281,8 @@ export default function StrategyChart() {
       rightPriceScale: {
         borderColor: "rgba(255,255,255,0.05)",
       },
-      handleScroll: true,
-      handleScale: true,
+      handleScroll: false,
+      handleScale: false,
     })
 
     const candleSeries = chart.addSeries(CandlestickSeries, {
