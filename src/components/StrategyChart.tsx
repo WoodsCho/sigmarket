@@ -207,6 +207,9 @@ export default function StrategyChart() {
   const seriesRef = useRef<ISeriesApi<"Candlestick"> | null>(null)
   const markersRef = useRef<ReturnType<typeof createSeriesMarkers<Time>> | null>(null)
   const candlesRef = useRef<CandlestickData<Time>[]>([])
+  const isFetchingRef = useRef(false)  // 과거 데이터 로딩 중복 방지
+  const activeSymbolRef = useRef("BTCUSDT")
+  const activeIntervalRef = useRef("1h")
   const [activeStrategy, setActiveStrategy] = useState("sigma-box")
   const [activeSymbol, setActiveSymbol] = useState("BTCUSDT")
   const [activeInterval, setActiveInterval] = useState("1h")
@@ -217,12 +220,26 @@ export default function StrategyChart() {
   const [showSymbolDropdown, setShowSymbolDropdown] = useState(false)
   const activeStrategyRef = useRef(activeStrategy)
 
+  // 인터벌별 최적 봉 수 (Binance 최대 1000)
+  const getCandleLimit = (interval: string) => {
+    switch (interval) {
+      case "15m": return 1000  // ~10일
+      case "1h":  return 720   // ~30일
+      case "4h":  return 500   // ~83일
+      case "1d":  return 365   // ~1년
+      default:    return 500
+    }
+  }
+
   // 데이터 fetch 함수
   const fetchCandles = useCallback((sym: string, interval: string, strategy: string) => {
     if (!seriesRef.current) return
     setIsLoading(true)
+    activeSymbolRef.current = sym
+    activeIntervalRef.current = interval
+    const limit = getCandleLimit(interval)
 
-    fetch(`https://api.binance.com/api/v3/klines?symbol=${encodeURIComponent(sym)}&interval=${encodeURIComponent(interval)}&limit=200`)
+    fetch(`https://api.binance.com/api/v3/klines?symbol=${encodeURIComponent(sym)}&interval=${encodeURIComponent(interval)}&limit=${limit}`)
       .then((res) => res.json())
       .then((data: unknown[]) => {
         if (!seriesRef.current) return
@@ -255,6 +272,50 @@ export default function StrategyChart() {
       .finally(() => setIsLoading(false))
   }, [])
 
+  // 과거 데이터 추가 로딩 (무한 스크롤)
+  const fetchOlderCandles = useCallback(() => {
+    if (isFetchingRef.current || candlesRef.current.length === 0 || !seriesRef.current) return
+    isFetchingRef.current = true
+    setIsLoading(true)
+
+    const oldest = candlesRef.current[0]
+    const endTime = (oldest.time as number) * 1000 - 1  // 기존 첫 봉 직전까지
+    const sym = activeSymbolRef.current
+    const interval = activeIntervalRef.current
+    const limit = 500
+
+    fetch(`https://api.binance.com/api/v3/klines?symbol=${encodeURIComponent(sym)}&interval=${encodeURIComponent(interval)}&limit=${limit}&endTime=${endTime}`)
+      .then((res) => res.json())
+      .then((data: unknown[]) => {
+        if (!seriesRef.current || !Array.isArray(data) || data.length === 0) return
+        const olderCandles: CandlestickData<Time>[] = (data as number[][]).map((d) => ({
+          time: (d[0] / 1000) as Time,
+          open: parseFloat(String(d[1])),
+          high: parseFloat(String(d[2])),
+          low: parseFloat(String(d[3])),
+          close: parseFloat(String(d[4])),
+        }))
+
+        // 기존 데이터 앞에 추가 (중복 제거)
+        const existingTimes = new Set(candlesRef.current.map(c => c.time))
+        const newCandles = olderCandles.filter(c => !existingTimes.has(c.time))
+        if (newCandles.length === 0) return
+
+        const merged = [...newCandles, ...candlesRef.current]
+        candlesRef.current = merged
+        seriesRef.current.setData(merged)
+
+        // 시그널 재계산
+        const result = generateSignals(merged, activeStrategyRef.current)
+        markersRef.current?.setMarkers(result.markers)
+        applyTradeStats(result)
+      })
+      .finally(() => {
+        isFetchingRef.current = false
+        setIsLoading(false)
+      })
+  }, [])
+
   // 차트 생성
   useEffect(() => {
     if (!chartContainerRef.current) return
@@ -281,8 +342,8 @@ export default function StrategyChart() {
       rightPriceScale: {
         borderColor: "rgba(255,255,255,0.05)",
       },
-      handleScroll: false,
-      handleScale: false,
+      handleScroll: true,
+      handleScale: true,
     })
 
     const candleSeries = chart.addSeries(CandlestickSeries, {
@@ -300,6 +361,15 @@ export default function StrategyChart() {
 
     fetchCandles("BTCUSDT", "1h", "sigma-box")
 
+    // 차트 왼쪽 끝 도달 시 과거 데이터 자동 로딩
+    const onVisibleRangeChange = () => {
+      const logicalRange = chart.timeScale().getVisibleLogicalRange()
+      if (logicalRange && logicalRange.from < 10) {
+        fetchOlderCandles()
+      }
+    }
+    chart.timeScale().subscribeVisibleLogicalRangeChange(onVisibleRangeChange)
+
     const handleResize = () => {
       if (chartContainerRef.current) {
         chart.applyOptions({ width: chartContainerRef.current.clientWidth })
@@ -309,9 +379,10 @@ export default function StrategyChart() {
 
     return () => {
       window.removeEventListener("resize", handleResize)
+      chart.timeScale().unsubscribeVisibleLogicalRangeChange(onVisibleRangeChange)
       chart.remove()
     }
-  }, [fetchCandles])
+  }, [fetchCandles, fetchOlderCandles])
 
   // 거래 통계 업데이트 헬퍼
   const applyTradeStats = useCallback((result: SignalResult) => {
