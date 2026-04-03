@@ -63,7 +63,6 @@ export default function IndicatorDetailPage() {
             <p className="text-gray-500 text-sm mb-8">{indicator.subtitle}</p>
             <StrategyChart
               fixedStrategyId={indicator.strategyId || "sigma-box"}
-              strategyCode={indicator.strategyCode}
             />
           </div>
 

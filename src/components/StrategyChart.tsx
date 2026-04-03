@@ -95,142 +95,33 @@ interface SignalResult {
   trades: TradeResult[]
 }
 
-/* ─── 전략별 시그널 생성 (Buy→Sell 교대) ─── */
-function generateSignals(candles: CandlestickData<Time>[], strategyId: string, strategyCode?: string): SignalResult {
-  const markers: SignalResult["markers"] = []
-  const trades: TradeResult[] = []
+/* ─── API URL ─── */
+const SIGNALS_API_URL = import.meta.env.VITE_INDICATORS_API_URL
+  || (import.meta.env.VITE_API_URL ? `${import.meta.env.VITE_API_URL}/indicators` : "")
 
-  if (candles.length < 30) return { markers, trades }
-
-  // 커스텀 전략 코드가 있으면 컴파일
-  type StrategyFn = (candles: CandlestickData<Time>[], i: number, c: CandlestickData<Time>, prev: CandlestickData<Time>) => { buyCondition: boolean; sellCondition: boolean }
-  let customStrategy: StrategyFn | null = null
-  if (strategyCode && strategyCode.trim()) {
-    try {
-      customStrategy = new Function("candles", "i", "c", "prev", strategyCode) as StrategyFn
-    } catch {
-      console.warn("전략 코드 컴파일 실패, 기본 전략 사용")
-    }
+/* ─── 서버 시그널 실행 API 호출 ─── */
+async function fetchSignals(candles: Array<{ time: Time; open: number; high: number; low: number; close: number }>, strategyId: string): Promise<SignalResult> {
+  if (!SIGNALS_API_URL) return { markers: [], trades: [] }
+  try {
+    const res = await fetch(SIGNALS_API_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ _action: "signals", strategyId, candles }),
+    })
+    if (!res.ok) throw new Error(`HTTP ${res.status}`)
+    return await res.json()
+  } catch (err) {
+    console.warn("시그널 API 호출 실패:", err)
+    return { markers: [], trades: [] }
   }
-
-  let inPosition = false
-  let entryPrice = 0
-  let entryTime: Time = 0 as Time
-
-  for (let i = 20; i < candles.length; i++) {
-    const c = candles[i]
-    const prev = candles[i - 1]
-
-    let buyCondition = false
-    let sellCondition = false
-
-    // 커스텀 전략 코드 우선 실행
-    if (customStrategy) {
-      try {
-        const result = customStrategy(candles, i, c, prev)
-        buyCondition = !!result.buyCondition
-        sellCondition = !!result.sellCondition
-      } catch {
-        // 런타임 에러 시 해당 봉 스킵
-        continue
-      }
-    } else {
-      // 기본 내장 전략
-      switch (strategyId) {
-      case "sigma-box": {
-        const high20 = Math.max(...candles.slice(i - 20, i).map(x => x.high))
-        const low20 = Math.min(...candles.slice(i - 20, i).map(x => x.low))
-        buyCondition = c.close > high20 && prev.close <= high20
-        sellCondition = c.close < low20 && prev.close >= low20
-        break
-      }
-      case "super-target": {
-        const avg5 = candles.slice(i - 5, i).reduce((s, x) => s + x.close, 0) / 5
-        const avg5prev = candles.slice(i - 6, i - 1).reduce((s, x) => s + x.close, 0) / 5
-        const avg20 = candles.slice(i - 20, i).reduce((s, x) => s + x.close, 0) / 20
-        buyCondition = avg5 > avg20 && avg5prev <= avg20
-        sellCondition = avg5 < avg20 && avg5prev >= avg20
-        break
-      }
-      case "order-block": {
-        const bodySize = Math.abs(c.close - c.open)
-        const avgBody = candles.slice(i - 10, i).reduce((s, x) => s + Math.abs(x.close - x.open), 0) / 10
-        buyCondition = prev.close < prev.open && bodySize > avgBody * 2 && c.close > c.open && c.close > prev.open
-        sellCondition = prev.close > prev.open && bodySize > avgBody * 2 && c.close < c.open && c.close < prev.open
-        break
-      }
-      case "rsi-bb": {
-        const gains: number[] = []
-        const losses: number[] = []
-        for (let j = i - 13; j <= i; j++) {
-          const diff = candles[j].close - candles[j - 1].close
-          gains.push(diff > 0 ? diff : 0)
-          losses.push(diff < 0 ? -diff : 0)
-        }
-        const avgGain = gains.reduce((a, b) => a + b, 0) / 14
-        const avgLoss = losses.reduce((a, b) => a + b, 0) / 14
-        const rsi = avgLoss === 0 ? 100 : 100 - 100 / (1 + avgGain / avgLoss)
-        const prevGains: number[] = []
-        const prevLosses: number[] = []
-        for (let j = i - 14; j <= i - 1; j++) {
-          const diff = candles[j].close - candles[j - 1].close
-          prevGains.push(diff > 0 ? diff : 0)
-          prevLosses.push(diff < 0 ? -diff : 0)
-        }
-        const prevAvgGain = prevGains.reduce((a, b) => a + b, 0) / 14
-        const prevAvgLoss = prevLosses.reduce((a, b) => a + b, 0) / 14
-        const prevRsi = prevAvgLoss === 0 ? 100 : 100 - 100 / (1 + prevAvgGain / prevAvgLoss)
-        buyCondition = prevRsi < 30 && rsi >= 30
-        sellCondition = prevRsi > 70 && rsi <= 70
-        break
-      }
-      }
-    }
-
-    // Buy → Sell 교대 방식: 포지션 없을 때만 Buy, 있을 때만 Sell
-    if (!inPosition && buyCondition) {
-      inPosition = true
-      entryPrice = c.close
-      entryTime = c.time
-      markers.push({
-        time: c.time,
-        position: "belowBar",
-        color: "#06b6d4",
-        shape: "arrowUp",
-        text: "◉ BUY",
-        size: 3,
-      })
-    } else if (inPosition && sellCondition) {
-      const pnl = ((c.close - entryPrice) / entryPrice) * 100
-      inPosition = false
-      trades.push({
-        buyTime: entryTime,
-        sellTime: c.time,
-        buyPrice: entryPrice,
-        sellPrice: c.close,
-        pnl,
-      })
-      markers.push({
-        time: c.time,
-        position: "aboveBar",
-        color: pnl >= 0 ? "#06b6d4" : "#ef4444",
-        shape: "arrowDown",
-        text: `${pnl >= 0 ? "▲" : "▼"} ${pnl >= 0 ? "+" : ""}${pnl.toFixed(2)}%`,
-        size: 3,
-      })
-    }
-  }
-
-  return { markers, trades }
 }
 
 /* ─── 메인 컴포넌트 ─── */
 interface StrategyChartProps {
   fixedStrategyId?: string
-  strategyCode?: string
 }
 
-export default function StrategyChart({ fixedStrategyId, strategyCode }: StrategyChartProps = {}) {
+export default function StrategyChart({ fixedStrategyId }: StrategyChartProps = {}) {
   const chartContainerRef = useRef<HTMLDivElement>(null)
   const chartRef = useRef<IChartApi | null>(null)
   const seriesRef = useRef<ISeriesApi<"Candlestick"> | null>(null)
@@ -249,8 +140,6 @@ export default function StrategyChart({ fixedStrategyId, strategyCode }: Strateg
   const [isLoading, setIsLoading] = useState(false)
   const [showSymbolDropdown, setShowSymbolDropdown] = useState(false)
   const isEmbedded = !!fixedStrategyId
-  const strategyCodeRef = useRef(strategyCode)
-  strategyCodeRef.current = strategyCode
   const activeStrategyRef = useRef(activeStrategy)
 
   // 인터벌별 최적 봉 수 (Binance 최대 1000)
@@ -274,7 +163,7 @@ export default function StrategyChart({ fixedStrategyId, strategyCode }: Strateg
 
     fetch(`https://api.binance.com/api/v3/klines?symbol=${encodeURIComponent(sym)}&interval=${encodeURIComponent(interval)}&limit=${limit}`)
       .then((res) => res.json())
-      .then((data: unknown[]) => {
+      .then(async (data: unknown[]) => {
         if (!seriesRef.current) return
         const candles: CandlestickData<Time>[] = (data as number[][]).map((d) => ({
           time: (d[0] / 1000) as Time,
@@ -286,18 +175,18 @@ export default function StrategyChart({ fixedStrategyId, strategyCode }: Strateg
         candlesRef.current = candles
         seriesRef.current.setData(candles)
 
-        const result = generateSignals(candles, strategy, strategyCodeRef.current)
+        const result = await fetchSignals(candles, strategy)
         markersRef.current?.setMarkers(result.markers)
         applyTradeStats(result)
 
         chartRef.current?.timeScale().fitContent()
       })
-      .catch(() => {
+      .catch(async () => {
         if (!seriesRef.current) return
         const demoCandles = generateDemoCandles()
         candlesRef.current = demoCandles
         seriesRef.current.setData(demoCandles)
-        const result = generateSignals(demoCandles, strategy, strategyCodeRef.current)
+        const result = await fetchSignals(demoCandles, strategy)
         markersRef.current?.setMarkers(result.markers)
         applyTradeStats(result)
         chartRef.current?.timeScale().fitContent()
@@ -319,7 +208,7 @@ export default function StrategyChart({ fixedStrategyId, strategyCode }: Strateg
 
     fetch(`https://api.binance.com/api/v3/klines?symbol=${encodeURIComponent(sym)}&interval=${encodeURIComponent(interval)}&limit=${limit}&endTime=${endTime}`)
       .then((res) => res.json())
-      .then((data: unknown[]) => {
+      .then(async (data: unknown[]) => {
         if (!seriesRef.current || !Array.isArray(data) || data.length === 0) return
         const olderCandles: CandlestickData<Time>[] = (data as number[][]).map((d) => ({
           time: (d[0] / 1000) as Time,
@@ -339,7 +228,7 @@ export default function StrategyChart({ fixedStrategyId, strategyCode }: Strateg
         seriesRef.current.setData(merged)
 
         // 시그널 재계산
-        const result = generateSignals(merged, activeStrategyRef.current, strategyCodeRef.current)
+        const result = await fetchSignals(merged, activeStrategyRef.current)
         markersRef.current?.setMarkers(result.markers)
         applyTradeStats(result)
       })
@@ -461,12 +350,12 @@ export default function StrategyChart({ fixedStrategyId, strategyCode }: Strateg
   }, [fetchCandles, fetchOlderCandles, updateVisibleStats])
 
   // 전략 변경 시 마커 업데이트
-  const updateStrategy = useCallback((strategyId: string) => {
+  const updateStrategy = useCallback(async (strategyId: string) => {
     setActiveStrategy(strategyId)
     activeStrategyRef.current = strategyId
     if (!seriesRef.current || candlesRef.current.length === 0) return
 
-    const result = generateSignals(candlesRef.current, strategyId, strategyCodeRef.current)
+    const result = await fetchSignals(candlesRef.current, strategyId)
     markersRef.current?.setMarkers(result.markers)
     applyTradeStats(result)
   }, [applyTradeStats])
