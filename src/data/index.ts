@@ -30,6 +30,7 @@ export const indicators: Indicator[] = [
   {
     name: "Sigma Box",
     subtitle: "Structure-Based Dual Box Setup",
+    strategyId: "sigma-box",
     content: "Sigma Box는 자체기스팀된 두 개의 구조 Box를 상호하여 추세변환, 진입 다이밍, TP와 SL 구간을 동시에 설정하는 조합된 구조 셋업입니다. 단일 지표가 아닌 구조 힐팅형 시스템입니다.",
     scores: [
       { label: "방향성 제어력", value: 4.8, max: 5.0 },
@@ -50,6 +51,7 @@ export const indicators: Indicator[] = [
   {
     name: "슈퍼타겟",
     subtitle: "Trend Direction Lock System",
+    strategyId: "super-target",
     content: "슈퍼타겟은 추세의 방향성을 실시간으로 고정하여, 횡보 구간에서 발생하는 잘못된 시그널을 원천 차단합니다. 추세추종 매매의 핵심 필터 역할을 합니다.",
     scores: [
       { label: "방향성 제어력", value: 4.9, max: 5.0 },
@@ -70,6 +72,7 @@ export const indicators: Indicator[] = [
   {
     name: "RSI Band",
     subtitle: "RSI Bandwidth Overlay",
+    strategyId: "rsi-bb",
     content: "기존 RSI를 밴드 형태로 변환하여 과매수/과매도가 아닌, 추세 내 눌림(풀백) 구간을 정밀하게 포착합니다. 추세추종 진입 타이밍의 핵심 보조지표입니다.",
     scores: [
       { label: "눌림 감지력", value: 4.6, max: 5.0 },
@@ -90,6 +93,7 @@ export const indicators: Indicator[] = [
   {
     name: "MACD Zero Cross",
     subtitle: "Zero-Line Structure Engine",
+    strategyId: "sigma-box",
     content: "MACD의 0선을 기준으로 상/하 구조를 분석하여 추세의 강도와 전환점을 판단합니다. 기존 MACD 크로스보다 구조적 관점으로 접근합니다.",
     scores: [
       { label: "추세 강도 판별", value: 4.5, max: 5.0 },
@@ -110,6 +114,7 @@ export const indicators: Indicator[] = [
   {
     name: "볼린저 밴드 x3",
     subtitle: "Triple Bollinger Band System",
+    strategyId: "rsi-bb",
     content: "세 가지 주기의 볼린저 밴드를 동시에 오버레이하여, 단기·중기·장기 변동성 구간을 한눈에 파악합니다. 밴드 수축/확장 구조로 브레이크아웃 타이밍을 포착합니다.",
     scores: [
       { label: "변동성 분석", value: 4.7, max: 5.0 },
@@ -130,6 +135,7 @@ export const indicators: Indicator[] = [
   {
     name: "Order Block",
     subtitle: "Institutional OB Detector",
+    strategyId: "order-block",
     content: "스마트머니 개념의 오더블록을 구조적으로 자동 탐지합니다. 기관의 매집/분배 구간을 시각화하여, 지지/저항 수준의 신뢰도를 높입니다.",
     scores: [
       { label: "구간 정확도", value: 4.6, max: 5.0 },
@@ -150,6 +156,7 @@ export const indicators: Indicator[] = [
   {
     name: "RSI + BB 시그널",
     subtitle: "Leading Signal Combinator",
+    strategyId: "rsi-bb",
     content: "RSI와 볼린저 밴드의 조합으로 가격 움직임보다 먼저 신호를 발생시키는 선행지표입니다. 눌림 진입과 과열 이탈 타이밍을 사전에 포착합니다.",
     scores: [
       { label: "선행성", value: 4.7, max: 5.0 },
@@ -170,6 +177,7 @@ export const indicators: Indicator[] = [
   {
     name: "멀티 이동평균선",
     subtitle: "Multi-MA Array System",
+    strategyId: "super-target",
     content: "다수의 이동평균선 배열 구조를 분석하여, 추세의 강도와 정렬 상태를 한눈에 파악합니다. 정배열/역배열 전환을 통해 트렌드 전환점을 감지합니다.",
     scores: [
       { label: "추세 정렬 감지", value: 4.5, max: 5.0 },
@@ -190,6 +198,7 @@ export const indicators: Indicator[] = [
   {
     name: "FVG",
     subtitle: "Fair Value Gap Detector",
+    strategyId: "order-block",
     content: "시장의 비효율적 가격 갭(Fair Value Gap)을 자동으로 탐지하여, 가격이 되돌아올 가능성이 높은 구간을 시각화합니다. ICT 트레이딩의 핵심 구성요소입니다.",
     scores: [
       { label: "갭 탐지 정확도", value: 4.5, max: 5.0 },
@@ -210,6 +219,7 @@ export const indicators: Indicator[] = [
   {
     name: "BB Broken",
     subtitle: "Structural BB Breakout",
+    strategyId: "rsi-bb",
     content: "단순한 밴드 터치가 아닌, 구조적으로 의미 있는 볼린저 밴드 돌파만을 선별하여 감지합니다. 거짓 돌파를 필터링하여 신뢰도 높은 브레이크아웃 시그널을 생성합니다.",
     scores: [
       { label: "돌파 신뢰도", value: 4.4, max: 5.0 },
@@ -230,6 +240,7 @@ export const indicators: Indicator[] = [
   {
     name: "Volume Spike",
     subtitle: "Abnormal Volume Detector",
+    strategyId: "sigma-box",
     content: "평균 대비 비정상적으로 큰 거래량이 발생한 구간을 자동으로 탐지합니다. 세력 개입, 뉴스 반응, 구조 전환의 초기 신호로 활용됩니다.",
     scores: [
       { label: "이상 감지력", value: 4.6, max: 5.0 },
@@ -250,6 +261,7 @@ export const indicators: Indicator[] = [
   {
     name: "Volume Divergence",
     subtitle: "Price-Volume Divergence",
+    strategyId: "sigma-box",
     content: "가격은 상승하는데 거래량은 감소하는 등의 괴리(다이버전스)를 탐지합니다. 추세 약화와 반전의 초기 경고 신호로 활용됩니다.",
     scores: [
       { label: "다이버전스 감지", value: 4.5, max: 5.0 },

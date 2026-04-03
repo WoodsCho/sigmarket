@@ -2,7 +2,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "../ui/card"
 import { Badge } from "../ui/badge"
 import { systemFeatures } from "../../data"
 import type { SystemFeature } from "../../types"
-import StrategyChart from "../StrategyChart"
 
 export default function System() {
   return (
@@ -19,10 +18,8 @@ export default function System() {
             <h2 className="text-4xl lg:text-5xl font-bold mb-4">
               <span className="text-gradient">시그널 엔진</span> 구조
             </h2>
-            <p className="text-gray-500 text-sm">전략을 선택하면 해당 조건에 맞는 시그널이 차트에 표시됩니다</p>
+            <p className="text-gray-500 text-sm">각 인디케이터 게시물에서 전략별 시그널 엔진을 확인하세요</p>
           </div>
-
-          <StrategyChart />
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {systemFeatures.map((feature, idx) => (
@@ -38,13 +35,13 @@ export default function System() {
 function FeatureCard({ feature, idx }: { feature: SystemFeature; idx: number }) {
   const Icon = feature.icon
   const gradients = [
-    "from-emerald-500/20 to-cyan-500/20",
+    "from-cyan-500/20 to-fuchsia-500/20",
     "from-blue-500/20 to-purple-500/20",
     "from-orange-500/20 to-red-500/20",
   ]
-  const iconColors = ["text-emerald-400", "text-blue-400", "text-orange-400"]
+  const iconColors = ["text-cyan-400", "text-blue-400", "text-orange-400"]
   const glows = [
-    "hover:shadow-emerald-500/10",
+    "hover:shadow-cyan-500/10",
     "hover:shadow-blue-500/10",
     "hover:shadow-orange-500/10",
   ]

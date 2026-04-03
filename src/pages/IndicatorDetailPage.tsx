@@ -3,6 +3,7 @@ import { Activity, ArrowLeft, TrendingUp, Loader2 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card"
 import { useIndicators } from "../hooks/useIndicators"
 import { Header, Footer } from "../components/sections"
+import StrategyChart from "../components/StrategyChart"
 
 export default function IndicatorDetailPage() {
   const { id } = useParams<{ id: string }>()
@@ -11,8 +12,8 @@ export default function IndicatorDetailPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-black text-white flex items-center justify-center">
-        <Loader2 className="h-8 w-8 text-emerald-500 animate-spin" />
+      <div className="min-h-screen bg-[var(--theme-bg)] text-white flex items-center justify-center">
+        <Loader2 className="h-8 w-8 text-cyan-500 animate-spin" />
       </div>
     )
   }
@@ -22,13 +23,13 @@ export default function IndicatorDetailPage() {
 
   if (!indicator) {
     return (
-      <div className="min-h-screen bg-black text-white">
+      <div className="min-h-screen bg-[var(--theme-bg)] text-white">
         <Header />
         <div className="flex flex-col items-center justify-center py-32">
           <p className="text-gray-400 text-lg mb-4">인디케이터를 찾을 수 없습니다.</p>
           <button
             onClick={() => navigate("/")}
-            className="flex items-center gap-2 text-emerald-500 hover:text-emerald-400 transition-colors"
+            className="flex items-center gap-2 text-cyan-500 hover:text-cyan-400 transition-colors"
           >
             <ArrowLeft className="h-4 w-4" /> 메인으로 돌아가기
           </button>
@@ -39,7 +40,7 @@ export default function IndicatorDetailPage() {
   }
 
   return (
-    <div className="min-h-screen bg-black text-white">
+    <div className="min-h-screen bg-[var(--theme-bg)] text-white">
       <Header />
 
       <section className="container mx-auto px-6 py-16 lg:py-24">
@@ -53,25 +54,21 @@ export default function IndicatorDetailPage() {
             All Sigma Setups
           </button>
 
+          {/* ─── 시그널 엔진 (인디케이터 이름 = 전략) ─── */}
+          <div className="mb-12">
+            <p className="text-sm text-cyan-400 font-medium mb-3 uppercase tracking-wider">Signal Engine</p>
+            <h2 className="text-3xl lg:text-4xl font-bold mb-2">
+              {indicator.name}
+            </h2>
+            <p className="text-gray-500 text-sm mb-8">{indicator.subtitle}</p>
+            <StrategyChart
+              fixedStrategyId={indicator.strategyId || "sigma-box"}
+            />
+          </div>
+
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {/* 왼쪽: 차트 + 기본 정보 */}
+            {/* 왼쪽: 기본 정보 */}
             <div>
-              <h2 className="text-3xl font-bold mb-1">{indicator.name}</h2>
-              <p className="text-gray-500 text-sm mb-6">{indicator.subtitle}</p>
-
-              {/* 차트/이미지 영역 */}
-              <div className="relative h-52 bg-gradient-to-br from-zinc-900 to-zinc-950 rounded-xl border border-zinc-800 overflow-hidden mb-6">
-                {indicator.image ? (
-                  <img src={indicator.image} alt={indicator.name} className="w-full h-full object-cover" />
-                ) : (
-                  <>
-                    <ChartPreviewSVG />
-                    <div className="absolute top-6 right-8 bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 text-xs font-bold px-2 py-1 rounded">TP</div>
-                    <div className="absolute bottom-6 right-8 bg-red-500/20 border border-red-500/40 text-red-400 text-xs font-bold px-2 py-1 rounded">SL</div>
-                  </>
-                )}
-              </div>
-
               <p className="text-gray-400 text-sm leading-relaxed whitespace-pre-line">{indicator.content}</p>
             </div>
 
@@ -81,7 +78,7 @@ export default function IndicatorDetailPage() {
               <Card className="bg-zinc-950 border-zinc-800">
                 <CardHeader className="pb-3">
                   <CardTitle className="text-base font-semibold flex items-center gap-2">
-                    <TrendingUp className="h-4 w-4 text-emerald-500" />
+                    <TrendingUp className="h-4 w-4 text-cyan-500" />
                     구조 성능 프로파일
                   </CardTitle>
                 </CardHeader>
@@ -92,7 +89,7 @@ export default function IndicatorDetailPage() {
                       <div className="flex items-center gap-3">
                         <div className="w-24 h-1.5 bg-zinc-800 rounded-full overflow-hidden">
                           <div
-                            className="h-full rounded-full bg-emerald-500 transition-all duration-500"
+                            className="h-full rounded-full bg-cyan-500 transition-all duration-500"
                             style={{ width: `${(score.value / score.max) * 100}%` }}
                           />
                         </div>
@@ -109,7 +106,7 @@ export default function IndicatorDetailPage() {
               <Card className="bg-zinc-950 border-zinc-800">
                 <CardHeader className="pb-3">
                   <CardTitle className="text-base font-semibold flex items-center gap-2">
-                    <Activity className="h-4 w-4 text-emerald-500" />
+                    <Activity className="h-4 w-4 text-cyan-500" />
                     시장 적합도
                   </CardTitle>
                 </CardHeader>
@@ -130,7 +127,7 @@ export default function IndicatorDetailPage() {
                 {indicator.tags.map((tag, i) => (
                   <span
                     key={i}
-                    className="px-3 py-1.5 bg-zinc-900 border border-zinc-700 rounded-lg text-xs text-gray-400 hover:border-emerald-500/30 hover:text-emerald-400 transition-colors cursor-default"
+                    className="px-3 py-1.5 bg-zinc-900 border border-zinc-700 rounded-lg text-xs text-gray-400 hover:border-cyan-500/30 hover:text-cyan-400 transition-colors cursor-default"
                   >
                     {tag}
                   </span>
@@ -138,6 +135,8 @@ export default function IndicatorDetailPage() {
               </div>
             </div>
           </div>
+
+
         </div>
       </section>
 
@@ -149,7 +148,7 @@ export default function IndicatorDetailPage() {
 /* ─── 적합도 도트 ─── */
 function FitDot({ fit }: { fit: "high" | "mid" | "low" }) {
   const colors = {
-    high: "bg-emerald-500",
+    high: "bg-cyan-500",
     mid: "bg-yellow-500",
     low: "bg-zinc-600",
   }
@@ -159,32 +158,5 @@ function FitDot({ fit }: { fit: "high" | "mid" | "low" }) {
       <div className={`h-2 w-2 rounded-full ${fit === "high" ? colors.high : "bg-zinc-700"}`} />
       <div className={`h-2 w-2 rounded-full ${fit === "high" ? colors.high : fit === "mid" ? colors.mid : "bg-zinc-700"}`} />
     </div>
-  )
-}
-
-/* ─── 차트 미리보기 SVG ─── */
-function ChartPreviewSVG() {
-  const h = 208
-  return (
-    <svg
-      viewBox={`0 0 400 ${h}`}
-      fill="none"
-      className="absolute inset-0 w-full h-full opacity-60"
-      preserveAspectRatio="none"
-    >
-      {[40, 70, 100, 130, 160, 190, 220, 250, 280, 310, 340, 370].map((x, i) => {
-        const isUp = [0, 2, 3, 5, 7, 8, 10, 11].includes(i)
-        const bodyH = 8 + Math.random() * 20
-        const wickH = bodyH + 6 + Math.random() * 10
-        const baseY = 30 + Math.sin(i * 0.5) * 20 + (i < 6 ? i * 4 : (12 - i) * 4)
-        return (
-          <g key={i}>
-            <line x1={x} y1={baseY - wickH / 2} x2={x} y2={baseY + wickH / 2} stroke={isUp ? "#10b981" : "#ef4444"} strokeWidth="1" />
-            <rect x={x - 6} y={baseY - bodyH / 2} width="12" height={bodyH} fill={isUp ? "#10b981" : "#ef4444"} rx="1" />
-          </g>
-        )
-      })}
-      <line x1="30" y1={h * 0.7} x2="380" y2={h * 0.3} stroke="#10b981" strokeWidth="0.5" strokeDasharray="4 4" opacity="0.4" />
-    </svg>
   )
 }

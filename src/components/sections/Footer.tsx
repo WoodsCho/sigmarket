@@ -4,7 +4,7 @@ export default function Footer() {
   return (
     <footer className="relative border-t border-white/5">
       {/* Top gradient line */}
-      <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-emerald-500/20 to-transparent" />
+      <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-cyan-500/20 to-transparent" />
 
       <div className="container mx-auto px-6 py-16">
         <div className="max-w-6xl mx-auto">
@@ -23,7 +23,7 @@ export default function Footer() {
               <ul className="space-y-3">
                 {navItems.map((item) => (
                   <li key={item.href}>
-                    <a href={item.href} className="text-sm text-gray-500 hover:text-emerald-400 transition-colors duration-300">
+                    <a href={item.href} className="text-sm text-gray-500 hover:text-cyan-400 transition-colors duration-300">
                       {item.label}
                     </a>
                   </li>

@@ -19,6 +19,8 @@ function emptyIndicator(): Indicator {
     subtitle: "",
     image: "",
     content: "",
+    strategyId: "sigma-box",
+    pineScript: "",
     scores: [
       { label: "", value: 4.5, max: 5.0 },
       { label: "", value: 4.5, max: 5.0 },
@@ -56,7 +58,7 @@ function LoginGate({ onLogin }: { onLogin: () => void }) {
   }
 
   return (
-    <div className="min-h-screen bg-black flex items-center justify-center">
+    <div className="min-h-screen bg-[var(--theme-bg)] flex items-center justify-center">
       <form
         onSubmit={handleSubmit}
         className="bg-zinc-950 border border-zinc-800 rounded-2xl p-8 w-full max-w-sm space-y-5"
@@ -67,7 +69,7 @@ function LoginGate({ onLogin }: { onLogin: () => void }) {
           <input
             value={id}
             onChange={(e) => setId(e.target.value)}
-            className="w-full bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-emerald-500"
+            className="w-full bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-cyan-500"
             autoFocus
           />
         </div>
@@ -77,13 +79,13 @@ function LoginGate({ onLogin }: { onLogin: () => void }) {
             type="password"
             value={pw}
             onChange={(e) => setPw(e.target.value)}
-            className="w-full bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-emerald-500"
+            className="w-full bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-cyan-500"
           />
         </div>
         {error && <p className="text-red-400 text-sm text-center">{error}</p>}
         <button
           type="submit"
-          className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-2.5 rounded-lg transition-colors"
+          className="w-full bg-cyan-600 hover:bg-cyan-500 text-white font-semibold py-2.5 rounded-lg transition-colors"
         >
           로그인
         </button>
@@ -198,12 +200,12 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
   }
 
   return (
-    <div className="min-h-screen bg-black text-white">
+    <div className="min-h-screen bg-[var(--theme-bg)] text-white">
       {/* 헤더 */}
-      <header className="sticky top-0 z-50 bg-black/90 backdrop-blur border-b border-zinc-800">
+      <header className="sticky top-0 z-50 bg-[var(--theme-bg)]/90 backdrop-blur border-b border-zinc-800">
         <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
           <h1 className="text-xl font-bold">
-            <span className="text-emerald-500">Σ</span> Indicator Admin
+            <span className="text-cyan-500">Σ</span> Indicator Admin
           </h1>
           <div className="flex items-center gap-4">
             {message && <span className="text-sm">{message}</span>}
@@ -225,7 +227,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
           </p>
           <button
             onClick={handleAdd}
-            className="flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
+            className="flex items-center gap-1.5 bg-cyan-600 hover:bg-cyan-500 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
           >
             <Plus className="h-4 w-4" /> 새 게시글
           </button>
@@ -233,7 +235,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
 
         {isLoading ? (
           <div className="flex justify-center py-20">
-            <Loader2 className="h-8 w-8 text-emerald-500 animate-spin" />
+            <Loader2 className="h-8 w-8 text-cyan-500 animate-spin" />
           </div>
         ) : (
           <div className="space-y-4">
@@ -330,7 +332,7 @@ function IndicatorRow({
       </div>
 
       {/* 수정 */}
-      <button onClick={onEdit} className="text-gray-400 hover:text-emerald-400 transition-colors p-1">
+      <button onClick={onEdit} className="text-gray-400 hover:text-cyan-400 transition-colors p-1">
         <Edit3 className="h-4 w-4" />
       </button>
     </div>
@@ -381,7 +383,7 @@ function IndicatorEditor({
   return (
     <form
       onSubmit={handleSubmit}
-      className="bg-zinc-950 border border-emerald-500/30 rounded-xl p-6 space-y-6"
+      className="bg-zinc-950 border border-cyan-500/30 rounded-xl p-6 space-y-6"
     >
       {/* 기본 정보 */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -405,7 +407,23 @@ function IndicatorEditor({
           value={form.content}
           onChange={(e) => set("content", e.target.value)}
           rows={4}
-          className="w-full bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-emerald-500 resize-y"
+          className="w-full bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-cyan-500 resize-y"
+        />
+      </div>
+
+      {/* 파인스크립트 코드 */}
+      <div>
+        <label className="block text-sm text-gray-400 mb-1">
+          Pine Script 코드
+          <span className="text-gray-600 ml-2 text-xs">TradingView 전략 스크립트를 입력하세요</span>
+        </label>
+        <textarea
+          value={form.pineScript || ""}
+          onChange={(e) => set("pineScript", e.target.value)}
+          rows={10}
+          placeholder={`//@version=5\nindicator("My Indicator", overlay=true)\n// ...`}
+          className="w-full bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-2 text-white text-sm font-mono focus:outline-none focus:border-cyan-500 resize-y"
+          spellCheck={false}
         />
       </div>
 
@@ -419,7 +437,7 @@ function IndicatorEditor({
                 value={s.label}
                 onChange={(e) => setScore(i, "label", e.target.value)}
                 placeholder={`항목 ${i + 1}`}
-                className="flex-1 bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-1.5 text-white text-sm focus:outline-none focus:border-emerald-500"
+                className="flex-1 bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-1.5 text-white text-sm focus:outline-none focus:border-cyan-500"
               />
               <input
                 type="number"
@@ -428,7 +446,7 @@ function IndicatorEditor({
                 max="5"
                 value={s.value}
                 onChange={(e) => setScore(i, "value", e.target.value)}
-                className="w-20 bg-zinc-900 border border-zinc-700 rounded-lg px-2 py-1.5 text-white text-sm text-center focus:outline-none focus:border-emerald-500"
+                className="w-20 bg-zinc-900 border border-zinc-700 rounded-lg px-2 py-1.5 text-white text-sm text-center focus:outline-none focus:border-cyan-500"
               />
               <span className="text-xs text-gray-500">/ 5.0</span>
             </div>
@@ -446,12 +464,12 @@ function IndicatorEditor({
                 value={m.label}
                 onChange={(e) => setFit(i, "label", e.target.value)}
                 placeholder={`시장 ${i + 1}`}
-                className="flex-1 bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-1.5 text-white text-sm focus:outline-none focus:border-emerald-500"
+                className="flex-1 bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-1.5 text-white text-sm focus:outline-none focus:border-cyan-500"
               />
               <select
                 value={m.fit}
                 onChange={(e) => setFit(i, "fit", e.target.value)}
-                className="bg-zinc-900 border border-zinc-700 rounded-lg px-2 py-1.5 text-white text-sm focus:outline-none focus:border-emerald-500"
+                className="bg-zinc-900 border border-zinc-700 rounded-lg px-2 py-1.5 text-white text-sm focus:outline-none focus:border-cyan-500"
               >
                 <option value="high">High</option>
                 <option value="mid">Mid</option>
@@ -468,11 +486,11 @@ function IndicatorEditor({
           type="checkbox"
           checked={form.isPublished !== false}
           onChange={(e) => set("isPublished", e.target.checked)}
-          className="accent-emerald-500"
+          className="accent-cyan-500"
         />
         <span className="text-sm text-gray-300 flex items-center gap-1">
           {form.isPublished !== false
-            ? <><Eye className="h-3.5 w-3.5 text-emerald-500" /> 공개</>
+            ? <><Eye className="h-3.5 w-3.5 text-cyan-500" /> 공개</>
             : <><EyeOff className="h-3.5 w-3.5 text-gray-500" /> 비공개</>
           }
         </span>
@@ -483,7 +501,7 @@ function IndicatorEditor({
         <button
           type="submit"
           disabled={saving || !form.name}
-          className="flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white text-sm font-medium px-5 py-2 rounded-lg transition-colors"
+          className="flex items-center gap-1.5 bg-cyan-600 hover:bg-cyan-500 disabled:opacity-50 text-white text-sm font-medium px-5 py-2 rounded-lg transition-colors"
         >
           {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
           저장
@@ -531,7 +549,7 @@ function Field({
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         required={required}
-        className="w-full bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-emerald-500"
+        className="w-full bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-cyan-500"
       />
     </div>
   )

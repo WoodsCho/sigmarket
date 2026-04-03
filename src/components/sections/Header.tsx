@@ -1,8 +1,10 @@
 import { useState, useEffect } from "react"
+import { useNavigate } from "react-router-dom"
 import { navItems } from "../../data"
 
 export default function Header() {
   const [scrolled, setScrolled] = useState(false)
+  const navigate = useNavigate()
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20)
@@ -14,13 +16,13 @@ export default function Header() {
     <header
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
         scrolled
-          ? "bg-[#050a14]/80 backdrop-blur-xl border-b border-white/5 shadow-lg shadow-black/20"
+          ? "bg-[var(--theme-bg)]/80 backdrop-blur-xl border-b border-white/5 shadow-lg shadow-black/20"
           : "bg-transparent"
       }`}
     >
       <div className="container mx-auto px-6 py-4">
         <nav className="flex items-center justify-between max-w-6xl mx-auto">
-          <div className="flex items-center">
+          <div className="flex items-center cursor-pointer" onClick={() => navigate("/")}>
             <img src="/images/sigmarket-logo.png" alt="시그마켓" className="h-6" />
           </div>
           <div className="hidden md:flex items-center gap-1">
@@ -35,7 +37,7 @@ export default function Header() {
             ))}
             <a
               href="#signals"
-              className="ml-4 px-5 py-2 text-sm font-semibold rounded-lg bg-gradient-to-r from-emerald-500 to-cyan-500 text-black hover:shadow-lg hover:shadow-emerald-500/25 transition-all duration-300 hover:scale-105"
+              className="ml-4 px-5 py-2 text-sm font-semibold rounded-lg bg-gradient-to-r from-cyan-500 to-fuchsia-500 text-black hover:shadow-lg hover:shadow-cyan-500/25 transition-all duration-300 hover:scale-105"
             >
               시작하기
             </a>

@@ -1,11 +1,11 @@
 export default function Hero() {
   return (
-    <section className="relative min-h-screen overflow-hidden flex items-center justify-center">
+    <section className="relative overflow-hidden flex items-center justify-center">
       {/* Animated Mesh Background */}
       <div className="absolute inset-0">
-        <div className="absolute inset-0 bg-[#050a14]" />
+        <div className="absolute inset-0" />
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1200px] h-[800px] opacity-60">
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_rgba(16,185,129,0.15)_0%,_transparent_70%)]" />
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_rgba(6,182,212,0.15)_0%,_transparent_70%)]" />
         </div>
         <div className="absolute top-1/4 right-0 w-[600px] h-[600px] opacity-40">
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_rgba(59,130,246,0.12)_0%,_transparent_70%)]" />
@@ -24,14 +24,14 @@ export default function Hero() {
       </div>
 
       {/* Hero Content */}
-      <div className="relative container mx-auto px-6 pt-32 pb-20">
+      <div className="relative container mx-auto px-6 pt-28 pb-12">
         <div className="max-w-6xl mx-auto">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
             {/* Left Content */}
             <div className="space-y-8">
               <div className="opacity-0 animate-fade-up">
-                <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-sm font-medium">
-                  <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+                <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 text-sm font-medium">
+                  <span className="h-2 w-2 rounded-full bg-cyan-500 animate-pulse" />
                   조건 기반 실시간 시그널
                 </span>
               </div>
@@ -48,10 +48,10 @@ export default function Hero() {
               <div className="flex flex-wrap gap-4 opacity-0 animate-fade-up-delay-3">
                 <a
                   href="#signals"
-                  className="group relative px-8 py-3.5 rounded-lg bg-gradient-to-r from-emerald-500 to-cyan-500 text-black font-bold text-base hover:shadow-xl hover:shadow-emerald-500/25 transition-all duration-300 hover:scale-105 overflow-hidden"
+                  className="group relative px-8 py-3.5 rounded-lg bg-gradient-to-r from-cyan-500 to-fuchsia-500 text-black font-bold text-base hover:shadow-xl hover:shadow-cyan-500/25 transition-all duration-300 hover:scale-105 overflow-hidden"
                 >
                   <span className="relative z-10">실시간 시그널 보기</span>
-                  <div className="absolute inset-0 bg-gradient-to-r from-emerald-400 to-cyan-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+                  <div className="absolute inset-0 bg-gradient-to-r from-cyan-400 to-fuchsia-400 opacity-0 group-hover:opacity-100 transition-opacity" />
                   <span className="ml-2 relative z-10">&rarr;</span>
                 </a>
                 <a
@@ -65,16 +65,16 @@ export default function Hero() {
 
             {/* Right - Floating Cards */}
             <div className="relative hidden lg:block">
-              <div className="absolute -inset-10 bg-[radial-gradient(ellipse_at_center,_rgba(16,185,129,0.08)_0%,_transparent_70%)]" />
+              <div className="absolute -inset-10 bg-[radial-gradient(ellipse_at_center,_rgba(6,182,212,0.08)_0%,_transparent_70%)]" />
               {/* Main Signal Engine Card */}
               <div className="relative animate-float">
                 <SignalEngineCard />
               </div>
               {/* Small floating stat cards */}
               <div className="absolute -top-4 -right-4 animate-float" style={{ animationDelay: '1s' }}>
-                <div className="glass-card rounded-xl px-4 py-3 glow-emerald">
+                <div className="glass-card rounded-xl px-4 py-3 glow-cyan">
                   <div className="text-xs text-gray-400">Win Rate</div>
-                  <div className="text-lg font-bold text-emerald-400">87.3%</div>
+                  <div className="text-lg font-bold text-cyan-400">87.3%</div>
                 </div>
               </div>
               <div className="absolute -bottom-4 -left-4 animate-float" style={{ animationDelay: '2s' }}>
@@ -87,8 +87,8 @@ export default function Hero() {
           </div>
 
           {/* Partner / Powered by section */}
-          <div className="mt-24 pt-12 border-t border-white/5">
-            <p className="text-center text-xs text-gray-600 uppercase tracking-[0.2em] mb-8">Powered by</p>
+          <div className="mt-16 pt-8 border-t border-white/5">
+            <p className="text-center text-xs text-gray-600 uppercase tracking-[0.2em] mb-6">Powered by</p>
             <div className="flex items-center justify-center gap-12 flex-wrap opacity-40">
               {["TradingView", "Telegram", "AWS Amplify", "Pine Script"].map((name) => (
                 <span key={name} className="text-sm font-medium text-gray-500 tracking-wider">{name}</span>
@@ -103,19 +103,19 @@ export default function Hero() {
 
 function SignalEngineCard() {
   return (
-    <div className="glass-card rounded-2xl p-6 glow-emerald relative overflow-hidden">
+    <div className="glass-card rounded-2xl p-6 glow-cyan relative overflow-hidden">
       {/* Gradient border top */}
-      <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-emerald-500/50 to-transparent" />
+      <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-cyan-500/50 to-transparent" />
 
       {/* Scan animation effect */}
       <div className="absolute inset-0 opacity-20">
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-emerald-500/20 to-transparent h-20 animate-[scan_3s_ease-in-out_infinite]" />
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-cyan-500/20 to-transparent h-20 animate-[scan_3s_ease-in-out_infinite]" />
       </div>
 
       <div className="relative">
         <div className="flex items-center gap-3 mb-6">
-          <div className="h-10 w-10 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">
-            <svg className="h-5 w-5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <div className="h-10 w-10 rounded-lg bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center">
+            <svg className="h-5 w-5 text-cyan-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
             </svg>
           </div>
@@ -135,8 +135,8 @@ function SignalEngineCard() {
           </div>
           <div className="flex justify-between items-center py-2 border-b border-white/5">
             <span className="text-gray-500">Status</span>
-            <span className="text-emerald-400 font-semibold flex items-center gap-2">
-              <span className="inline-block h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+            <span className="text-cyan-400 font-semibold flex items-center gap-2">
+              <span className="inline-block h-2 w-2 rounded-full bg-cyan-500 animate-pulse" />
               Monitoring
             </span>
           </div>

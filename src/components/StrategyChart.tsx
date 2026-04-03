@@ -43,9 +43,9 @@ const strategies: Strategy[] = [
     id: "sigma-box",
     name: "Sigma Box",
     description: "듀얼 박스 구조 + 브레이크아웃",
-    color: "text-emerald-400",
-    activeColor: "bg-emerald-500/20 border-emerald-500/40",
-    borderColor: "border-emerald-500/20",
+    color: "text-cyan-400",
+    activeColor: "bg-cyan-500/20 border-cyan-500/40",
+    borderColor: "border-cyan-500/20",
   },
   {
     id: "super-target",
@@ -171,7 +171,7 @@ function generateSignals(candles: CandlestickData<Time>[], strategyId: string): 
       markers.push({
         time: c.time,
         position: "belowBar",
-        color: "#10b981",
+        color: "#06b6d4",
         shape: "arrowUp",
         text: "◉ BUY",
         size: 3,
@@ -189,7 +189,7 @@ function generateSignals(candles: CandlestickData<Time>[], strategyId: string): 
       markers.push({
         time: c.time,
         position: "aboveBar",
-        color: pnl >= 0 ? "#10b981" : "#ef4444",
+        color: pnl >= 0 ? "#06b6d4" : "#ef4444",
         shape: "arrowDown",
         text: `${pnl >= 0 ? "▲" : "▼"} ${pnl >= 0 ? "+" : ""}${pnl.toFixed(2)}%`,
         size: 3,
@@ -201,7 +201,11 @@ function generateSignals(candles: CandlestickData<Time>[], strategyId: string): 
 }
 
 /* ─── 메인 컴포넌트 ─── */
-export default function StrategyChart() {
+interface StrategyChartProps {
+  fixedStrategyId?: string
+}
+
+export default function StrategyChart({ fixedStrategyId }: StrategyChartProps = {}) {
   const chartContainerRef = useRef<HTMLDivElement>(null)
   const chartRef = useRef<IChartApi | null>(null)
   const seriesRef = useRef<ISeriesApi<"Candlestick"> | null>(null)
@@ -211,7 +215,7 @@ export default function StrategyChart() {
   const signalResultRef = useRef<SignalResult>({ markers: [], trades: [] })  // 전체 시그널 결과
   const activeSymbolRef = useRef("BTCUSDT")
   const activeIntervalRef = useRef("1h")
-  const [activeStrategy, setActiveStrategy] = useState("sigma-box")
+  const [activeStrategy, setActiveStrategy] = useState(fixedStrategyId || "sigma-box")
   const [activeSymbol, setActiveSymbol] = useState("BTCUSDT")
   const [activeInterval, setActiveInterval] = useState("1h")
   const [signalCount, setSignalCount] = useState({ buy: 0, sell: 0 })
@@ -219,6 +223,7 @@ export default function StrategyChart() {
   const [tradeList, setTradeList] = useState<TradeResult[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [showSymbolDropdown, setShowSymbolDropdown] = useState(false)
+const isEmbedded = !!fixedStrategyId
   const activeStrategyRef = useRef(activeStrategy)
 
   // 인터벌별 최적 봉 수 (Binance 최대 1000)
@@ -361,9 +366,11 @@ export default function StrategyChart() {
   useEffect(() => {
     if (!chartContainerRef.current) return
 
+    const chartBgColor = getComputedStyle(document.documentElement).getPropertyValue('--theme-bg-card').trim() || "#0c0a1e"
+
     const chart = createChart(chartContainerRef.current, {
       layout: {
-        background: { type: ColorType.Solid, color: "#0a0f1a" },
+        background: { type: ColorType.Solid, color: chartBgColor },
         textColor: "#6b7280",
         fontSize: 12,
       },
@@ -372,8 +379,8 @@ export default function StrategyChart() {
         horzLines: { color: "rgba(255,255,255,0.03)" },
       },
       crosshair: {
-        vertLine: { color: "rgba(16,185,129,0.3)", labelBackgroundColor: "#10b981" },
-        horzLine: { color: "rgba(16,185,129,0.3)", labelBackgroundColor: "#10b981" },
+        vertLine: { color: "rgba(6,182,212,0.3)", labelBackgroundColor: "#06b6d4" },
+        horzLine: { color: "rgba(6,182,212,0.3)", labelBackgroundColor: "#06b6d4" },
       },
       timeScale: {
         borderColor: "rgba(255,255,255,0.05)",
@@ -388,11 +395,11 @@ export default function StrategyChart() {
     })
 
     const candleSeries = chart.addSeries(CandlestickSeries, {
-      upColor: "#10b981",
+      upColor: "#06b6d4",
       downColor: "#ef4444",
-      borderUpColor: "#10b981",
+      borderUpColor: "#06b6d4",
       borderDownColor: "#ef4444",
-      wickUpColor: "#10b981",
+      wickUpColor: "#06b6d4",
       wickDownColor: "#ef4444",
     })
 
@@ -400,7 +407,7 @@ export default function StrategyChart() {
     seriesRef.current = candleSeries
     markersRef.current = createSeriesMarkers(candleSeries)
 
-    fetchCandles("BTCUSDT", "1h", "sigma-box")
+    fetchCandles("BTCUSDT", "1h", fixedStrategyId || "sigma-box")
 
     // 차트 영역 변경 시: 과거 데이터 로딩 + 보이는 영역 통계 업데이트
     const onVisibleRangeChange = () => {
@@ -461,7 +468,7 @@ export default function StrategyChart() {
   return (
     <div className="mb-16">
       <div className="gradient-border overflow-hidden">
-        <div className="bg-[#0a0f1a] rounded-2xl overflow-hidden">
+        <div className="bg-[var(--theme-bg-card)] rounded-2xl overflow-hidden">
           {/* 종목 & 인터벌 선택 */}
           <div className="p-4 border-b border-white/5 bg-white/[0.02]">
             <div className="flex items-center gap-3 flex-wrap">
@@ -469,9 +476,9 @@ export default function StrategyChart() {
               <div className="relative" onClick={(e) => e.stopPropagation()}>
                 <button
                   onClick={() => setShowSymbolDropdown(!showSymbolDropdown)}
-                  className="flex items-center gap-2 px-4 py-2 rounded-lg border border-white/10 bg-white/[0.03] hover:border-emerald-500/30 transition-all text-sm font-semibold text-white"
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg border border-white/10 bg-white/[0.03] hover:border-cyan-500/30 transition-all text-sm font-semibold text-white"
                 >
-                  <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+                  <span className="h-2 w-2 rounded-full bg-cyan-500 animate-pulse" />
                   {symbols.find((s) => s.symbol === activeSymbol)?.label ?? activeSymbol}
                   <svg className={`w-3 h-3 text-gray-500 transition-transform ${showSymbolDropdown ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
                 </button>
@@ -483,12 +490,12 @@ export default function StrategyChart() {
                         onClick={() => updateSymbol(s.symbol)}
                         className={`w-full text-left px-4 py-2.5 text-sm transition-colors flex items-center justify-between ${
                           activeSymbol === s.symbol
-                            ? "text-emerald-400 bg-emerald-500/10"
+                            ? "text-cyan-400 bg-cyan-500/10"
                             : "text-gray-400 hover:text-white hover:bg-white/5"
                         }`}
                       >
                         <span>{s.label}</span>
-                        {activeSymbol === s.symbol && <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />}
+                        {activeSymbol === s.symbol && <span className="h-1.5 w-1.5 rounded-full bg-cyan-500" />}
                       </button>
                     ))}
                   </div>
@@ -506,7 +513,7 @@ export default function StrategyChart() {
                     onClick={() => updateInterval(iv.id)}
                     className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${
                       activeInterval === iv.id
-                        ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
+                        ? "bg-cyan-500/20 text-cyan-400 border border-cyan-500/30"
                         : "text-gray-500 hover:text-gray-300 border border-transparent"
                     }`}
                   >
@@ -518,48 +525,69 @@ export default function StrategyChart() {
               {/* 로딩 표시 */}
               {isLoading && (
                 <div className="flex items-center gap-1.5 text-xs text-gray-500">
-                  <div className="h-3 w-3 border-2 border-emerald-500/30 border-t-emerald-500 rounded-full animate-spin" />
+                  <div className="h-3 w-3 border-2 border-cyan-500/30 border-t-cyan-500 rounded-full animate-spin" />
                   로딩중...
                 </div>
               )}
             </div>
           </div>
 
-          {/* 전략 선택 탭 */}
-          <div className="p-4 border-b border-white/5 bg-white/[0.01]">
-            <div className="flex items-center justify-between flex-wrap gap-3">
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-gray-500 uppercase tracking-wider font-semibold mr-2">전략 선택</span>
-                {strategies.map((s) => (
-                  <button
-                    key={s.id}
-                    onClick={() => updateStrategy(s.id)}
-                    className={`px-4 py-2 rounded-lg text-xs font-semibold border transition-all duration-300 ${
-                      activeStrategy === s.id
-                        ? `${s.activeColor} ${s.color}`
-                        : "border-white/5 text-gray-500 hover:border-white/10 hover:text-gray-400"
-                    }`}
-                  >
-                    {s.name}
-                  </button>
-                ))}
-              </div>
-              <div className="flex items-center gap-4 text-xs">
-                <span className="flex items-center gap-1.5 text-emerald-400">
-                  <span className="h-2 w-2 rounded-full bg-emerald-500" />
-                  Buy: {signalCount.buy}
-                </span>
-                <span className="flex items-center gap-1.5 text-red-400">
-                  <span className="h-2 w-2 rounded-full bg-red-500" />
-                  Sell: {signalCount.sell}
-                </span>
+          {/* 전략 선택 탭 (임베디드 모드에선 전략명만 표시) */}
+          {isEmbedded ? (
+            <div className="p-4 border-b border-white/5 bg-white/[0.01]">
+              <div className="flex items-center justify-between flex-wrap gap-3">
+                <p className="text-[11px] text-gray-600">
+                  {strategies.find((s) => s.id === activeStrategy)?.description}
+                  <span className="ml-2 text-gray-700">· BINANCE:{activeSymbol} · {activeInterval.toUpperCase()}</span>
+                </p>
+                <div className="flex items-center gap-4 text-xs">
+                  <span className="flex items-center gap-1.5 text-cyan-400">
+                    <span className="h-2 w-2 rounded-full bg-cyan-500" />
+                    Buy: {signalCount.buy}
+                  </span>
+                  <span className="flex items-center gap-1.5 text-red-400">
+                    <span className="h-2 w-2 rounded-full bg-red-500" />
+                    Sell: {signalCount.sell}
+                  </span>
+                </div>
               </div>
             </div>
-            <p className="text-[11px] text-gray-600 mt-2">
-              {strategies.find((s) => s.id === activeStrategy)?.description}
-              <span className="ml-2 text-gray-700">· BINANCE:{activeSymbol} · {activeInterval.toUpperCase()}</span>
-            </p>
-          </div>
+          ) : (
+            <div className="p-4 border-b border-white/5 bg-white/[0.01]">
+              <div className="flex items-center justify-between flex-wrap gap-3">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-gray-500 uppercase tracking-wider font-semibold mr-2">전략 선택</span>
+                  {strategies.map((s) => (
+                    <button
+                      key={s.id}
+                      onClick={() => updateStrategy(s.id)}
+                      className={`px-4 py-2 rounded-lg text-xs font-semibold border transition-all duration-300 ${
+                        activeStrategy === s.id
+                          ? `${s.activeColor} ${s.color}`
+                          : "border-white/5 text-gray-500 hover:border-white/10 hover:text-gray-400"
+                      }`}
+                    >
+                      {s.name}
+                    </button>
+                  ))}
+                </div>
+                <div className="flex items-center gap-4 text-xs">
+                  <span className="flex items-center gap-1.5 text-cyan-400">
+                    <span className="h-2 w-2 rounded-full bg-cyan-500" />
+                    Buy: {signalCount.buy}
+                  </span>
+                  <span className="flex items-center gap-1.5 text-red-400">
+                    <span className="h-2 w-2 rounded-full bg-red-500" />
+                    Sell: {signalCount.sell}
+                  </span>
+                </div>
+              </div>
+              <p className="text-[11px] text-gray-600 mt-2">
+                {strategies.find((s) => s.id === activeStrategy)?.description}
+                <span className="ml-2 text-gray-700">· BINANCE:{activeSymbol} · {activeInterval.toUpperCase()}</span>
+              </p>
+            </div>
+          )}
 
           {/* 차트 영역 */}
           <div ref={chartContainerRef} style={{ height: "600px", width: "100%" }} />
@@ -573,26 +601,26 @@ export default function StrategyChart() {
               </div>
               <div className="bg-white/[0.03] rounded-lg p-3 border border-white/5">
                 <p className="text-[10px] text-gray-500 uppercase tracking-wider mb-1">승률</p>
-                <p className={`text-lg font-bold ${tradeStats.winRate >= 50 ? "text-emerald-400" : "text-red-400"}`}>
+                <p className={`text-lg font-bold ${tradeStats.winRate >= 50 ? "text-cyan-400" : "text-red-400"}`}>
                   {tradeStats.winRate.toFixed(1)}%
                 </p>
               </div>
               <div className="bg-white/[0.03] rounded-lg p-3 border border-white/5">
                 <p className="text-[10px] text-gray-500 uppercase tracking-wider mb-1">총 수익률</p>
-                <p className={`text-lg font-bold ${tradeStats.totalPnl >= 0 ? "text-emerald-400" : "text-red-400"}`}>
+                <p className={`text-lg font-bold ${tradeStats.totalPnl >= 0 ? "text-cyan-400" : "text-red-400"}`}>
                   {tradeStats.totalPnl >= 0 ? "+" : ""}{tradeStats.totalPnl.toFixed(2)}%
                 </p>
               </div>
               <div className="bg-white/[0.03] rounded-lg p-3 border border-white/5">
                 <p className="text-[10px] text-gray-500 uppercase tracking-wider mb-1">평균 수익률</p>
-                <p className={`text-lg font-bold ${tradeStats.avgPnl >= 0 ? "text-emerald-400" : "text-red-400"}`}>
+                <p className={`text-lg font-bold ${tradeStats.avgPnl >= 0 ? "text-cyan-400" : "text-red-400"}`}>
                   {tradeStats.avgPnl >= 0 ? "+" : ""}{tradeStats.avgPnl.toFixed(2)}%
                 </p>
               </div>
               <div className="bg-white/[0.03] rounded-lg p-3 border border-white/5">
                 <p className="text-[10px] text-gray-500 uppercase tracking-wider mb-1">승/패</p>
                 <p className="text-lg font-bold">
-                  <span className="text-emerald-400">{tradeStats.wins}</span>
+                  <span className="text-cyan-400">{tradeStats.wins}</span>
                   <span className="text-gray-600 mx-1">/</span>
                   <span className="text-red-400">{tradeStats.losses}</span>
                 </p>
@@ -600,7 +628,7 @@ export default function StrategyChart() {
               <div className="bg-white/[0.03] rounded-lg p-3 border border-white/5">
                 <p className="text-[10px] text-gray-500 uppercase tracking-wider mb-1">시그널</p>
                 <p className="text-lg font-bold">
-                  <span className="text-emerald-400">{signalCount.buy}</span>
+                  <span className="text-cyan-400">{signalCount.buy}</span>
                   <span className="text-gray-600 text-xs mx-1">Buy</span>
                   <span className="text-red-400 ml-1">{signalCount.sell}</span>
                   <span className="text-gray-600 text-xs mx-1">Sell</span>
@@ -627,12 +655,12 @@ export default function StrategyChart() {
                         <td className="px-3 py-2 text-gray-500">{idx + 1}</td>
                         <td className="px-3 py-2 text-gray-300 font-mono">{t.buyPrice.toLocaleString(undefined, { maximumFractionDigits: 2 })}</td>
                         <td className="px-3 py-2 text-gray-300 font-mono">{t.sellPrice.toLocaleString(undefined, { maximumFractionDigits: 2 })}</td>
-                        <td className={`px-3 py-2 text-right font-mono font-semibold ${t.pnl >= 0 ? "text-emerald-400" : "text-red-400"}`}>
+                        <td className={`px-3 py-2 text-right font-mono font-semibold ${t.pnl >= 0 ? "text-cyan-400" : "text-red-400"}`}>
                           {t.pnl >= 0 ? "+" : ""}{t.pnl.toFixed(2)}%
                         </td>
                         <td className="px-3 py-2 text-right">
                           <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-bold ${
-                            t.pnl >= 0 ? "bg-emerald-500/20 text-emerald-400" : "bg-red-500/20 text-red-400"
+                            t.pnl >= 0 ? "bg-cyan-500/20 text-cyan-400" : "bg-red-500/20 text-red-400"
                           }`}>
                             {t.pnl >= 0 ? "WIN" : "LOSS"}
                           </span>

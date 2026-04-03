@@ -8,14 +8,14 @@ export default function Signals() {
   return (
     <section id="signals" className="relative py-24">
       {/* Section bg glow */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-[radial-gradient(ellipse_at_center,_rgba(16,185,129,0.06)_0%,_transparent_70%)]" />
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-[radial-gradient(ellipse_at_center,_rgba(6,182,212,0.06)_0%,_transparent_70%)]" />
 
       <div className="relative container mx-auto px-6">
         <div className="max-w-6xl mx-auto">
           <SignalHeader isLive={isLive} />
           {isLoading ? (
             <div className="text-center py-20">
-              <div className="inline-block h-10 w-10 rounded-full border-2 border-emerald-500 border-t-transparent animate-spin" />
+              <div className="inline-block h-10 w-10 rounded-full border-2 border-cyan-500 border-t-transparent animate-spin" />
               <p className="text-gray-500 mt-4 text-sm">시그널 로딩 중...</p>
             </div>
           ) : (
@@ -38,13 +38,13 @@ function SignalHeader({ isLive }: { isLive: boolean }) {
     <div className="mb-10">
       <div className="flex items-start justify-between gap-4 mb-3">
         <div>
-          <p className="text-sm text-emerald-400 font-medium mb-3 uppercase tracking-wider">Live Signals</p>
+          <p className="text-sm text-cyan-400 font-medium mb-3 uppercase tracking-wider">Live Signals</p>
           <h2 className="text-4xl lg:text-5xl font-bold mb-4">
             실시간 <span className="text-gradient">시그널</span> 현황
           </h2>
           <div className="flex items-center gap-3">
-            <div className={`h-2.5 w-2.5 rounded-full ${isLive ? "bg-emerald-500 animate-pulse" : "bg-gray-500"}`} />
-            <span className={`font-bold text-sm ${isLive ? "text-emerald-400" : "text-gray-400"}`}>
+            <div className={`h-2.5 w-2.5 rounded-full ${isLive ? "bg-cyan-500 animate-pulse" : "bg-gray-500"}`} />
+            <span className={`font-bold text-sm ${isLive ? "text-cyan-400" : "text-gray-400"}`}>
               {isLive ? "LIVE" : "DEMO"}
             </span>
             <span className="text-gray-500 text-sm">
@@ -77,7 +77,7 @@ function SignalTable({ signals }: { signals: Signal[] }) {
   return (
     <div className="glass-card rounded-2xl overflow-hidden">
       {/* Gradient border top */}
-      <div className="h-[1px] bg-gradient-to-r from-transparent via-emerald-500/30 to-transparent" />
+      <div className="h-[1px] bg-gradient-to-r from-transparent via-cyan-500/30 to-transparent" />
       <div className="overflow-x-auto">
         <table className="w-full">
           <thead>
@@ -103,7 +103,7 @@ function SignalRow({ signal }: { signal: Signal }) {
   return (
     <tr
       className={`border-b border-white/5 hover:bg-white/[0.02] transition-all duration-300 ${
-        signal.isNew ? "bg-emerald-500/[0.03]" : ""
+        signal.isNew ? "bg-cyan-500/[0.03]" : ""
       }`}
     >
       <td className="px-6 py-5">
@@ -129,7 +129,7 @@ function SignalRow({ signal }: { signal: Signal }) {
         <Badge
           className={
             signal.position === "LONG"
-              ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-bold px-4 py-1.5 hover:bg-emerald-500/20"
+              ? "bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 font-bold px-4 py-1.5 hover:bg-cyan-500/20"
               : "bg-red-500/10 text-red-400 border border-red-500/20 font-bold px-4 py-1.5 hover:bg-red-500/20"
           }
         >
