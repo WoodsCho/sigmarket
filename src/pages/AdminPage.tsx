@@ -411,6 +411,20 @@ function IndicatorEditor({
         />
       </div>
 
+      {/* 전략 ID */}
+      <div>
+        <label className="block text-sm text-gray-400 mb-1">
+          전략 ID
+          <span className="text-gray-600 ml-2 text-xs">내장 전략: sigma-box, super-target, order-block, rsi-bb</span>
+        </label>
+        <input
+          value={form.strategyId || ""}
+          onChange={(e) => set("strategyId", e.target.value)}
+          placeholder="sigma-box"
+          className="w-full bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-cyan-500"
+        />
+      </div>
+
       {/* 전략 코드 (JavaScript) */}
       <div>
         <label className="block text-sm text-gray-400 mb-1">
