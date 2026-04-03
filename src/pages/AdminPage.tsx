@@ -3,7 +3,7 @@ import {
   Plus, Trash2, Edit3, Save, X, LogOut,
   Loader2, Eye, EyeOff, ArrowUp, ArrowDown,
 } from "lucide-react"
-import { signIn, signOut, getCurrentUser, fetchAuthSession, confirmSignIn, setUpTOTP } from "aws-amplify/auth"
+import { signIn, signOut, getCurrentUser, fetchAuthSession, confirmSignIn } from "aws-amplify/auth"
 import type { Indicator } from "../types"
 
 /* ─── 환경 변수 ─── */
@@ -51,15 +51,18 @@ function LoginGate({ onLogin }: { onLogin: () => void }) {
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
 
-  const handleNextStep = async (nextStep: string) => {
-    switch (nextStep) {
+  const handleNextStep = async (nextStep: any) => {
+    const signInStep = nextStep?.signInStep || "DONE"
+    switch (signInStep) {
       case "CONFIRM_SIGN_IN_WITH_NEW_PASSWORD_REQUIRED":
         setStep("newPassword")
         break
       case "CONTINUE_SIGN_IN_WITH_TOTP_SETUP": {
-        const totpSetup = await setUpTOTP()
-        const uri = totpSetup.getSetupUri("Sigmarket", email)
-        setTotpSetupUri(uri.toString())
+        const details = nextStep?.totpSetupDetails
+        if (details) {
+          const uri = details.getSetupUri("Sigmarket", email)
+          setTotpSetupUri(uri.toString())
+        }
         setStep("totpSetup")
         break
       }
@@ -80,7 +83,7 @@ function LoginGate({ onLogin }: { onLogin: () => void }) {
     setLoading(true)
     try {
       const result = await signIn({ username: email, password: pw })
-      await handleNextStep(result.nextStep?.signInStep || "DONE")
+      await handleNextStep(result.nextStep)
     } catch (err: any) {
       setError(err.message || "로그인 실패")
     } finally {
@@ -94,7 +97,7 @@ function LoginGate({ onLogin }: { onLogin: () => void }) {
     setLoading(true)
     try {
       const result = await confirmSignIn({ challengeResponse: newPw })
-      await handleNextStep(result.nextStep?.signInStep || "DONE")
+      await handleNextStep(result.nextStep)
     } catch (err: any) {
       setError(err.message || "비밀번호 변경 실패")
     } finally {
@@ -108,7 +111,7 @@ function LoginGate({ onLogin }: { onLogin: () => void }) {
     setLoading(true)
     try {
       const result = await confirmSignIn({ challengeResponse: totpCode })
-      await handleNextStep(result.nextStep?.signInStep || "DONE")
+      await handleNextStep(result.nextStep)
     } catch (err: any) {
       setError(err.message || "인증 코드가 올바르지 않습니다.")
     } finally {
