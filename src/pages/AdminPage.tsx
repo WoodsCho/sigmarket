@@ -3,7 +3,7 @@ import {
   Plus, Trash2, Edit3, Save, X, LogOut,
   Loader2, Eye, EyeOff, ArrowUp, ArrowDown,
 } from "lucide-react"
-import { signIn, signOut, getCurrentUser, fetchAuthSession, confirmSignIn } from "aws-amplify/auth"
+import { signIn, signOut, getCurrentUser, fetchAuthSession, confirmSignIn, setUpTOTP } from "aws-amplify/auth"
 import type { Indicator } from "../types"
 
 /* ─── 환경 변수 ─── */
@@ -45,9 +45,34 @@ function LoginGate({ onLogin }: { onLogin: () => void }) {
   const [email, setEmail] = useState("")
   const [pw, setPw] = useState("")
   const [newPw, setNewPw] = useState("")
-  const [needNewPassword, setNeedNewPassword] = useState(false)
+  const [totpCode, setTotpCode] = useState("")
+  const [totpSetupUri, setTotpSetupUri] = useState("")
+  const [step, setStep] = useState<"login" | "newPassword" | "totpSetup" | "totpVerify">("login")
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
+
+  const handleNextStep = async (nextStep: string) => {
+    switch (nextStep) {
+      case "CONFIRM_SIGN_IN_WITH_NEW_PASSWORD_REQUIRED":
+        setStep("newPassword")
+        break
+      case "CONTINUE_SIGN_IN_WITH_TOTP_SETUP": {
+        const totpSetup = await setUpTOTP()
+        const uri = totpSetup.getSetupUri("Sigmarket", email)
+        setTotpSetupUri(uri.toString())
+        setStep("totpSetup")
+        break
+      }
+      case "CONFIRM_SIGN_IN_WITH_TOTP_CODE":
+        setStep("totpVerify")
+        break
+      case "DONE":
+        onLogin()
+        break
+      default:
+        onLogin()
+    }
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -55,12 +80,7 @@ function LoginGate({ onLogin }: { onLogin: () => void }) {
     setLoading(true)
     try {
       const result = await signIn({ username: email, password: pw })
-      if (result.nextStep?.signInStep === "CONFIRM_SIGN_IN_WITH_NEW_PASSWORD_REQUIRED") {
-        setNeedNewPassword(true)
-        setLoading(false)
-        return
-      }
-      onLogin()
+      await handleNextStep(result.nextStep?.signInStep || "DONE")
     } catch (err: any) {
       setError(err.message || "로그인 실패")
     } finally {
@@ -73,8 +93,8 @@ function LoginGate({ onLogin }: { onLogin: () => void }) {
     setError("")
     setLoading(true)
     try {
-      await confirmSignIn({ challengeResponse: newPw })
-      onLogin()
+      const result = await confirmSignIn({ challengeResponse: newPw })
+      await handleNextStep(result.nextStep?.signInStep || "DONE")
     } catch (err: any) {
       setError(err.message || "비밀번호 변경 실패")
     } finally {
@@ -82,21 +102,81 @@ function LoginGate({ onLogin }: { onLogin: () => void }) {
     }
   }
 
-  if (needNewPassword) {
+  const handleTotpVerify = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setError("")
+    setLoading(true)
+    try {
+      const result = await confirmSignIn({ challengeResponse: totpCode })
+      await handleNextStep(result.nextStep?.signInStep || "DONE")
+    } catch (err: any) {
+      setError(err.message || "인증 코드가 올바르지 않습니다.")
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const formClass = "bg-zinc-950 border border-zinc-800 rounded-2xl p-8 w-full max-w-sm space-y-5"
+  const inputClass = "w-full bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-cyan-500"
+  const btnClass = "w-full bg-cyan-600 hover:bg-cyan-500 text-white font-semibold py-2.5 rounded-lg transition-colors disabled:opacity-50"
+
+  if (step === "newPassword") {
     return (
       <div className="min-h-screen bg-[var(--theme-bg)] flex items-center justify-center">
-        <form onSubmit={handleNewPassword} className="bg-zinc-950 border border-zinc-800 rounded-2xl p-8 w-full max-w-sm space-y-5">
+        <form onSubmit={handleNewPassword} className={formClass}>
           <h1 className="text-2xl font-bold text-white text-center">새 비밀번호 설정</h1>
           <p className="text-gray-400 text-sm text-center">첫 로그인 시 비밀번호를 변경해야 합니다.</p>
           <div>
             <label className="block text-sm text-gray-400 mb-1">새 비밀번호</label>
-            <input type="password" value={newPw} onChange={(e) => setNewPw(e.target.value)}
-              className="w-full bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-cyan-500" autoFocus />
+            <input type="password" value={newPw} onChange={(e) => setNewPw(e.target.value)} className={inputClass} autoFocus />
           </div>
           {error && <p className="text-red-400 text-sm text-center">{error}</p>}
-          <button type="submit" disabled={loading}
-            className="w-full bg-cyan-600 hover:bg-cyan-500 text-white font-semibold py-2.5 rounded-lg transition-colors disabled:opacity-50">
+          <button type="submit" disabled={loading} className={btnClass}>
             {loading ? "처리 중..." : "비밀번호 변경"}
+          </button>
+        </form>
+      </div>
+    )
+  }
+
+  if (step === "totpSetup") {
+    return (
+      <div className="min-h-screen bg-[var(--theme-bg)] flex items-center justify-center">
+        <form onSubmit={handleTotpVerify} className={formClass}>
+          <h1 className="text-2xl font-bold text-white text-center">MFA 설정</h1>
+          <p className="text-gray-400 text-sm text-center">인증 앱(Google Authenticator 등)에서 아래 코드를 등록하세요.</p>
+          <div className="bg-zinc-900 border border-zinc-700 rounded-lg p-3">
+            <p className="text-xs text-gray-500 mb-1">수동 입력 키:</p>
+            <p className="text-cyan-400 text-xs font-mono break-all select-all">{totpSetupUri.split("secret=")[1]?.split("&")[0] || totpSetupUri}</p>
+          </div>
+          <div>
+            <label className="block text-sm text-gray-400 mb-1">인증 코드 (6자리)</label>
+            <input value={totpCode} onChange={(e) => setTotpCode(e.target.value)} placeholder="000000"
+              className={`${inputClass} text-center tracking-widest text-lg`} autoFocus maxLength={6} />
+          </div>
+          {error && <p className="text-red-400 text-sm text-center">{error}</p>}
+          <button type="submit" disabled={loading || totpCode.length !== 6} className={btnClass}>
+            {loading ? "확인 중..." : "MFA 등록 완료"}
+          </button>
+        </form>
+      </div>
+    )
+  }
+
+  if (step === "totpVerify") {
+    return (
+      <div className="min-h-screen bg-[var(--theme-bg)] flex items-center justify-center">
+        <form onSubmit={handleTotpVerify} className={formClass}>
+          <h1 className="text-2xl font-bold text-white text-center">2단계 인증</h1>
+          <p className="text-gray-400 text-sm text-center">인증 앱의 6자리 코드를 입력하세요.</p>
+          <div>
+            <label className="block text-sm text-gray-400 mb-1">인증 코드</label>
+            <input value={totpCode} onChange={(e) => setTotpCode(e.target.value)} placeholder="000000"
+              className={`${inputClass} text-center tracking-widest text-lg`} autoFocus maxLength={6} />
+          </div>
+          {error && <p className="text-red-400 text-sm text-center">{error}</p>}
+          <button type="submit" disabled={loading || totpCode.length !== 6} className={btnClass}>
+            {loading ? "확인 중..." : "인증"}
           </button>
         </form>
       </div>
@@ -105,21 +185,18 @@ function LoginGate({ onLogin }: { onLogin: () => void }) {
 
   return (
     <div className="min-h-screen bg-[var(--theme-bg)] flex items-center justify-center">
-      <form onSubmit={handleSubmit} className="bg-zinc-950 border border-zinc-800 rounded-2xl p-8 w-full max-w-sm space-y-5">
+      <form onSubmit={handleSubmit} className={formClass}>
         <h1 className="text-2xl font-bold text-white text-center">Admin Login</h1>
         <div>
           <label className="block text-sm text-gray-400 mb-1">Email</label>
-          <input value={email} onChange={(e) => setEmail(e.target.value)}
-            className="w-full bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-cyan-500" autoFocus />
+          <input value={email} onChange={(e) => setEmail(e.target.value)} className={inputClass} autoFocus />
         </div>
         <div>
           <label className="block text-sm text-gray-400 mb-1">Password</label>
-          <input type="password" value={pw} onChange={(e) => setPw(e.target.value)}
-            className="w-full bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-cyan-500" />
+          <input type="password" value={pw} onChange={(e) => setPw(e.target.value)} className={inputClass} />
         </div>
         {error && <p className="text-red-400 text-sm text-center">{error}</p>}
-        <button type="submit" disabled={loading}
-          className="w-full bg-cyan-600 hover:bg-cyan-500 text-white font-semibold py-2.5 rounded-lg transition-colors disabled:opacity-50">
+        <button type="submit" disabled={loading} className={btnClass}>
           {loading ? "로그인 중..." : "로그인"}
         </button>
       </form>
