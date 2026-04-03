@@ -4,6 +4,7 @@ import {
   Loader2, Eye, EyeOff, ArrowUp, ArrowDown,
 } from "lucide-react"
 import { signIn, signOut, getCurrentUser, fetchAuthSession, confirmSignIn } from "aws-amplify/auth"
+import { QRCodeSVG } from "qrcode.react"
 import type { Indicator } from "../types"
 
 /* ─── 환경 변수 ─── */
@@ -143,15 +144,23 @@ function LoginGate({ onLogin }: { onLogin: () => void }) {
   }
 
   if (step === "totpSetup") {
+    const secretKey = totpSetupUri.split("secret=")[1]?.split("&")[0] || ""
     return (
       <div className="min-h-screen bg-[var(--theme-bg)] flex items-center justify-center">
         <form onSubmit={handleTotpVerify} className={formClass}>
           <h1 className="text-2xl font-bold text-white text-center">MFA 설정</h1>
-          <p className="text-gray-400 text-sm text-center">인증 앱(Google Authenticator 등)에서 아래 코드를 등록하세요.</p>
-          <div className="bg-zinc-900 border border-zinc-700 rounded-lg p-3">
-            <p className="text-xs text-gray-500 mb-1">수동 입력 키:</p>
-            <p className="text-cyan-400 text-xs font-mono break-all select-all">{totpSetupUri.split("secret=")[1]?.split("&")[0] || totpSetupUri}</p>
-          </div>
+          <p className="text-gray-400 text-sm text-center">인증 앱(Google Authenticator 등)으로 QR 코드를 스캔하세요.</p>
+          {totpSetupUri && (
+            <div className="flex justify-center py-2">
+              <div className="bg-white p-3 rounded-lg">
+                <QRCodeSVG value={totpSetupUri} size={180} />
+              </div>
+            </div>
+          )}
+          <details className="text-center">
+            <summary className="text-xs text-gray-600 cursor-pointer hover:text-gray-400">QR 스캔이 안 되면 수동 입력</summary>
+            <p className="text-cyan-400 text-xs font-mono break-all select-all mt-2 bg-zinc-900 border border-zinc-700 rounded-lg p-2">{secretKey}</p>
+          </details>
           <div>
             <label className="block text-sm text-gray-400 mb-1">인증 코드 (6자리)</label>
             <input value={totpCode} onChange={(e) => setTotpCode(e.target.value)} placeholder="000000"
