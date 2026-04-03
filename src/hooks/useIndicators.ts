@@ -38,7 +38,7 @@ export function useIndicators() {
           content: item.content || "",
           image: item.image || undefined,
           strategyId: item.strategyId || "sigma-box",
-          pineScript: item.pineScript || "",
+          strategyCode: item.strategyCode || "",
           scores: Array.isArray(item.scores)
             ? item.scores
             : typeof item.scores === "string"

@@ -96,13 +96,24 @@ interface SignalResult {
 }
 
 /* ─── 전략별 시그널 생성 (Buy→Sell 교대) ─── */
-function generateSignals(candles: CandlestickData<Time>[], strategyId: string): SignalResult {
+function generateSignals(candles: CandlestickData<Time>[], strategyId: string, strategyCode?: string): SignalResult {
   const markers: SignalResult["markers"] = []
   const trades: TradeResult[] = []
 
   if (candles.length < 30) return { markers, trades }
 
-  let inPosition = false  // 현재 포지션 보유 여부
+  // 커스텀 전략 코드가 있으면 컴파일
+  type StrategyFn = (candles: CandlestickData<Time>[], i: number, c: CandlestickData<Time>, prev: CandlestickData<Time>) => { buyCondition: boolean; sellCondition: boolean }
+  let customStrategy: StrategyFn | null = null
+  if (strategyCode && strategyCode.trim()) {
+    try {
+      customStrategy = new Function("candles", "i", "c", "prev", strategyCode) as StrategyFn
+    } catch {
+      console.warn("전략 코드 컴파일 실패, 기본 전략 사용")
+    }
+  }
+
+  let inPosition = false
   let entryPrice = 0
   let entryTime: Time = 0 as Time
 
@@ -113,7 +124,19 @@ function generateSignals(candles: CandlestickData<Time>[], strategyId: string): 
     let buyCondition = false
     let sellCondition = false
 
-    switch (strategyId) {
+    // 커스텀 전략 코드 우선 실행
+    if (customStrategy) {
+      try {
+        const result = customStrategy(candles, i, c, prev)
+        buyCondition = !!result.buyCondition
+        sellCondition = !!result.sellCondition
+      } catch {
+        // 런타임 에러 시 해당 봉 스킵
+        continue
+      }
+    } else {
+      // 기본 내장 전략
+      switch (strategyId) {
       case "sigma-box": {
         const high20 = Math.max(...candles.slice(i - 20, i).map(x => x.high))
         const low20 = Math.min(...candles.slice(i - 20, i).map(x => x.low))
@@ -161,6 +184,7 @@ function generateSignals(candles: CandlestickData<Time>[], strategyId: string): 
         sellCondition = prevRsi > 70 && rsi <= 70
         break
       }
+      }
     }
 
     // Buy → Sell 교대 방식: 포지션 없을 때만 Buy, 있을 때만 Sell
@@ -203,9 +227,10 @@ function generateSignals(candles: CandlestickData<Time>[], strategyId: string): 
 /* ─── 메인 컴포넌트 ─── */
 interface StrategyChartProps {
   fixedStrategyId?: string
+  strategyCode?: string
 }
 
-export default function StrategyChart({ fixedStrategyId }: StrategyChartProps = {}) {
+export default function StrategyChart({ fixedStrategyId, strategyCode }: StrategyChartProps = {}) {
   const chartContainerRef = useRef<HTMLDivElement>(null)
   const chartRef = useRef<IChartApi | null>(null)
   const seriesRef = useRef<ISeriesApi<"Candlestick"> | null>(null)
@@ -223,7 +248,9 @@ export default function StrategyChart({ fixedStrategyId }: StrategyChartProps = 
   const [tradeList, setTradeList] = useState<TradeResult[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [showSymbolDropdown, setShowSymbolDropdown] = useState(false)
-const isEmbedded = !!fixedStrategyId
+  const isEmbedded = !!fixedStrategyId
+  const strategyCodeRef = useRef(strategyCode)
+  strategyCodeRef.current = strategyCode
   const activeStrategyRef = useRef(activeStrategy)
 
   // 인터벌별 최적 봉 수 (Binance 최대 1000)
@@ -259,7 +286,7 @@ const isEmbedded = !!fixedStrategyId
         candlesRef.current = candles
         seriesRef.current.setData(candles)
 
-        const result = generateSignals(candles, strategy)
+        const result = generateSignals(candles, strategy, strategyCodeRef.current)
         markersRef.current?.setMarkers(result.markers)
         applyTradeStats(result)
 
@@ -270,7 +297,7 @@ const isEmbedded = !!fixedStrategyId
         const demoCandles = generateDemoCandles()
         candlesRef.current = demoCandles
         seriesRef.current.setData(demoCandles)
-        const result = generateSignals(demoCandles, strategy)
+        const result = generateSignals(demoCandles, strategy, strategyCodeRef.current)
         markersRef.current?.setMarkers(result.markers)
         applyTradeStats(result)
         chartRef.current?.timeScale().fitContent()
@@ -312,7 +339,7 @@ const isEmbedded = !!fixedStrategyId
         seriesRef.current.setData(merged)
 
         // 시그널 재계산
-        const result = generateSignals(merged, activeStrategyRef.current)
+        const result = generateSignals(merged, activeStrategyRef.current, strategyCodeRef.current)
         markersRef.current?.setMarkers(result.markers)
         applyTradeStats(result)
       })
@@ -439,7 +466,7 @@ const isEmbedded = !!fixedStrategyId
     activeStrategyRef.current = strategyId
     if (!seriesRef.current || candlesRef.current.length === 0) return
 
-    const result = generateSignals(candlesRef.current, strategyId)
+    const result = generateSignals(candlesRef.current, strategyId, strategyCodeRef.current)
     markersRef.current?.setMarkers(result.markers)
     applyTradeStats(result)
   }, [applyTradeStats])

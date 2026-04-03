@@ -20,7 +20,7 @@ function emptyIndicator(): Indicator {
     image: "",
     content: "",
     strategyId: "sigma-box",
-    pineScript: "",
+    strategyCode: "",
     scores: [
       { label: "", value: 4.5, max: 5.0 },
       { label: "", value: 4.5, max: 5.0 },
@@ -411,17 +411,17 @@ function IndicatorEditor({
         />
       </div>
 
-      {/* 파인스크립트 코드 */}
+      {/* 전략 코드 (JavaScript) */}
       <div>
         <label className="block text-sm text-gray-400 mb-1">
-          Pine Script 코드
-          <span className="text-gray-600 ml-2 text-xs">TradingView 전략 스크립트를 입력하세요</span>
+          전략 코드 (JavaScript)
+          <span className="text-gray-600 ml-2 text-xs">candles, i, c, prev 변수 사용 가능. buyCondition / sellCondition 반환</span>
         </label>
         <textarea
-          value={form.pineScript || ""}
-          onChange={(e) => set("pineScript", e.target.value)}
-          rows={10}
-          placeholder={`//@version=5\nindicator("My Indicator", overlay=true)\n// ...`}
+          value={form.strategyCode || ""}
+          onChange={(e) => set("strategyCode", e.target.value)}
+          rows={12}
+          placeholder={`// 예시: 20봉 고점/저점 돌파 전략\nconst high20 = Math.max(...candles.slice(i - 20, i).map(x => x.high));\nconst low20 = Math.min(...candles.slice(i - 20, i).map(x => x.low));\n\nconst buyCondition = c.close > high20 && prev.close <= high20;\nconst sellCondition = c.close < low20 && prev.close >= low20;\n\nreturn { buyCondition, sellCondition };`}
           className="w-full bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-2 text-white text-sm font-mono focus:outline-none focus:border-cyan-500 resize-y"
           spellCheck={false}
         />

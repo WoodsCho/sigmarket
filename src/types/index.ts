@@ -25,7 +25,7 @@ export interface Indicator {
   image?: string          // 이미지 URL
   content: string         // 내용 (상세 설명)
   strategyId: string      // 전략 엔진 ID (예: sigma-box, super-target, order-block, rsi-bb)
-  pineScript?: string     // 파인스크립트 코드
+  strategyCode?: string   // 자바스크립트 전략 코드 (Buy/Sell 조건)
   scores: {               // 구조 성능 프로파일 (5개)
     label: string
     value: number

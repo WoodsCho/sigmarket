@@ -26,6 +26,8 @@
  *   scores           (String)  - JSON 문자열: [{"label":"방향성","value":4.8,"max":5.0}] (5개)
  *   marketFit        (String)  - JSON 문자열: [{"label":"스윙형","fit":"high"}] (5개)
  *   tags             (String)  - JSON 문자열: ["주식","해외선물","코인"]
+ *   strategyId       (String)  - 전략 ID (예: sigma-box, super-target)
+ *   strategyCode     (String)  - 자바스크립트 전략 코드 (옵션)
  *   sortOrder        (Number)  - 정렬 순서 (작을수록 위)
  *   isPublished      (Boolean) - 공개 여부
  *   createdAt        (String)  - ISO 날짜
@@ -153,6 +155,8 @@ export const handler = async (event) => {
         scores: JSON.stringify(body.scores || []),
         marketFit: JSON.stringify(body.marketFit || []),
         tags: JSON.stringify(body.tags || []),
+        strategyId: body.strategyId || "sigma-box",
+        strategyCode: body.strategyCode || "",
         sortOrder: body.sortOrder ?? 999,
         isPublished: body.isPublished ?? true,
         createdAt: body.createdAt || now.toISOString(),
