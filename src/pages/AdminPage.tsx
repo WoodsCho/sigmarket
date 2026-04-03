@@ -3,11 +3,10 @@ import {
   Plus, Trash2, Edit3, Save, X, LogOut,
   Loader2, Eye, EyeOff, ArrowUp, ArrowDown,
 } from "lucide-react"
+import { signIn, signOut, getCurrentUser, fetchAuthSession, confirmSignIn } from "aws-amplify/auth"
 import type { Indicator } from "../types"
 
 /* ─── 환경 변수 ─── */
-const ADMIN_ID = import.meta.env.VITE_ADMIN_ID || "sigma"
-const ADMIN_PW = import.meta.env.VITE_ADMIN_PW || "sigma2026!"
 const ADMIN_SECRET = import.meta.env.VITE_ADMIN_SECRET || ""
 const API_URL = import.meta.env.VITE_INDICATORS_API_URL
   || (import.meta.env.VITE_API_URL ? `${import.meta.env.VITE_API_URL}/indicators` : "")
@@ -43,51 +42,85 @@ function emptyIndicator(): Indicator {
 /*              로그인 게이트                   */
 /* ========================================== */
 function LoginGate({ onLogin }: { onLogin: () => void }) {
-  const [id, setId] = useState("")
+  const [email, setEmail] = useState("")
   const [pw, setPw] = useState("")
+  const [newPw, setNewPw] = useState("")
+  const [needNewPassword, setNeedNewPassword] = useState(false)
   const [error, setError] = useState("")
+  const [loading, setLoading] = useState(false)
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (id === ADMIN_ID && pw === ADMIN_PW) {
-      sessionStorage.setItem("sigma-admin", "1")
+    setError("")
+    setLoading(true)
+    try {
+      const result = await signIn({ username: email, password: pw })
+      if (result.nextStep?.signInStep === "CONFIRM_SIGN_IN_WITH_NEW_PASSWORD_REQUIRED") {
+        setNeedNewPassword(true)
+        setLoading(false)
+        return
+      }
       onLogin()
-    } else {
-      setError("ID 또는 비밀번호가 올바르지 않습니다.")
+    } catch (err: any) {
+      setError(err.message || "로그인 실패")
+    } finally {
+      setLoading(false)
     }
+  }
+
+  const handleNewPassword = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setError("")
+    setLoading(true)
+    try {
+      await confirmSignIn({ challengeResponse: newPw })
+      onLogin()
+    } catch (err: any) {
+      setError(err.message || "비밀번호 변경 실패")
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  if (needNewPassword) {
+    return (
+      <div className="min-h-screen bg-[var(--theme-bg)] flex items-center justify-center">
+        <form onSubmit={handleNewPassword} className="bg-zinc-950 border border-zinc-800 rounded-2xl p-8 w-full max-w-sm space-y-5">
+          <h1 className="text-2xl font-bold text-white text-center">새 비밀번호 설정</h1>
+          <p className="text-gray-400 text-sm text-center">첫 로그인 시 비밀번호를 변경해야 합니다.</p>
+          <div>
+            <label className="block text-sm text-gray-400 mb-1">새 비밀번호</label>
+            <input type="password" value={newPw} onChange={(e) => setNewPw(e.target.value)}
+              className="w-full bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-cyan-500" autoFocus />
+          </div>
+          {error && <p className="text-red-400 text-sm text-center">{error}</p>}
+          <button type="submit" disabled={loading}
+            className="w-full bg-cyan-600 hover:bg-cyan-500 text-white font-semibold py-2.5 rounded-lg transition-colors disabled:opacity-50">
+            {loading ? "처리 중..." : "비밀번호 변경"}
+          </button>
+        </form>
+      </div>
+    )
   }
 
   return (
     <div className="min-h-screen bg-[var(--theme-bg)] flex items-center justify-center">
-      <form
-        onSubmit={handleSubmit}
-        className="bg-zinc-950 border border-zinc-800 rounded-2xl p-8 w-full max-w-sm space-y-5"
-      >
+      <form onSubmit={handleSubmit} className="bg-zinc-950 border border-zinc-800 rounded-2xl p-8 w-full max-w-sm space-y-5">
         <h1 className="text-2xl font-bold text-white text-center">Admin Login</h1>
         <div>
-          <label className="block text-sm text-gray-400 mb-1">ID</label>
-          <input
-            value={id}
-            onChange={(e) => setId(e.target.value)}
-            className="w-full bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-cyan-500"
-            autoFocus
-          />
+          <label className="block text-sm text-gray-400 mb-1">Email</label>
+          <input value={email} onChange={(e) => setEmail(e.target.value)}
+            className="w-full bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-cyan-500" autoFocus />
         </div>
         <div>
           <label className="block text-sm text-gray-400 mb-1">Password</label>
-          <input
-            type="password"
-            value={pw}
-            onChange={(e) => setPw(e.target.value)}
-            className="w-full bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-cyan-500"
-          />
+          <input type="password" value={pw} onChange={(e) => setPw(e.target.value)}
+            className="w-full bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-cyan-500" />
         </div>
         {error && <p className="text-red-400 text-sm text-center">{error}</p>}
-        <button
-          type="submit"
-          className="w-full bg-cyan-600 hover:bg-cyan-500 text-white font-semibold py-2.5 rounded-lg transition-colors"
-        >
-          로그인
+        <button type="submit" disabled={loading}
+          className="w-full bg-cyan-600 hover:bg-cyan-500 text-white font-semibold py-2.5 rounded-lg transition-colors disabled:opacity-50">
+          {loading ? "로그인 중..." : "로그인"}
         </button>
       </form>
     </div>
@@ -98,10 +131,31 @@ function LoginGate({ onLogin }: { onLogin: () => void }) {
 /*           관리자 대시보드                     */
 /* ========================================== */
 export default function AdminPage() {
-  const [authed, setAuthed] = useState(() => sessionStorage.getItem("sigma-admin") === "1")
+  const [authed, setAuthed] = useState(false)
+  const [checking, setChecking] = useState(true)
+
+  useEffect(() => {
+    getCurrentUser()
+      .then(() => setAuthed(true))
+      .catch(() => setAuthed(false))
+      .finally(() => setChecking(false))
+  }, [])
+
+  const handleLogout = async () => {
+    await signOut()
+    setAuthed(false)
+  }
+
+  if (checking) {
+    return (
+      <div className="min-h-screen bg-[var(--theme-bg)] flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-cyan-500" />
+      </div>
+    )
+  }
 
   if (!authed) return <LoginGate onLogin={() => setAuthed(true)} />
-  return <AdminDashboard onLogout={() => { sessionStorage.removeItem("sigma-admin"); setAuthed(false) }} />
+  return <AdminDashboard onLogout={handleLogout} />
 }
 
 /* ─── 대시보드 본체 ─── */
@@ -138,18 +192,29 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
 
   useEffect(() => { loadIndicators() }, [loadIndicators])
 
+  /* JWT 토큰 가져오기 */
+  const getAuthToken = async () => {
+    try {
+      const session = await fetchAuthSession()
+      return session.tokens?.idToken?.toString() || ""
+    } catch {
+      return ""
+    }
+  }
+
   /* 저장 (POST) */
   const handleSave = async (indicator: Indicator & { sortOrder?: number; isPublished?: boolean }) => {
-    if (!API_URL || !ADMIN_SECRET) {
-      setMessage("⚠️ API URL 또는 ADMIN_SECRET 미설정")
+    if (!API_URL) {
+      setMessage("⚠️ API URL 미설정")
       return
     }
     setSaving(true)
     setMessage("")
     try {
+      const token = await getAuthToken()
       const res = await fetch(API_URL, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
         body: JSON.stringify({
           secret: ADMIN_SECRET,
           ...indicator,
@@ -174,12 +239,13 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
   /* 삭제 (POST with _action: delete) */
   const handleDelete = async (id: string) => {
     if (!confirm("정말 삭제하시겠습니까?")) return
-    if (!API_URL || !ADMIN_SECRET) return
+    if (!API_URL) return
     setSaving(true)
     try {
+      const token = await getAuthToken()
       const res = await fetch(API_URL, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
         body: JSON.stringify({ secret: ADMIN_SECRET, _action: "delete", id }),
       })
       if (!res.ok) throw new Error("Delete failed")

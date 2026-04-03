@@ -56,16 +56,66 @@ import { DynamoDBDocumentClient, ScanCommand, PutCommand, GetCommand, DeleteComm
 
 const TABLE_NAME = process.env.INDICATOR_TABLE_NAME || "";
 const ADMIN_SECRET = process.env.ADMIN_SECRET || "";
+const COGNITO_USER_POOL_ID = process.env.COGNITO_USER_POOL_ID || "";
+const AWS_REGION = process.env.AWS_REGION || "ap-northeast-2";
 
 const ddbClient = new DynamoDBClient({});
 const docClient = DynamoDBDocumentClient.from(ddbClient);
 
 const headers = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "Content-Type",
+  "Access-Control-Allow-Headers": "Content-Type, Authorization",
   "Access-Control-Allow-Methods": "GET, POST, DELETE, OPTIONS",
   "Content-Type": "application/json",
 };
+
+/* ─── JWT 검증 (Cognito ID Token) ─── */
+let cachedJwks = null;
+async function getJwks() {
+  if (cachedJwks) return cachedJwks;
+  const url = `https://cognito-idp.${AWS_REGION}.amazonaws.com/${COGNITO_USER_POOL_ID}/.well-known/jwks.json`;
+  const res = await fetch(url);
+  cachedJwks = await res.json();
+  return cachedJwks;
+}
+
+function base64UrlDecode(str) {
+  str = str.replace(/-/g, '+').replace(/_/g, '/');
+  while (str.length % 4) str += '=';
+  return Buffer.from(str, 'base64');
+}
+
+async function verifyJwt(token) {
+  if (!token || !COGNITO_USER_POOL_ID) return false;
+  try {
+    const parts = token.split('.');
+    if (parts.length !== 3) return false;
+    const header = JSON.parse(base64UrlDecode(parts[0]).toString());
+    const payload = JSON.parse(base64UrlDecode(parts[1]).toString());
+    
+    // 발급자 확인
+    const expectedIss = `https://cognito-idp.${AWS_REGION}.amazonaws.com/${COGNITO_USER_POOL_ID}`;
+    if (payload.iss !== expectedIss) return false;
+    
+    // 만료 확인
+    if (payload.exp && payload.exp < Math.floor(Date.now() / 1000)) return false;
+    
+    // JWKS에서 키 확인
+    const jwks = await getJwks();
+    const key = jwks.keys?.find(k => k.kid === header.kid);
+    if (!key) return false;
+    
+    // 서명 검증 (crypto)
+    const { createVerify, createPublicKey } = await import('node:crypto');
+    const pubKey = createPublicKey({ key, format: 'jwk' });
+    const verify = createVerify('RSA-SHA256');
+    verify.update(parts[0] + '.' + parts[1]);
+    return verify.verify(pubKey, base64UrlDecode(parts[2]));
+  } catch (err) {
+    console.error("JWT verify error:", err);
+    return false;
+  }
+}
 
 export const handler = async (event) => {
   // CORS preflight
@@ -115,8 +165,13 @@ export const handler = async (event) => {
     try {
       const body = JSON.parse(event.body || "{}");
 
-      // 관리자 인증
-      if (body.secret !== ADMIN_SECRET) {
+      // 관리자 인증 (JWT 또는 ADMIN_SECRET)
+      const authHeader = event.headers?.Authorization || event.headers?.authorization || "";
+      const token = authHeader.replace("Bearer ", "");
+      const jwtValid = await verifyJwt(token);
+      const secretValid = ADMIN_SECRET && body.secret === ADMIN_SECRET;
+      
+      if (!jwtValid && !secretValid) {
         return {
           statusCode: 401,
           headers,
