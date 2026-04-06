@@ -30,7 +30,19 @@ export default function Signals() {
                   {isLive ? "Live" : "Demo"}
                 </span>
               </div>
+
             </div>
+            <a
+              href="https://t.me/your_telegram_channel"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 px-5 py-2.5 rounded-lg bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-400 hover:to-blue-400 text-white font-semibold text-sm transition-all duration-300 shadow-lg hover:shadow-cyan-500/50"
+            >
+              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 00-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.36.74-.55 2.92-1.27 4.86-2.11 5.83-2.51 2.78-1.16 3.35-1.36 3.73-1.36.08 0 .27.02.39.12.1.08.13.19.14.27-.01.06.01.24 0 .38z"/>
+              </svg>
+              실시간 알림 받기
+            </a>
           </div>
 
           {/* ── 로딩 ── */}
@@ -49,7 +61,6 @@ export default function Signals() {
                     <tr className="bg-[#161b22] text-gray-500 text-[10px] uppercase tracking-widest border-b border-gray-700/50">
                       <th className="px-6 py-2.5 font-semibold w-32">실시간 알림</th>
                       <th className="px-6 py-2.5 font-semibold">종목</th>
-                      <th className="px-6 py-2.5 font-semibold">거래소</th>
                       <th className="px-6 py-2.5 font-semibold">시그널 (지표)</th>
                       <th className="px-6 py-2.5 font-semibold">진입</th>
                       <th className="px-6 py-2.5 font-semibold">포지션</th>
@@ -114,8 +125,6 @@ function SignalRow({ signal }: { signal: Signal }) {
           {signal.symbol}
         </div>
       </td>
-      {/* 거래소 */}
-      <td className="px-6 py-3 text-gray-400">{signal.exchange || "—"}</td>
       {/* 시그널 (지표) */}
       <td className="px-6 py-3 text-gray-300">
         <span className="px-1.5 py-0.5 rounded bg-gray-800/50 border border-gray-700/40 text-[10px] text-gray-400">
