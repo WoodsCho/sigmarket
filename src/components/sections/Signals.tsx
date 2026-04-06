@@ -5,13 +5,13 @@ import type { Signal } from "../../types"
 /* ─── 포지션 스타일 ─── */
 const POS_STYLES: Record<string, { text: string; bg: string }> = {
   LONG: { text: "text-cyan-400", bg: "bg-cyan-400/10" },
-  SHORT: { text: "text-purple-400", bg: "bg-purple-400/10" },
+  SHORT: { text: "text-pink-500", bg: "bg-pink-500/10" },
 }
 
 /* ─── 종목 도트 컬러 ─── */
 function dotColor(signal: Signal) {
-  if (signal.position === "SHORT") return "bg-purple-400"
-  return "bg-cyan-400 shadow-[0_0_8px_rgba(34,211,238,0.8)]"
+  if (signal.position === "SHORT") return "bg-pink-500"
+  return "bg-cyan-400"
 }
 
 export default function Signals() {
@@ -48,23 +48,21 @@ export default function Signals() {
             </div>
           ) : (
             /* ── 테이블 카드 ── */
-            <div className="bg-gray-900/60 border border-gray-800 rounded-2xl backdrop-blur-xl shadow-2xl overflow-hidden relative">
-              {/* 상단 그라디언트 라인 */}
-              <div className="absolute top-0 left-0 h-[1px] w-full bg-gradient-to-r from-transparent via-cyan-400 to-transparent opacity-50" />
+            <div className="bg-[#0d1117] border border-gray-700/50 rounded-md shadow-2xl overflow-hidden">
 
-              <div className="overflow-x-auto w-full">
-                <table className="w-full text-left border-collapse whitespace-nowrap">
+              <div className="overflow-x-auto w-full bg-[#0d1117]">
+                <table className="w-full text-left border-collapse whitespace-nowrap font-mono">
                   <thead>
-                    <tr className="bg-gray-800/50 text-gray-400 text-xs uppercase tracking-widest border-b border-gray-800">
-                      <th className="px-6 py-4 font-semibold w-32">실시간 알림</th>
-                      <th className="px-6 py-4 font-semibold">종목</th>
-                      <th className="px-6 py-4 font-semibold">거래소</th>
-                      <th className="px-6 py-4 font-semibold">시그널 (지표)</th>
-                      <th className="px-6 py-4 font-semibold">진입</th>
-                      <th className="px-6 py-4 font-semibold">포지션</th>
+                    <tr className="bg-[#161b22] text-gray-500 text-[10px] uppercase tracking-widest border-b border-gray-700/50">
+                      <th className="px-6 py-2.5 font-semibold w-32">실시간 알림</th>
+                      <th className="px-6 py-2.5 font-semibold">종목</th>
+                      <th className="px-6 py-2.5 font-semibold">거래소</th>
+                      <th className="px-6 py-2.5 font-semibold">시그널 (지표)</th>
+                      <th className="px-6 py-2.5 font-semibold">진입</th>
+                      <th className="px-6 py-2.5 font-semibold">포지션</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-800/50 text-sm">
+                  <tbody className="divide-y divide-gray-800/30 text-xs">
                     {signals.map((signal, idx) => (
                       <SignalRow key={signal.id || idx} signal={signal} />
                     ))}
@@ -73,7 +71,7 @@ export default function Signals() {
               </div>
 
               {/* ── 하단 안내 ── */}
-              <div className="bg-gray-900/80 border-t border-gray-800 p-5 px-6 flex flex-col gap-2">
+              <div className="bg-[#161b22] border-t border-gray-700/50 p-5 px-6 flex flex-col gap-2">
                 <div className="flex items-start gap-3">
                   <Info className="w-4 h-4 text-pink-500 flex-shrink-0 mt-0.5" />
                   <p className="text-xs text-gray-400 leading-relaxed break-keep">
@@ -101,9 +99,9 @@ function SignalRow({ signal }: { signal: Signal }) {
   const dot = dotColor(signal)
 
   return (
-    <tr className={`hover:bg-gray-800/40 transition-colors group ${signal.isNew ? "bg-gray-800/20" : ""}`}>
+    <tr className="bg-[#0d1117] hover:bg-gray-800/30 transition-colors group">
       {/* 실시간 알림 */}
-      <td className="px-6 py-4">
+      <td className="px-6 py-3">
         {signal.isNew ? (
           <span className="text-pink-400 font-bold text-xs bg-pink-400/10 px-2 py-1 rounded animate-pulse">
             {signal.timeAgo || "방금 전"}
@@ -113,25 +111,30 @@ function SignalRow({ signal }: { signal: Signal }) {
         )}
       </td>
       {/* 종목 */}
-      <td className="px-6 py-4 font-bold text-white">
+      <td className="px-6 py-3 font-bold text-gray-300">
         <div className="flex items-center gap-2">
-          <span className={`w-2 h-2 rounded-full ${dot}`} />
+          <img
+            src={`https://assets.coincap.io/assets/icons/${signal.symbol.split("/")[0].toLowerCase()}@2x.png`}
+            alt={signal.symbol.split("/")[0]}
+            className="w-4 h-4 rounded-full"
+            onError={(e) => { (e.target as HTMLImageElement).style.display = "none" }}
+          />
           {signal.symbol}
         </div>
       </td>
       {/* 거래소 */}
-      <td className="px-6 py-4 text-gray-300">{signal.exchange || "—"}</td>
+      <td className="px-6 py-3 text-gray-400">{signal.exchange || "—"}</td>
       {/* 시그널 (지표) */}
-      <td className="px-6 py-4 text-gray-300">
-        <span className="px-2.5 py-1 rounded bg-gray-800 border border-gray-700 text-xs text-gray-300">
+      <td className="px-6 py-3 text-gray-300">
+        <span className="px-1.5 py-0.5 rounded bg-gray-800/50 border border-gray-700/40 text-[10px] text-gray-400">
           {signal.indicator || "—"}
         </span>
       </td>
       {/* 진입 */}
-      <td className="px-6 py-4 font-mono text-gray-300">{signal.price}</td>
+      <td className="px-6 py-3 text-gray-400">{signal.price}</td>
       {/* 포지션 */}
-      <td className="px-6 py-4">
-        <span className={`${pos.text} font-bold ${pos.bg} px-2 py-1 rounded`}>{signal.position}</span>
+      <td className="px-6 py-3">
+        <span className={`${pos.text} font-bold ${pos.bg} px-1.5 py-0.5 rounded text-[10px]`}>{signal.position}</span>
       </td>
     </tr>
   )
