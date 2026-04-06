@@ -1,15 +1,8 @@
 import { useState } from "react"
-import { Info } from "lucide-react"
 import { dummyRankings } from "../../data"
 import type { RankingEntry } from "../../types"
 
 /* ─── 색상 매핑 ─── */
-const DOT_COLORS: Record<string, string> = {
-  cyan: "bg-cyan-400",
-  purple: "bg-purple-400",
-  pink: "bg-pink-500",
-  gray: "bg-gray-400",
-}
 const POS_STYLES: Record<string, { text: string; bg: string }> = {
   LONG: { text: "text-cyan-400", bg: "bg-cyan-400/10" },
   SHORT: { text: "text-pink-500", bg: "bg-pink-500/10" },

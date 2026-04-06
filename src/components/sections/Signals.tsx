@@ -96,7 +96,6 @@ export default function Signals() {
 
 function SignalRow({ signal }: { signal: Signal }) {
   const pos = POS_STYLES[signal.position] || POS_STYLES.LONG
-  const dot = dotColor(signal)
 
   return (
     <tr className="bg-[#0d1117] hover:bg-gray-800/30 transition-colors group">
