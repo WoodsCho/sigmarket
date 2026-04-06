@@ -111,7 +111,7 @@ body {
 
 /* ── Gradient Text ── */
 .text-gradient {
-  background: linear-gradient(135deg, #06b6d4 0%, #8b5cf6 50%, #d946ef 100%);
+  background: linear-gradient(135deg, #e2e8f0 0%, #94a3b8 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -126,15 +126,15 @@ body {
 
 /* ── Glow Effects ── */
 .glow-cyan {
-  box-shadow: 0 0 20px rgba(6, 182, 212, 0.15), 0 0 60px rgba(6, 182, 212, 0.1);
+  box-shadow: 0 0 20px rgba(148, 163, 184, 0.1), 0 0 60px rgba(148, 163, 184, 0.05);
 }
 
 .glow-blue {
-  box-shadow: 0 0 20px rgba(59, 130, 246, 0.15), 0 0 60px rgba(59, 130, 246, 0.1);
+  box-shadow: 0 0 20px rgba(148, 163, 184, 0.1), 0 0 60px rgba(148, 163, 184, 0.05);
 }
 
 .glow-text {
-  text-shadow: 0 0 40px rgba(6, 182, 212, 0.5), 0 0 80px rgba(6, 182, 212, 0.3);
+  text-shadow: 0 0 40px rgba(148, 163, 184, 0.3), 0 0 80px rgba(148, 163, 184, 0.15);
 }
 
 /* ── Glass Card ── */
@@ -146,8 +146,8 @@ body {
 
 .glass-card-hover:hover {
   background: rgba(255, 255, 255, 0.06);
-  border-color: rgba(6, 182, 212, 0.2);
-  box-shadow: 0 0 30px rgba(6, 182, 212, 0.08);
+  border-color: rgba(148, 163, 184, 0.15);
+  box-shadow: 0 0 30px rgba(148, 163, 184, 0.05);
 }
 
 /* ── Gradient Border ── */
@@ -191,3 +191,9 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.2);
 }
+
+/* ── 랭킹 테이블 커스텀 스크롤바 ── */
+.custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+.custom-scrollbar::-webkit-scrollbar-track { background: rgba(31, 41, 55, 0.5); border-radius: 4px; }
+.custom-scrollbar::-webkit-scrollbar-thumb { background: #374151; border-radius: 4px; }
+.custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #4b5563; }

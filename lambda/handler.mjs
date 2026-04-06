@@ -33,7 +33,9 @@
  *   "secret": "sigmarket-webhook-secret-2025",
  *   "symbol": "{{ticker}}",
  *   "price": "{{close}}",
- *   "position": "LONG"
+ *   "position": "LONG",
+ *   "exchange": "{{exchange}}",
+ *   "indicator": "시그마 메서드 1차눌림"
  * }
  */
 
@@ -152,6 +154,10 @@ export const handler = async (event) => {
     const icon = SYMBOL_ICONS[symbol] || "●";
     const signalId = `${symbol}-${Date.now()}`;
 
+    // 거래소 & 지표 (옵션)
+    const exchange = body.exchange || "";
+    const indicator = body.indicator || "";
+
     // DynamoDB에 저장
     await docClient.send(
       new PutCommand({
@@ -166,6 +172,8 @@ export const handler = async (event) => {
           icon,
           isNew: true,
           source: "tradingview",
+          exchange,
+          indicator,
           createdAt: now.toISOString(),
           updatedAt: now.toISOString(),
           __typename: "Signal",
@@ -173,14 +181,14 @@ export const handler = async (event) => {
       })
     );
 
-    console.log(`Signal saved: ${symbol} ${position} @ ${body.price}`);
+    console.log(`Signal saved: ${symbol} ${position} @ ${body.price} [${exchange}] (${indicator})`);
 
     return {
       statusCode: 200,
       headers,
       body: JSON.stringify({
         message: "Signal received",
-        signal: { id: signalId, symbol, position, price: body.price, date, time },
+        signal: { id: signalId, symbol, position, price: body.price, date, time, exchange, indicator },
       }),
     };
   } catch (error) {

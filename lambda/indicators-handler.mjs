@@ -22,7 +22,11 @@
  *   name             (String)  - 지표 이름 (제목)
  *   subtitle         (String)  - 영문 부제
  *   image            (String)  - 이미지 URL (옵션)
- *   content          (String)  - 내용 (상세 설명)
+ *   content          (String)  - 내용 (상세 설명, 레거시)
+ *   sections         (String)  - JSON 문자열: 구조화된 섹션 배열
+ *                                [{"title":"...", "body":"...", "layout":"half|full",
+ *                                  "highlight":"...", "bullets":[], "infoCards":[],
+ *                                  "gridItems":[], "combo":{}}]
  *   scores           (String)  - JSON 문자열: [{"label":"방향성","value":4.8,"max":5.0}] (5개)
  *   marketFit        (String)  - JSON 문자열: [{"label":"스윙형","fit":"high"}] (5개)
  *   tags             (String)  - JSON 문자열: ["주식","해외선물","코인"]
@@ -61,6 +65,15 @@ const AWS_REGION = process.env.AWS_REGION || "ap-northeast-2";
 
 const ddbClient = new DynamoDBClient({});
 const docClient = DynamoDBDocumentClient.from(ddbClient);
+
+/* ─── 안전한 JSON 파싱 (잘못된 데이터로 전체 API 안 터지게) ─── */
+function safeJsonParse(val, fallback = []) {
+  if (Array.isArray(val)) return val;
+  if (typeof val === "string") {
+    try { return JSON.parse(val); } catch { return fallback; }
+  }
+  return fallback;
+}
 
 const headers = {
   "Access-Control-Allow-Origin": "*",
@@ -117,126 +130,331 @@ async function verifyJwt(token) {
   }
 }
 
-/* ─── 전략별 시그널 생성 (Buy→Sell 교대) ─── */
-function generateSignals(candles, strategyId, strategyCode) {
+/* ═══════════════════════════════════════════════════════════════
+   범용 전략 실행 엔진
+   ─ 어떤 형식의 JS 코드를 넣어도 시그널(BUY/SELL)을 추출한다.
+   ─ 실행 순서: 엔진(class) → 함수 → per-candle → 내장 폴백
+   ═══════════════════════════════════════════════════════════════ */
+
+/**
+ * BUY/SELL 교대 방식으로 markers + trades를 생성하는 공통 변환기
+ * @param {Array} signalArray - [{time, close, long: bool, short: bool}, ...]
+ */
+function signalsToMarkersTrades(signalArray) {
   const markers = [];
   const trades = [];
-
-  if (!candles || candles.length < 30) return { markers, trades };
-
-  // 커스텀 전략 코드가 있으면 컴파일
-  let customStrategy = null;
-  if (strategyCode && strategyCode.trim()) {
-    try {
-      customStrategy = new Function("candles", "i", "c", "prev", strategyCode);
-    } catch {
-      console.warn("전략 코드 컴파일 실패, 기본 전략 사용");
-    }
-  }
-
   let inPosition = false;
   let entryPrice = 0;
   let entryTime = 0;
 
-  for (let i = 20; i < candles.length; i++) {
-    const c = candles[i];
-    const prev = candles[i - 1];
+  for (const s of signalArray) {
+    if (!s) continue;
+    const time = s.time;
+    const price = s.close ?? s.price ?? 0;
 
-    let buyCondition = false;
-    let sellCondition = false;
-
-    if (customStrategy) {
-      try {
-        const result = customStrategy(candles, i, c, prev);
-        buyCondition = !!result.buyCondition;
-        sellCondition = !!result.sellCondition;
-      } catch {
-        continue;
-      }
-    } else {
-      switch (strategyId) {
-        case "sigma-box": {
-          const high20 = Math.max(...candles.slice(i - 20, i).map(x => x.high));
-          const low20 = Math.min(...candles.slice(i - 20, i).map(x => x.low));
-          buyCondition = c.close > high20 && prev.close <= high20;
-          sellCondition = c.close < low20 && prev.close >= low20;
-          break;
-        }
-        case "super-target": {
-          const avg5 = candles.slice(i - 5, i).reduce((s, x) => s + x.close, 0) / 5;
-          const avg5prev = candles.slice(i - 6, i - 1).reduce((s, x) => s + x.close, 0) / 5;
-          const avg20 = candles.slice(i - 20, i).reduce((s, x) => s + x.close, 0) / 20;
-          buyCondition = avg5 > avg20 && avg5prev <= avg20;
-          sellCondition = avg5 < avg20 && avg5prev >= avg20;
-          break;
-        }
-        case "order-block": {
-          const bodySize = Math.abs(c.close - c.open);
-          const avgBody = candles.slice(i - 10, i).reduce((s, x) => s + Math.abs(x.close - x.open), 0) / 10;
-          buyCondition = prev.close < prev.open && bodySize > avgBody * 2 && c.close > c.open && c.close > prev.open;
-          sellCondition = prev.close > prev.open && bodySize > avgBody * 2 && c.close < c.open && c.close < prev.open;
-          break;
-        }
-        case "rsi-bb": {
-          const gains = [], losses = [];
-          for (let j = i - 13; j <= i; j++) {
-            const diff = candles[j].close - candles[j - 1].close;
-            gains.push(diff > 0 ? diff : 0);
-            losses.push(diff < 0 ? -diff : 0);
-          }
-          const avgGain = gains.reduce((a, b) => a + b, 0) / 14;
-          const avgLoss = losses.reduce((a, b) => a + b, 0) / 14;
-          const rsi = avgLoss === 0 ? 100 : 100 - 100 / (1 + avgGain / avgLoss);
-          const prevGains = [], prevLosses = [];
-          for (let j = i - 14; j <= i - 1; j++) {
-            const diff = candles[j].close - candles[j - 1].close;
-            prevGains.push(diff > 0 ? diff : 0);
-            prevLosses.push(diff < 0 ? -diff : 0);
-          }
-          const prevAvgGain = prevGains.reduce((a, b) => a + b, 0) / 14;
-          const prevAvgLoss = prevLosses.reduce((a, b) => a + b, 0) / 14;
-          const prevRsi = prevAvgLoss === 0 ? 100 : 100 - 100 / (1 + prevAvgGain / prevAvgLoss);
-          buyCondition = prevRsi < 30 && rsi >= 30;
-          sellCondition = prevRsi > 70 && rsi <= 70;
-          break;
-        }
-      }
-    }
-
-    if (!inPosition && buyCondition) {
+    if (!inPosition && s.long) {
       inPosition = true;
-      entryPrice = c.close;
-      entryTime = c.time;
-      markers.push({
-        time: c.time,
-        position: "belowBar",
-        color: "#06b6d4",
-        shape: "arrowUp",
-        text: "◉ BUY",
-        size: 3,
-      });
-    } else if (inPosition && sellCondition) {
-      const pnl = ((c.close - entryPrice) / entryPrice) * 100;
+      entryPrice = price;
+      entryTime = time;
+      markers.push({ time, position: "belowBar", color: "#06b6d4", shape: "arrowUp", text: "◉ BUY", size: 3 });
+    } else if (inPosition && s.short) {
+      const pnl = entryPrice ? ((price - entryPrice) / entryPrice) * 100 : 0;
       inPosition = false;
-      trades.push({
-        buyTime: entryTime,
-        sellTime: c.time,
-        buyPrice: entryPrice,
-        sellPrice: c.close,
-        pnl,
-      });
-      markers.push({
-        time: c.time,
-        position: "aboveBar",
-        color: pnl >= 0 ? "#06b6d4" : "#ef4444",
-        shape: "arrowDown",
-        text: `${pnl >= 0 ? "▲" : "▼"} ${pnl >= 0 ? "+" : ""}${pnl.toFixed(2)}%`,
-        size: 3,
-      });
+      trades.push({ buyTime: entryTime, sellTime: time, buyPrice: entryPrice, sellPrice: price, pnl });
+      markers.push({ time, position: "aboveBar", color: pnl >= 0 ? "#06b6d4" : "#ef4444", shape: "arrowDown", text: `${pnl >= 0 ? "▲" : "▼"} ${pnl >= 0 ? "+" : ""}${pnl.toFixed(2)}%`, size: 3 });
+    }
+  }
+  return { markers, trades };
+}
+
+/**
+ * 엔진 결과 객체를 탐색하여 long/short 불리언을 자동 추출
+ * 지원하는 출력 형태:
+ *   - { longSignal, shortSignal }
+ *   - { long, short }
+ *   - { buyCondition, sellCondition }
+ *   - { buy, sell }
+ *   - 중첩: { box1: { signal: { longSignal, shortSignal } } }
+ *   - 중첩: { signal: { long, short } }
+ */
+function extractSignal(obj) {
+  if (!obj || typeof obj !== "object") return { long: false, short: false };
+
+  // 직접 키가 있는 경우
+  if ("longSignal" in obj)     return { long: !!obj.longSignal,     short: !!obj.shortSignal };
+  if ("long" in obj)           return { long: !!obj.long,           short: !!obj.short };
+  if ("buyCondition" in obj)   return { long: !!obj.buyCondition,   short: !!obj.sellCondition };
+  if ("buy" in obj)            return { long: !!obj.buy,            short: !!obj.sell };
+
+  // signal 키 안에 있는 경우
+  if (obj.signal)              return extractSignal(obj.signal);
+
+  // box1 > signal 같은 중첩 구조 (첫 번째 box* 키 탐색)
+  for (const key of Object.keys(obj)) {
+    if (/^box/i.test(key) && obj[key]?.signal) {
+      return extractSignal(obj[key].signal);
     }
   }
 
-  return { markers, trades };
+  // 어떤 키에든 longSignal/long/buy 가 있으면 재귀
+  for (const key of Object.keys(obj)) {
+    if (typeof obj[key] === "object" && obj[key] !== null) {
+      const found = extractSignal(obj[key]);
+      if (found.long || found.short) return found;
+    }
+  }
+
+  return { long: false, short: false };
+}
+
+/**
+ * 전략 코드 안전 실행 — 코드를 new Function()으로 감싸서 실행
+ * @returns 실행 결과값 (class, function, array, object 등 뭐든)
+ */
+function safeExec(code, args = {}) {
+  try {
+    const argNames = Object.keys(args);
+    const argValues = Object.values(args);
+    const fn = new Function(...argNames, code);
+    return fn(...argValues);
+  } catch (err) {
+    console.warn("safeExec 실패:", err.message);
+    return null;
+  }
+}
+
+/* ──────────────────────────────
+   패턴 1: class 기반 엔진
+   class ○○ { static run(candles, config) → Array }
+   ────────────────────────────── */
+function tryClassEngine(candles, code) {
+  const classMatch = code.match(/class\s+(\w+)/);
+  if (!classMatch) return null;
+
+  const className = classMatch[1];
+  const EngineClass = safeExec(`${code};\nreturn ${className};`);
+  if (!EngineClass) return null;
+
+  // static run(candles, config) 찾기
+  const runFn = EngineClass.run || EngineClass.execute || EngineClass.generate;
+  if (typeof runFn !== "function") return null;
+
+  // config 자동 탐지: 코드에 config 기본값이 있으면 그걸 쓰고, 아니면 범용 기본값
+  const config = {
+    b1: { length: 5, sigType: 1.0 },
+    b2: { length: 6, sigType: 1.0 },
+    b3: { length: 98, sigType: 1.0 },
+  };
+
+  try {
+    const result = runFn.call(EngineClass, candles, config);
+    if (!Array.isArray(result)) return null;
+
+    // 결과 배열에서 자동으로 시그널 추출
+    const signals = result.map((r, i) => {
+      const candle = candles[i] || {};
+      const { long, short } = extractSignal(r);
+      return { time: candle.time || r.time, close: candle.close || r.close || 0, long, short };
+    });
+
+    return signalsToMarkersTrades(signals);
+  } catch (err) {
+    console.warn("class 엔진 run() 실패:", err.message);
+    return null;
+  }
+}
+
+/* ──────────────────────────────
+   패턴 2: 전체 배열 리턴 함수
+   function ○○(candles) → Array<{time, long, short}>
+   ────────────────────────────── */
+function tryBatchFunction(candles, code) {
+  // 함수 이름 탐지: function xxx(, const xxx = (
+  const fnMatch = code.match(/(?:function\s+(\w+)|(?:const|let|var)\s+(\w+)\s*=\s*(?:\(|function))/);
+  if (!fnMatch) return null;
+
+  const fnName = fnMatch[1] || fnMatch[2];
+  const fn = safeExec(`${code};\nreturn ${fnName};`);
+  if (typeof fn !== "function") return null;
+
+  try {
+    const result = fn(candles);
+    if (!Array.isArray(result)) return null;
+
+    const signals = result.map((r, i) => {
+      if (!r) return null;
+      const candle = candles[i] || candles.find(c => c.time === r.time) || {};
+      const { long, short } = extractSignal(r);
+      return { time: r.time || candle.time, close: candle.close || r.close || r.price || 0, long, short };
+    });
+
+    return signalsToMarkersTrades(signals.filter(Boolean));
+  } catch (err) {
+    console.warn("배치 함수 실패:", err.message);
+    return null;
+  }
+}
+
+/* ──────────────────────────────
+   패턴 3: per-candle 코드
+   candles, i, c, prev 변수로 → {buyCondition, sellCondition} 리턴
+   ────────────────────────────── */
+function tryPerCandle(candles, code) {
+  let fn;
+  try { fn = new Function("candles", "i", "c", "prev", code); } catch { return null; }
+
+  const signals = [];
+  for (let i = 1; i < candles.length; i++) {
+    const c = candles[i];
+    const prev = candles[i - 1];
+    try {
+      const r = fn(candles, i, c, prev);
+      if (!r || typeof r !== "object") { signals.push(null); continue; }
+      const { long, short } = extractSignal(r);
+      signals.push({ time: c.time, close: c.close, long, short });
+    } catch {
+      signals.push(null);
+    }
+  }
+
+  const result = signalsToMarkersTrades(signals.filter(Boolean));
+  return result.markers.length > 0 ? result : null;
+}
+
+/* ──────────────────────────────
+   패턴 4: 코드 전체 실행 후 결과 자동 탐지
+   마지막 표현식이 배열이면 시그널로 해석
+   ────────────────────────────── */
+function tryAutoDetect(candles, code) {
+  // 코드를 즉시실행함수로 감싸서 마지막 값 리턴
+  const wrapped = `const candles = arguments[0];\n${code}`;
+  try {
+    const result = new Function(wrapped)(candles);
+
+    // 배열이면 시그널 배열로 해석
+    if (Array.isArray(result) && result.length > 0) {
+      const first = result[0];
+      if (first && typeof first === "object") {
+        const signals = result.map((r, i) => {
+          if (!r) return null;
+          const candle = candles[i] || candles.find(c => c.time === r.time) || {};
+          const { long, short } = extractSignal(r);
+          return { time: r.time || candle.time, close: candle.close || r.close || 0, long, short };
+        });
+        const res = signalsToMarkersTrades(signals.filter(Boolean));
+        if (res.markers.length > 0) return res;
+      }
+    }
+
+    // 객체에 markers가 직접 들어있는 경우 { markers, trades }
+    if (result && typeof result === "object" && Array.isArray(result.markers)) {
+      return { markers: result.markers, trades: result.trades || [] };
+    }
+
+    return null;
+  } catch (err) {
+    console.warn("자동 탐지 실패:", err.message);
+    return null;
+  }
+}
+
+/* ──────────────────────────────
+   내장 전략 (폴백)
+   ────────────────────────────── */
+function builtinStrategy(candles, strategyId) {
+  const signals = [];
+
+  for (let i = 20; i < candles.length; i++) {
+    const c = candles[i];
+    const prev = candles[i - 1];
+    let long = false;
+    let short = false;
+
+    switch (strategyId) {
+      case "sigma-box": {
+        const high20 = Math.max(...candles.slice(i - 20, i).map(x => x.high));
+        const low20 = Math.min(...candles.slice(i - 20, i).map(x => x.low));
+        long = c.close > high20 && prev.close <= high20;
+        short = c.close < low20 && prev.close >= low20;
+        break;
+      }
+      case "super-target": {
+        const avg5 = candles.slice(i - 5, i).reduce((s, x) => s + x.close, 0) / 5;
+        const avg5prev = candles.slice(i - 6, i - 1).reduce((s, x) => s + x.close, 0) / 5;
+        const avg20 = candles.slice(i - 20, i).reduce((s, x) => s + x.close, 0) / 20;
+        long = avg5 > avg20 && avg5prev <= avg20;
+        short = avg5 < avg20 && avg5prev >= avg20;
+        break;
+      }
+      case "order-block": {
+        const bodySize = Math.abs(c.close - c.open);
+        const avgBody = candles.slice(i - 10, i).reduce((s, x) => s + Math.abs(x.close - x.open), 0) / 10;
+        long = prev.close < prev.open && bodySize > avgBody * 2 && c.close > c.open && c.close > prev.open;
+        short = prev.close > prev.open && bodySize > avgBody * 2 && c.close < c.open && c.close < prev.open;
+        break;
+      }
+      case "rsi-bb": {
+        const gains = [], losses = [];
+        for (let j = i - 13; j <= i; j++) {
+          const diff = candles[j].close - candles[j - 1].close;
+          gains.push(diff > 0 ? diff : 0);
+          losses.push(diff < 0 ? -diff : 0);
+        }
+        const avgGain = gains.reduce((a, b) => a + b, 0) / 14;
+        const avgLoss = losses.reduce((a, b) => a + b, 0) / 14;
+        const rsi = avgLoss === 0 ? 100 : 100 - 100 / (1 + avgGain / avgLoss);
+        const prevGains = [], prevLosses = [];
+        for (let j = i - 14; j <= i - 1; j++) {
+          const diff = candles[j].close - candles[j - 1].close;
+          prevGains.push(diff > 0 ? diff : 0);
+          prevLosses.push(diff < 0 ? -diff : 0);
+        }
+        const prevAvgGain = prevGains.reduce((a, b) => a + b, 0) / 14;
+        const prevAvgLoss = prevLosses.reduce((a, b) => a + b, 0) / 14;
+        const prevRsi = prevAvgLoss === 0 ? 100 : 100 - 100 / (1 + prevAvgGain / prevAvgLoss);
+        long = prevRsi < 30 && rsi >= 30;
+        short = prevRsi > 70 && rsi <= 70;
+        break;
+      }
+    }
+
+    signals.push({ time: c.time, close: c.close, long, short });
+  }
+
+  return signalsToMarkersTrades(signals);
+}
+
+/* ──────────────────────────────
+   메인 함수: 순서대로 시도
+   ────────────────────────────── */
+function generateSignals(candles, strategyId, strategyCode) {
+  if (!candles || candles.length < 30) return { markers: [], trades: [] };
+
+  if (strategyCode && strategyCode.trim()) {
+    const code = strategyCode.trim();
+    const attempts = [
+      ["class 엔진",   () => tryClassEngine(candles, code)],
+      ["배치 함수",    () => tryBatchFunction(candles, code)],
+      ["per-candle",   () => tryPerCandle(candles, code)],
+      ["자동 탐지",    () => tryAutoDetect(candles, code)],
+    ];
+
+    for (const [label, attempt] of attempts) {
+      try {
+        const result = attempt();
+        if (result && result.markers.length > 0) {
+          console.log(`✅ ${label} 성공: markers=${result.markers.length}, trades=${result.trades.length}`);
+          return result;
+        }
+      } catch (err) {
+        console.warn(`${label} 실패:`, err.message);
+      }
+    }
+
+    console.warn("모든 커스텀 전략 실행 실패 → 내장 전략 폴백");
+  }
+
+  return builtinStrategy(candles, strategyId);
 }
 
 export const handler = async (event) => {
@@ -264,9 +482,10 @@ export const handler = async (event) => {
           const { strategyCode, ...rest } = item;
           return {
             ...rest,
-            scores: typeof item.scores === "string" ? JSON.parse(item.scores) : item.scores || [],
-            marketFit: typeof item.marketFit === "string" ? JSON.parse(item.marketFit) : item.marketFit || [],
-            tags: typeof item.tags === "string" ? JSON.parse(item.tags) : item.tags || [],
+            scores: safeJsonParse(item.scores),
+            marketFit: safeJsonParse(item.marketFit),
+            tags: safeJsonParse(item.tags),
+            sections: safeJsonParse(item.sections),
           };
         });
 
@@ -366,6 +585,7 @@ export const handler = async (event) => {
         scores: JSON.stringify(body.scores || []),
         marketFit: JSON.stringify(body.marketFit || []),
         tags: JSON.stringify(body.tags || []),
+        sections: JSON.stringify(body.sections || []),
         strategyId: body.strategyId || "sigma-box",
         strategyCode: body.strategyCode || "",
         sortOrder: body.sortOrder ?? 999,
@@ -383,10 +603,21 @@ export const handler = async (event) => {
 
       console.log(`Indicator saved: ${item.name} (${id})`);
 
+      // 응답에서 strategyCode 제외 (관리자 응답에서도 코드 미노출)
+      const { strategyCode: _sc, scores: _s, marketFit: _m, tags: _t, sections: _sec, ...safeItem } = item;
       return {
         statusCode: 200,
         headers,
-        body: JSON.stringify({ message: "Indicator saved", indicator: { ...item, scores: body.scores, marketFit: body.marketFit, tags: body.tags } }),
+        body: JSON.stringify({
+          message: "Indicator saved",
+          indicator: {
+            ...safeItem,
+            scores: body.scores || [],
+            marketFit: body.marketFit || [],
+            tags: body.tags || [],
+            sections: body.sections || [],
+          },
+        }),
       };
     } catch (err) {
       console.error("POST error:", err);

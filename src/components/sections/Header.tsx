@@ -37,7 +37,7 @@ export default function Header() {
             ))}
             <a
               href="#signals"
-              className="ml-4 px-5 py-2 text-sm font-semibold rounded-lg bg-gradient-to-r from-cyan-500 to-fuchsia-500 text-black hover:shadow-lg hover:shadow-cyan-500/25 transition-all duration-300 hover:scale-105"
+              className="ml-4 px-5 py-2 text-sm font-semibold rounded-lg bg-white text-gray-900 hover:bg-gray-200 transition-all duration-300"
             >
               시작하기
             </a>

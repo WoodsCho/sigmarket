@@ -1,5 +1,5 @@
-import { TrendingUp, Activity } from "lucide-react"
-import type { SystemFeature, Indicator, NavItem } from "../types"
+import { TrendingUp, Activity, Zap } from "lucide-react"
+import type { SystemFeature, Indicator, NavItem, RankingEntry } from "../types"
 
 export const navItems: NavItem[] = [
   { href: "#signals", label: "실시간 시그널" },
@@ -10,19 +10,25 @@ export const navItems: NavItem[] = [
 
 export const systemFeatures: SystemFeature[] = [
   {
-    name: "슈퍼타겟",
-    description: "추세 방향 고정\n횡보 구간 시그널 차단",
+    name: "구조와 방향",
+    subtitle: "SIGMA BOX & TREND",
+    description: "시그마 박스 돌파 타점과 지지/저항, 그리고 추세를 한눈에 파악합니다. 흔들림 없는 완벽한 TP/SL 기준을 제시합니다.",
     icon: TrendingUp,
+    color: "cyan",
   },
   {
-    name: "Double Box",
-    description: "변동성 구조화\n브레이크아웃 존 탐지",
+    name: "타이밍과 패턴",
+    subtitle: "RSI SPECTRUM & METHOD",
+    description: "노이즈를 제거하고 고유의 패턴 알고리즘으로 타이밍을 압축합니다. 스캘핑부터 스윙까지, 정밀한 진입 타점을 설계합니다.",
     icon: Activity,
+    color: "purple",
   },
   {
-    name: "Order Block",
-    description: "구조 기반 오더블록\n기관 매집 구간 인식",
-    icon: TrendingUp,
+    name: "극대화된 속도",
+    subtitle: "SIGMA CORE",
+    description: "가격이 폭발하는 찰나의 기회를 놓치지 않습니다. 짧은 호흡의 스캘핑에 특화된, 가장 빠른 속도의 코어 엔진입니다.",
+    icon: Zap,
+    color: "pink",
   },
 ]
 
@@ -287,4 +293,18 @@ export const principles: string[] = [
   "올라가는 종목이 더 올라간다! 추세추종을 원칙으로 합니다.",
   "떨어지는 칼날을 잡으면 다쳐요! 역추세는 위험합니다.",
   "경제 논리로 매매를 하면 경제분야 전문가들은 전부 재벌이어야 합니다. 오직 가격의 움직임만 신뢰합니다.",
+]
+
+/* ─── 수익률 랭킹 더미 데이터 (나중에 DB 교체) ─── */
+export const dummyRankings: RankingEntry[] = [
+  { rank: 1, symbol: "DOGE/USDT", signal: "Sigma Core", entryPrice: "0.1250", entryDate: "03.29 09:15", resultPrice: "0.1800", position: "LONG", returnPct: 44.0, color: "cyan" },
+  { rank: 2, symbol: "SOL/USDT", signal: "Box Trend", entryPrice: "142.30", entryDate: "03.29 10:30", resultPrice: "185.50", position: "LONG", returnPct: 30.3, color: "cyan" },
+  { rank: 3, symbol: "AVAX/USDT", signal: "Sigma Method", entryPrice: "35.20", entryDate: "03.29 11:45", resultPrice: "44.00", position: "LONG", returnPct: 25.0, color: "purple" },
+  { rank: 4, symbol: "ETH/USDT", signal: "Sigma Box", entryPrice: "3,450.20", entryDate: "03.29 13:20", resultPrice: "2,800.00", position: "SHORT", returnPct: 18.8, color: "pink" },
+  { rank: 5, symbol: "BTC/USDT", signal: "Sigma Core", entryPrice: "65,240.50", entryDate: "03.29 14:05", resultPrice: "74,500.00", position: "LONG", returnPct: 14.2, color: "cyan" },
+  { rank: 6, symbol: "LINK/USDT", signal: "RSI Spectrum", entryPrice: "14.50", entryDate: "03.29 15:30", resultPrice: "16.10", position: "LONG", returnPct: 11.0, color: "gray" },
+  { rank: 7, symbol: "BNB/USDT", signal: "Box Trend", entryPrice: "510.00", entryDate: "03.29 16:50", resultPrice: "460.00", position: "SHORT", returnPct: 9.8, color: "purple" },
+  { rank: 8, symbol: "ADA/USDT", signal: "Sigma Method", entryPrice: "0.4500", entryDate: "03.29 18:10", resultPrice: "0.4850", position: "LONG", returnPct: 7.7, color: "cyan" },
+  { rank: 9, symbol: "XRP/USDT", signal: "RSI Spectrum", entryPrice: "0.5820", entryDate: "03.29 19:45", resultPrice: "0.6120", position: "LONG", returnPct: 5.1, color: "gray" },
+  { rank: 10, symbol: "MATIC/USDT", signal: "Sigma Box", entryPrice: "0.7200", entryDate: "03.29 21:00", resultPrice: "0.7500", position: "LONG", returnPct: 4.1, color: "pink" },
 ]

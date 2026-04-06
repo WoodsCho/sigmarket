@@ -1,151 +1,177 @@
+import { useState } from "react"
+import { Info } from "lucide-react"
+import { dummyRankings } from "../../data"
+import type { RankingEntry } from "../../types"
+
+/* ─── 색상 매핑 ─── */
+const DOT_COLORS: Record<string, string> = {
+  cyan: "bg-cyan-400",
+  purple: "bg-purple-400",
+  pink: "bg-pink-500",
+  gray: "bg-gray-400",
+}
+const POS_STYLES: Record<string, { text: string; bg: string }> = {
+  LONG: { text: "text-cyan-400", bg: "bg-cyan-400/10" },
+  SHORT: { text: "text-pink-500", bg: "bg-pink-500/10" },
+}
+function returnColor(entry: RankingEntry) {
+  if (entry.position === "SHORT") return entry.color === "purple" ? "text-purple-400" : "text-pink-500"
+  if (entry.color === "purple") return "text-purple-400"
+  if (entry.color === "pink") return "text-pink-500"
+  return "text-cyan-400"
+}
+
+type Period = "daily" | "weekly" | "monthly"
+
 export default function Hero() {
+  const [period, setPeriod] = useState<Period>("daily")
+  // 나중에 DB 연동 시: useRankings(period) 훅으로 교체
+  const rankings = dummyRankings
+
   return (
-    <section className="relative overflow-hidden flex items-center justify-center">
-      {/* Animated Mesh Background */}
-      <div className="absolute inset-0">
-        <div className="absolute inset-0" />
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1200px] h-[800px] opacity-60">
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_rgba(6,182,212,0.15)_0%,_transparent_70%)]" />
-        </div>
-        <div className="absolute top-1/4 right-0 w-[600px] h-[600px] opacity-40">
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_rgba(59,130,246,0.12)_0%,_transparent_70%)]" />
-        </div>
-        <div className="absolute bottom-0 left-0 w-[600px] h-[600px] opacity-30">
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_rgba(139,92,246,0.1)_0%,_transparent_70%)]" />
-        </div>
-        {/* Grid overlay */}
-        <div
-          className="absolute inset-0 opacity-[0.03]"
-          style={{
-            backgroundImage: `linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)`,
-            backgroundSize: '60px 60px',
-          }}
-        />
-      </div>
+    <section className="relative overflow-hidden flex items-center justify-center pt-24 pb-16">
+      {/* ─── 배경 글로우 ─── */}
+      <div className="fixed top-1/2 left-1/4 -translate-y-1/2 w-[600px] h-[600px] bg-cyan-900/10 blur-[150px] rounded-full pointer-events-none z-0" />
+      <div className="fixed top-1/2 right-1/4 -translate-y-1/2 w-[500px] h-[500px] bg-pink-900/10 blur-[150px] rounded-full pointer-events-none z-0" />
 
-      {/* Hero Content */}
-      <div className="relative container mx-auto px-6 pt-28 pb-12">
-        <div className="max-w-6xl mx-auto">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
-            {/* Left Content */}
-            <div className="space-y-8">
-              <div className="opacity-0 animate-fade-up">
-                <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 text-sm font-medium">
-                  <span className="h-2 w-2 rounded-full bg-cyan-500 animate-pulse" />
-                  조건 기반 실시간 시그널
-                </span>
-              </div>
-              <h1 className="text-4xl lg:text-6xl font-bold leading-[1.1] opacity-0 animate-fade-up-delay-1">
-                감정의 개입없이,
-                <br />
-                <span className="text-gradient">조건으로 매매</span>
-              </h1>
-              <p className="text-lg lg:text-xl text-gray-400 leading-relaxed max-w-lg opacity-0 animate-fade-up-delay-2">
-                해석이 아닌 조건, 예측이 아닌 반응.
-                <br />
-                시그마켓이 당신의 매매에 구조를 입힙니다.
-              </p>
-              <div className="flex flex-wrap gap-4 opacity-0 animate-fade-up-delay-3">
-                <a
-                  href="#signals"
-                  className="group relative px-8 py-3.5 rounded-lg bg-gradient-to-r from-cyan-500 to-fuchsia-500 text-black font-bold text-base hover:shadow-xl hover:shadow-cyan-500/25 transition-all duration-300 hover:scale-105 overflow-hidden"
-                >
-                  <span className="relative z-10">실시간 시그널 보기</span>
-                  <div className="absolute inset-0 bg-gradient-to-r from-cyan-400 to-fuchsia-400 opacity-0 group-hover:opacity-100 transition-opacity" />
-                  <span className="ml-2 relative z-10">&rarr;</span>
-                </a>
-                <a
-                  href="#system"
-                  className="px-8 py-3.5 rounded-lg border border-white/10 text-white font-medium text-base hover:bg-white/5 hover:border-white/20 transition-all duration-300"
-                >
-                  시스템 소개
-                </a>
-              </div>
-            </div>
+      {/* ─── 메인 그리드 ─── */}
+      <div className="relative z-10 w-full max-w-[1200px] mx-auto px-6 grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 items-center">
 
-            {/* Right - Floating Cards */}
-            <div className="relative hidden lg:block">
-              <div className="absolute -inset-10 bg-[radial-gradient(ellipse_at_center,_rgba(6,182,212,0.08)_0%,_transparent_70%)]" />
-              {/* Main Signal Engine Card */}
-              <div className="relative animate-float">
-                <SignalEngineCard />
-              </div>
-              {/* Small floating stat cards */}
-              <div className="absolute -top-4 -right-4 animate-float" style={{ animationDelay: '1s' }}>
-                <div className="glass-card rounded-xl px-4 py-3 glow-cyan">
-                  <div className="text-xs text-gray-400">Win Rate</div>
-                  <div className="text-lg font-bold text-cyan-400">87.3%</div>
-                </div>
-              </div>
-              <div className="absolute -bottom-4 -left-4 animate-float" style={{ animationDelay: '2s' }}>
-                <div className="glass-card rounded-xl px-4 py-3 glow-blue">
-                  <div className="text-xs text-gray-400">Active Signals</div>
-                  <div className="text-lg font-bold text-cyan-400">24</div>
-                </div>
-              </div>
-            </div>
+        {/* ═══ 왼쪽: 텍스트 + CTA ═══ */}
+        <div className="lg:col-span-5 flex flex-col items-start text-left">
+          {/* 로고 */}
+          <div className="mb-8 flex items-center gap-2">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" className="text-cyan-400">
+              <path d="M12 2C17.5228 2 22 6.47715 22 12C22 17.5228 17.5228 22 12 22C6.47715 22 2 17.5228 2 12C2 6.47715 6.47715 2 12 2ZM14 8C15.1046 8 16 8.89543 16 10C16 11.1046 15.1046 12 14 12C12.8954 12 12 11.1046 12 10C12 8.89543 12.8954 8 14 8Z" fill="currentColor" />
+            </svg>
+            <span className="text-2xl font-bold tracking-tight text-white">Sigmarket</span>
           </div>
 
-          {/* Partner / Powered by section */}
-          <div className="mt-16 pt-8 border-t border-white/5">
-            <p className="text-center text-xs text-gray-600 uppercase tracking-[0.2em] mb-6">Powered by</p>
-            <div className="flex items-center justify-center gap-12 flex-wrap opacity-40">
-              {["TradingView", "Telegram", "AWS Amplify", "Pine Script"].map((name) => (
-                <span key={name} className="text-sm font-medium text-gray-500 tracking-wider">{name}</span>
+          {/* 타이틀 */}
+          <h1 className="text-4xl md:text-5xl font-bold tracking-tight mb-5 leading-tight break-keep text-gray-100">
+            판단을 단순하게
+            <br />
+            만드세요
+          </h1>
+
+          <p className="text-lg md:text-xl text-gray-200 mb-5 font-medium break-keep">
+            복잡한 분석 대신
+            <br />
+            명확한 조건으로 매매에 구조를 입힙니다.
+          </p>
+
+          <p className="text-xs md:text-sm text-gray-400 mb-8 break-keep leading-relaxed border-l-2 border-gray-700 pl-4">
+            주식, 해외선물, 크립토, 외환 등
+            <br />
+            모든 변동성 시장에 최적화되어 있습니다.
+          </p>
+
+          <button className="px-6 py-3 rounded-full bg-gradient-to-r from-cyan-500 via-purple-500 to-pink-500 text-white font-bold text-base hover:scale-105 hover:shadow-[0_0_30px_rgba(168,85,247,0.4)] transition-all duration-300">
+            3일동안 알림 받기 (free)
+          </button>
+        </div>
+
+        {/* ═══ 오른쪽: 수익률 랭킹 테이블 ═══ */}
+        <div className="lg:col-span-7 bg-gray-900/60 border border-gray-800 rounded-2xl backdrop-blur-xl shadow-2xl flex flex-col h-[480px] overflow-hidden">
+
+          {/* 테이블 헤더 */}
+          <div className="px-5 py-4 border-b border-gray-800 flex justify-between items-center bg-gray-900/80 shrink-0">
+            <div className="flex items-center gap-3">
+              <h3 className="text-lg font-bold text-white">수익률 랭킹</h3>
+              <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-pink-500/20 text-pink-400 border border-pink-500/30">
+                TOP 10
+              </span>
+            </div>
+
+            {/* 기간 토글 */}
+            <div className="flex bg-gray-950 p-1 rounded-lg border border-gray-800">
+              {([
+                { key: "daily" as Period, label: "전일" },
+                { key: "weekly" as Period, label: "지난주" },
+                { key: "monthly" as Period, label: "지난달" },
+              ]).map(({ key, label }) => (
+                <button
+                  key={key}
+                  onClick={() => setPeriod(key)}
+                  className={`px-4 py-1.5 rounded text-xs font-medium transition-colors ${
+                    period === key
+                      ? "bg-gray-800 text-cyan-400 font-bold shadow-sm"
+                      : "text-gray-500 hover:text-white"
+                  }`}
+                >
+                  {label}
+                </button>
               ))}
             </div>
           </div>
+
+          {/* 테이블 바디 */}
+          <div className="overflow-y-auto custom-scrollbar flex-1 relative bg-gray-900/40">
+            <table className="w-full text-left border-collapse">
+              <thead className="sticky top-0 z-20 bg-gray-900 shadow-sm">
+                <tr className="text-gray-400 text-[10px] uppercase tracking-widest border-b border-gray-800">
+                  <th className="px-4 py-3 font-semibold w-10 text-center">순위</th>
+                  <th className="px-3 py-3 font-semibold">종목</th>
+                  <th className="px-3 py-3 font-semibold">시그널 (지표)</th>
+                  <th className="px-3 py-3 font-semibold">진입</th>
+                  <th className="px-3 py-3 font-semibold">성과 가격</th>
+                  <th className="px-3 py-3 font-semibold">포지션</th>
+                  <th className="px-4 py-3 font-semibold text-right">수익률</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-800/50 text-xs">
+                {rankings.map((entry) => {
+                  const pos = POS_STYLES[entry.position] || POS_STYLES.LONG
+                  const retCol = returnColor(entry)
+                  const dotCol = DOT_COLORS[entry.color || "cyan"]
+                  return (
+                    <tr key={entry.rank} className="hover:bg-gray-800/50 transition-colors group">
+                      <td className="px-4 py-2.5 text-center font-mono text-gray-500 font-bold group-hover:text-cyan-400">
+                        {entry.rank}
+                      </td>
+                      <td className="px-3 py-2.5 font-bold text-white">
+                        <div className="flex items-center gap-2">
+                          <span className={`w-1.5 h-1.5 rounded-full ${dotCol}`} />
+                          {entry.symbol}
+                        </div>
+                      </td>
+                      <td className="px-3 py-2.5">
+                        <span className="px-2 py-0.5 rounded bg-gray-800 border border-gray-700 text-[10px] text-gray-300">
+                          {entry.signal}
+                        </span>
+                      </td>
+                      <td className="px-3 py-2">
+                        <div className="font-mono text-gray-300">{entry.entryPrice}</div>
+                        <div className="text-[9px] text-gray-500 mt-0.5">{entry.entryDate}</div>
+                      </td>
+                      <td className={`px-3 py-2.5 font-mono font-medium ${retCol}`}>
+                        {entry.resultPrice}
+                      </td>
+                      <td className="px-3 py-2.5">
+                        <span className={`${pos.text} font-bold ${pos.bg} px-2 py-0.5 rounded text-[10px]`}>
+                          {entry.position}
+                        </span>
+                      </td>
+                      <td className={`px-4 py-2.5 text-right font-bold text-sm ${retCol}`}>
+                        +{entry.returnPct.toFixed(1)}%
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
+
+          {/* 하단 안내 */}
+          <div className="bg-gray-900 border-t border-gray-800 px-4 py-3 shrink-0 flex items-start gap-2">
+            <Info className="w-3.5 h-3.5 text-gray-500 flex-shrink-0 mt-0.5" />
+            <p className="text-[10px] text-gray-500 leading-relaxed break-keep">
+              수익률은 진입 이후 성과 가격(LONG: 최고가, SHORT: 최저가) 기준으로 산정되며, 실제 수익은 트레이더의 성향과 경험에 따라 크게 달라질 수 있음을 알려드립니다.
+            </p>
+          </div>
         </div>
+
       </div>
     </section>
-  )
-}
-
-function SignalEngineCard() {
-  return (
-    <div className="glass-card rounded-2xl p-6 glow-cyan relative overflow-hidden">
-      {/* Gradient border top */}
-      <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-cyan-500/50 to-transparent" />
-
-      {/* Scan animation effect */}
-      <div className="absolute inset-0 opacity-20">
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-cyan-500/20 to-transparent h-20 animate-[scan_3s_ease-in-out_infinite]" />
-      </div>
-
-      <div className="relative">
-        <div className="flex items-center gap-3 mb-6">
-          <div className="h-10 w-10 rounded-lg bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center">
-            <svg className="h-5 w-5 text-cyan-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-            </svg>
-          </div>
-          <div>
-            <h3 className="text-lg font-bold text-white">Real-time Signal Engine</h3>
-            <p className="text-xs text-gray-500">Live monitoring active</p>
-          </div>
-        </div>
-        <div className="space-y-4 text-sm font-mono">
-          <div className="flex justify-between items-center py-2 border-b border-white/5">
-            <span className="text-gray-500">Market Scan</span>
-            <span className="text-white font-semibold">BTC · ETH · ALT</span>
-          </div>
-          <div className="flex justify-between items-center py-2 border-b border-white/5">
-            <span className="text-gray-500">Strategy</span>
-            <span className="text-white font-semibold">Trend Following</span>
-          </div>
-          <div className="flex justify-between items-center py-2 border-b border-white/5">
-            <span className="text-gray-500">Status</span>
-            <span className="text-cyan-400 font-semibold flex items-center gap-2">
-              <span className="inline-block h-2 w-2 rounded-full bg-cyan-500 animate-pulse" />
-              Monitoring
-            </span>
-          </div>
-          <div className="flex justify-between items-center py-2">
-            <span className="text-gray-500">Update</span>
-            <span className="text-white font-semibold">Every Tick</span>
-          </div>
-        </div>
-      </div>
-    </div>
   )
 }

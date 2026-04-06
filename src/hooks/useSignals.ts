@@ -25,10 +25,10 @@ const SYMBOL_ICONS: Record<string, string> = {
 
 // 기본 시그널 (API 미연결 시 데모 표시)
 const DEFAULT_SIGNALS: Signal[] = [
-  { symbol: "BTC", date: "2025/12/22", time: "18:00", price: "89,392", position: "LONG", isNew: false, icon: "₿" },
-  { symbol: "ETH", date: "2025/12/22", time: "18:15", price: "3,034", position: "LONG", isNew: false, icon: "Ξ" },
-  { symbol: "XRP", date: "2025/12/22", time: "18:00", price: "1.9164", position: "LONG", isNew: false, icon: "✕" },
-  { symbol: "SOL", date: "2025/12/22", time: "18:00", price: "126", position: "LONG", isNew: false, icon: "◎" },
+  { symbol: "BTC/USDT", date: "2025/12/22", time: "18:00", price: "68,240.50", position: "LONG", isNew: true, icon: "₿", exchange: "Binance", indicator: "시그마 메서드 1차눌림", timeAgo: "방금 전" },
+  { symbol: "ETH/USDT", date: "2025/12/22", time: "18:15", price: "3,450.20", position: "SHORT", isNew: false, icon: "Ξ", exchange: "Binance", indicator: "Box Trend", timeAgo: "3분 전" },
+  { symbol: "SOL/USDT", date: "2025/12/22", time: "18:00", price: "142.30", position: "LONG", isNew: false, icon: "◎", exchange: "Bybit", indicator: "시그마 코어", timeAgo: "12분 전" },
+  { symbol: "SIREN/USDT", date: "2025/12/22", time: "18:00", price: "0.4500", position: "LONG", isNew: false, icon: "●", exchange: "OKX", indicator: "시그마 메서드 3차눌림", timeAgo: "28분 전" },
 ];
 
 export function useSignals() {
@@ -56,17 +56,36 @@ export function useSignals() {
       const data = await res.json();
 
       if (data.signals && data.signals.length > 0) {
-        const mapped: Signal[] = data.signals.map((item: any) => ({
-          id: item.id,
-          symbol: item.symbol,
-          date: item.date,
-          time: item.time,
-          price: item.price,
-          position: (item.position as "LONG" | "SHORT") || "LONG",
-          isNew: item.isNew ?? false,
-          icon: item.icon || SYMBOL_ICONS[item.symbol] || "●",
-          source: item.source || "tradingview",
-        }));
+        const mapped: Signal[] = data.signals.map((item: any) => {
+          // timeAgo 계산
+          let timeAgo = "";
+          if (item.createdAt) {
+            const diff = Math.floor((Date.now() - new Date(item.createdAt).getTime()) / 1000);
+            if (diff < 60) timeAgo = "방금 전";
+            else if (diff < 3600) timeAgo = `${Math.floor(diff / 60)}분 전`;
+            else if (diff < 86400) timeAgo = `${Math.floor(diff / 3600)}시간 전`;
+            else timeAgo = `${Math.floor(diff / 86400)}일 전`;
+          }
+
+          // symbol 표시 형식: "BTC" → "BTC/USDT"
+          const rawSymbol = (item.symbol || "").toUpperCase();
+          const displaySymbol = rawSymbol.includes("/") ? rawSymbol : `${rawSymbol}/USDT`;
+
+          return {
+            id: item.id,
+            symbol: displaySymbol,
+            date: item.date,
+            time: item.time,
+            price: item.price,
+            position: (item.position as "LONG" | "SHORT") || "LONG",
+            isNew: item.isNew ?? false,
+            icon: item.icon || SYMBOL_ICONS[rawSymbol.replace(/\/.*/, "")] || "●",
+            source: item.source || "tradingview",
+            exchange: item.exchange || "",
+            indicator: item.indicator || "",
+            timeAgo,
+          };
+        });
         setSignals(mapped);
         setIsLive(true);
       }

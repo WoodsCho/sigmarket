@@ -6,7 +6,7 @@
  * DynamoDB 테이블 생성 가이드:
  * - 테이블 이름: Signal (또는 원하는 이름)
  * - 파티션 키: id (String)
- * - 속성: symbol, date, time, price, position, icon, isNew, source, createdAt, updatedAt
+ * - 속성: symbol, date, time, price, position, icon, isNew, source, exchange, indicator, createdAt, updatedAt
  */
 
 // Amplify backend.ts에서 data를 사용하지 않으므로 빈 export

@@ -54,6 +54,11 @@ export function useIndicators() {
             : typeof item.tags === "string"
               ? JSON.parse(item.tags)
               : [],
+          sections: Array.isArray(item.sections)
+            ? item.sections
+            : typeof item.sections === "string"
+              ? JSON.parse(item.sections)
+              : [],
           createdAt: item.createdAt,
           updatedAt: item.updatedAt,
         }));
