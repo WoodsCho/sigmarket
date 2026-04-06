@@ -8,12 +8,6 @@ const POS_STYLES: Record<string, { text: string; bg: string }> = {
   SHORT: { text: "text-pink-500", bg: "bg-pink-500/10" },
 }
 
-/* ─── 종목 도트 컬러 ─── */
-function dotColor(signal: Signal) {
-  if (signal.position === "SHORT") return "bg-pink-500"
-  return "bg-cyan-400"
-}
-
 export default function Signals() {
   const { signals, isLoading, isLive } = useSignals()
 
