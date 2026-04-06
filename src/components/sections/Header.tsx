@@ -20,21 +20,14 @@ export default function Header() {
                 >
                   {item.label}
                 </a>
-                {item.label === "tradingview" && (
-                  <span className="absolute -bottom-4 left-1/2 -translate-x-1/2 text-xs font-bold bg-gradient-to-r from-cyan-500 via-purple-500 to-pink-500 bg-clip-text text-transparent whitespace-nowrap">
-                    15$ 저렴하게
-                  </span>
-                )}
               </div>
             ))}
-            <div className="ml-4">
-              <a
-                href="#signals"
-                className="px-5 py-2 text-sm font-semibold rounded-lg bg-white text-gray-900 hover:bg-gray-200 transition-all duration-300 inline-block"
-              >
-                이용하기
-              </a>
-            </div>
+            <a
+              href="#signals"
+              className="px-4 py-2 text-sm text-gray-400 hover:text-white transition-all duration-300 rounded-lg hover:bg-white/5 inline-block"
+            >
+              이용하기
+            </a>
           </div>
         </nav>
       </div>

@@ -12,7 +12,7 @@ export default function Signals() {
   const { signals, isLoading, isLive } = useSignals()
 
   return (
-    <section id="signals" className="relative py-12">
+    <section id="signals" className="relative pt-40 pb-12">
       {/* bg glow */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[500px] bg-purple-900/10 blur-[150px] rounded-full pointer-events-none z-0" />
 
@@ -30,7 +30,6 @@ export default function Signals() {
                   {isLive ? "Live" : "Demo"}
                 </span>
               </div>
-              <p className="text-gray-400 text-sm">시그마 시스템이 시장의 파동을 실시간으로 추적하여 타점을 제시합니다.</p>
             </div>
           </div>
 

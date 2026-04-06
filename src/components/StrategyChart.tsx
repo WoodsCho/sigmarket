@@ -506,7 +506,7 @@ export default function StrategyChart({ fixedStrategyId }: StrategyChartProps = 
           )}
 
           {/* 차트 영역 */}
-          <div ref={chartContainerRef} style={{ height: "600px", width: "100%" }} />
+          <div ref={chartContainerRef} style={{ height: "400px", width: "100%" }} />
 
           {/* 하단 거래 통계 */}
           <div className="p-4 border-t border-white/5 bg-white/[0.02]">
