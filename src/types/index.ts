@@ -17,8 +17,10 @@ export interface Signal {
 
 export interface SystemFeature {
   name: string
+  subtitle?: string
   description: string
   icon: LucideIcon
+  color?: string
 }
 
 export interface ContentSection {

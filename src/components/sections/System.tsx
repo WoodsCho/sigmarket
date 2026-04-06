@@ -1,8 +1,3 @@
-import { Card, CardContent, CardHeader, CardTitle } from "../ui/card"
-import { Badge } from "../ui/badge"
-import { systemFeatures } from "../../data"
-import type { SystemFeature } from "../../types"
-
 export default function System() {
   return (
     <section id="system" className="relative py-16">
