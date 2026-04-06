@@ -23,20 +23,8 @@ function emptyIndicator(): Indicator {
     sections: [],
     strategyId: "sigma-box",
     strategyCode: "",
-    scores: [
-      { label: "", value: 4.5, max: 5.0 },
-      { label: "", value: 4.5, max: 5.0 },
-      { label: "", value: 4.5, max: 5.0 },
-      { label: "", value: 4.5, max: 5.0 },
-      { label: "", value: 4.5, max: 5.0 },
-    ],
-    marketFit: [
-      { label: "", fit: "high" },
-      { label: "", fit: "high" },
-      { label: "", fit: "high" },
-      { label: "", fit: "high" },
-      { label: "", fit: "high" },
-    ],
+    scores: [],
+    marketFit: [],
     tags: [],
   }
 }
@@ -517,22 +505,6 @@ function IndicatorEditor({
   const set = <K extends keyof typeof form>(key: K, val: (typeof form)[K]) =>
     setForm((prev) => ({ ...prev, [key]: val }))
 
-  const setScore = (idx: number, field: "label" | "value", val: string | number) => {
-    setForm((prev) => {
-      const scores = [...prev.scores]
-      scores[idx] = { ...scores[idx], [field]: field === "value" ? Number(val) : val }
-      return { ...prev, scores }
-    })
-  }
-
-  const setFit = (idx: number, field: "label" | "fit", val: string) => {
-    setForm((prev) => {
-      const marketFit = [...prev.marketFit]
-      marketFit[idx] = { ...marketFit[idx], [field]: val }
-      return { ...prev, marketFit }
-    })
-  }
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     onSave({ ...form, tags: tagInput.split(",").map((t) => t.trim()).filter(Boolean) })
@@ -660,59 +632,6 @@ function IndicatorEditor({
           spellCheck={false}
         />
       </div>
-
-      {/* 구조 성능 프로파일 (5개) */}
-      <fieldset>
-        <legend className="text-sm font-semibold text-gray-300 mb-3">구조 성능 프로파일 (5개)</legend>
-        <div className="space-y-2">
-          {form.scores.map((s, i) => (
-            <div key={i} className="flex gap-3 items-center">
-              <input
-                value={s.label}
-                onChange={(e) => setScore(i, "label", e.target.value)}
-                placeholder={`항목 ${i + 1}`}
-                className="flex-1 bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-1.5 text-white text-sm focus:outline-none focus:border-cyan-500"
-              />
-              <input
-                type="number"
-                step="0.1"
-                min="0"
-                max="5"
-                value={s.value}
-                onChange={(e) => setScore(i, "value", e.target.value)}
-                className="w-20 bg-zinc-900 border border-zinc-700 rounded-lg px-2 py-1.5 text-white text-sm text-center focus:outline-none focus:border-cyan-500"
-              />
-              <span className="text-xs text-gray-500">/ 5.0</span>
-            </div>
-          ))}
-        </div>
-      </fieldset>
-
-      {/* 시장 적합도 (5개) */}
-      <fieldset>
-        <legend className="text-sm font-semibold text-gray-300 mb-3">시장 적합도 (5개)</legend>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-          {form.marketFit.map((m, i) => (
-            <div key={i} className="flex gap-2 items-center">
-              <input
-                value={m.label}
-                onChange={(e) => setFit(i, "label", e.target.value)}
-                placeholder={`시장 ${i + 1}`}
-                className="flex-1 bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-1.5 text-white text-sm focus:outline-none focus:border-cyan-500"
-              />
-              <select
-                value={m.fit}
-                onChange={(e) => setFit(i, "fit", e.target.value)}
-                className="bg-zinc-900 border border-zinc-700 rounded-lg px-2 py-1.5 text-white text-sm focus:outline-none focus:border-cyan-500"
-              >
-                <option value="high">High</option>
-                <option value="mid">Mid</option>
-                <option value="low">Low</option>
-              </select>
-            </div>
-          ))}
-        </div>
-      </fieldset>
 
       {/* 공개 여부 */}
       <label className="flex items-center gap-2 cursor-pointer">
