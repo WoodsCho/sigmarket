@@ -23,8 +23,6 @@ function emptyIndicator(): Indicator {
     sections: [],
     strategyId: "sigma-box",
     strategyCode: "",
-    scores: [],
-    marketFit: [],
     tags: [],
   }
 }
@@ -256,8 +254,6 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
         setIndicators(
           data.indicators.map((item: any) => ({
             ...item,
-            scores: typeof item.scores === "string" ? JSON.parse(item.scores) : item.scores || [],
-            marketFit: typeof item.marketFit === "string" ? JSON.parse(item.marketFit) : item.marketFit || [],
             tags: typeof item.tags === "string" ? JSON.parse(item.tags) : item.tags || [],
             sections: typeof item.sections === "string" ? JSON.parse(item.sections) : item.sections || [],
           }))

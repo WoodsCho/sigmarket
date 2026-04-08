@@ -52,12 +52,12 @@ export interface Indicator {
   sections?: ContentSection[]  // 구조화된 섹션 (신규)
   strategyId: string      // 전략 엔진 ID (예: sigma-box, super-target, order-block, rsi-bb)
   strategyCode?: string   // 자바스크립트 전략 코드 (Buy/Sell 조건)
-  scores: {               // 구조 성능 프로파일 (5개)
+  scores?: {               // 구조 성능 프로파일 (5개)
     label: string
     value: number
     max: number
   }[]
-  marketFit: {            // 시장 적합도 (5개)
+  marketFit?: {            // 시장 적합도 (5개)
     label: string
     fit: "high" | "mid" | "low"
   }[]

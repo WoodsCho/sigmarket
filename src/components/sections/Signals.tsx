@@ -1,12 +1,12 @@
-import { Info, AlertTriangle } from "lucide-react"
+import { Info, AlertTriangle, Clock } from "lucide-react"
 import { useNavigate } from "react-router-dom"
 import { useSignals } from "../../hooks/useSignals"
 import type { Signal } from "../../types"
 
 /* ─── 포지션 스타일 ─── */
-const POS_STYLES: Record<string, { text: string; bg: string }> = {
-  LONG: { text: "text-cyan-400", bg: "bg-cyan-400/10" },
-  SHORT: { text: "text-pink-500", bg: "bg-pink-500/10" },
+const POS_STYLES: Record<string, { text: string; bg: string; border: string; bar: string }> = {
+  LONG:  { text: "text-cyan-400",  bg: "bg-cyan-400/10",  border: "border-cyan-400/30",  bar: "bg-cyan-500" },
+  SHORT: { text: "text-pink-400",  bg: "bg-pink-400/10",  border: "border-pink-400/30",  bar: "bg-pink-500" },
 }
 
 export default function Signals() {
@@ -58,22 +58,22 @@ export default function Signals() {
             </div>
           ) : (
             /* ── 테이블 카드 ── */
-            <div className="bg-[#0d1117] border border-gray-700/50 rounded-md shadow-2xl overflow-hidden">
+            <div className="bg-[#0d1117] border border-gray-700/50 rounded-xl shadow-2xl overflow-hidden">
 
               <div className="overflow-x-auto w-full bg-[#0d1117]">
-                <table className="w-full text-left border-collapse whitespace-nowrap font-mono">
+                <table className="w-full text-left border-collapse whitespace-nowrap">
                   <thead>
-                    <tr className="bg-[#161b22] text-gray-500 text-[10px] uppercase tracking-widest border-b border-gray-700/50">
-                      <th className="px-6 py-2.5 font-semibold w-32">실시간 알림</th>
-                      <th className="px-6 py-2.5 font-semibold">종목</th>
-                      <th className="px-6 py-2.5 font-semibold">시그널 (지표)</th>
-                      <th className="px-6 py-2.5 font-semibold">진입</th>
-                      <th className="px-6 py-2.5 font-semibold">포지션</th>
+                    <tr className="bg-[#0f1420] text-gray-500 text-[10px] uppercase tracking-widest border-b border-gray-700/50">
+                      <th className="px-5 py-3 font-semibold w-36">시각</th>
+                      <th className="px-5 py-3 font-semibold">종목</th>
+                      <th className="px-5 py-3 font-semibold">시그널 (지표)</th>
+                      <th className="px-5 py-3 font-semibold">진입가</th>
+                      <th className="px-5 py-3 font-semibold">포지션</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-800/30 text-xs">
+                  <tbody className="divide-y divide-gray-800/40 text-xs">
                     {signals.map((signal, idx) => (
-                      <SignalRow key={signal.id || idx} signal={signal} />
+                      <SignalRow key={signal.id || idx} signal={signal} idx={idx} />
                     ))}
                   </tbody>
                 </table>
@@ -103,44 +103,77 @@ export default function Signals() {
   )
 }
 
-function SignalRow({ signal }: { signal: Signal }) {
+function SignalRow({ signal, idx }: { signal: Signal; idx: number }) {
   const pos = POS_STYLES[signal.position] || POS_STYLES.LONG
+  const baseSymbol = signal.symbol.split("/")[0]
+  const isEven = idx % 2 === 0
 
   return (
-    <tr className="bg-[#0d1117] hover:bg-gray-800/30 transition-colors group">
-      {/* 실시간 알림 */}
-      <td className="px-6 py-3">
+    <tr className={`relative transition-colors group hover:bg-white/[0.03] ${isEven ? "bg-[#0d1117]" : "bg-[#0b0f1a]"}`}>
+
+      {/* ── 시각 ── */}
+      <td className="relative px-5 py-4">
+        {/* 포지션 컬러 바 */}
+        <div className={`absolute inset-y-0 left-0 w-[3px] ${pos.bar} opacity-0 group-hover:opacity-100 transition-opacity rounded-r`} />
         {signal.isNew ? (
-          <span className="text-pink-400 font-bold text-xs bg-pink-400/10 px-2 py-1 rounded animate-pulse">
-            {signal.timeAgo || "방금 전"}
+          <span className="inline-flex items-center gap-1.5 text-pink-400 font-semibold text-[11px] bg-pink-500/10 border border-pink-500/20 px-2.5 py-1 rounded-full animate-pulse">
+            <span className="w-1.5 h-1.5 rounded-full bg-pink-400" />
+            방금 전
           </span>
         ) : (
-          <span className="text-gray-500 text-xs font-medium">{signal.timeAgo || `${signal.date} ${signal.time}`}</span>
+          <div className="flex items-center gap-1.5 text-gray-500">
+            <Clock className="w-3 h-3 shrink-0" />
+            <span className="text-[11px]">{signal.timeAgo || `${signal.date} ${signal.time}`}</span>
+          </div>
         )}
       </td>
-      {/* 종목 */}
-      <td className="px-6 py-3 font-bold text-gray-300">
-        <div className="flex items-center gap-2">
-          <img
-            src={`https://assets.coincap.io/assets/icons/${signal.symbol.split("/")[0].toLowerCase()}@2x.png`}
-            alt={signal.symbol.split("/")[0]}
-            className="w-4 h-4 rounded-full"
-            onError={(e) => { (e.target as HTMLImageElement).style.display = "none" }}
-          />
-          {signal.symbol}
+
+      {/* ── 종목 ── */}
+      <td className="px-5 py-4">
+        <div className="flex items-center gap-2.5">
+          {/* 코인 아이콘 or 폴백 */}
+          <div className="w-6 h-6 rounded-full bg-gray-800 border border-gray-700/60 flex-shrink-0 overflow-hidden flex items-center justify-center">
+            <img
+              src={`https://assets.coincap.io/assets/icons/${baseSymbol.toLowerCase()}@2x.png`}
+              alt={baseSymbol}
+              className="w-full h-full object-cover"
+              onError={(e) => {
+                const el = e.target as HTMLImageElement
+                el.style.display = "none"
+                el.parentElement!.innerHTML = `<span class="text-[10px] font-bold text-gray-400">${baseSymbol.slice(0, 2)}</span>`
+              }}
+            />
+          </div>
+          <div>
+            <div className="font-semibold text-gray-200 text-[13px] tracking-wide">{signal.symbol}</div>
+            {signal.exchange && (
+              <div className="text-[10px] text-gray-600 mt-0.5">{signal.exchange}</div>
+            )}
+          </div>
         </div>
       </td>
-      {/* 시그널 (지표) */}
-      <td className="px-6 py-3 text-gray-300">
-        <span className="px-1.5 py-0.5 rounded bg-gray-800/50 border border-gray-700/40 text-[10px] text-gray-400">
-          {signal.indicator || "—"}
-        </span>
+
+      {/* ── 시그널 (지표) ── */}
+      <td className="px-5 py-4">
+        {signal.indicator && signal.indicator !== "—" ? (
+          <span className="inline-flex items-center px-2.5 py-1 rounded-md bg-purple-500/10 border border-purple-500/20 text-[11px] text-purple-300 font-medium">
+            {signal.indicator}
+          </span>
+        ) : (
+          <span className="text-gray-700 text-xs">—</span>
+        )}
       </td>
-      {/* 진입 */}
-      <td className="px-6 py-3 text-gray-400">{signal.price}</td>
-      {/* 포지션 */}
-      <td className="px-6 py-3">
-        <span className={`${pos.text} font-bold ${pos.bg} px-1.5 py-0.5 rounded text-[10px]`}>{signal.position}</span>
+
+      {/* ── 진입가 ── */}
+      <td className="px-5 py-4">
+        <span className="font-mono text-[13px] text-gray-300 font-medium">{signal.price}</span>
+      </td>
+
+      {/* ── 포지션 ── */}
+      <td className="px-5 py-4">
+        <span className={`inline-flex items-center px-3 py-1 rounded-md text-[11px] font-bold tracking-wider border ${pos.text} ${pos.bg} ${pos.border}`}>
+          {signal.position}
+        </span>
       </td>
     </tr>
   )

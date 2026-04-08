@@ -147,49 +147,6 @@ export default function IndicatorDetailPage() {
             )
           )}
 
-          {/* ═══ 성능 프로파일 + 시장 적합도 ═══ */}
-          {(indicator.scores.length > 0 || indicator.marketFit.length > 0) && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-8">
-              {indicator.scores.length > 0 && indicator.scores[0].label && (
-                <div className="bg-gray-900/40 border border-gray-800 rounded-2xl p-8 hover:border-cyan-500/30 transition-colors">
-                  <div className="flex items-center gap-3 mb-6">
-                    <TrendingUp className="h-5 w-5 text-cyan-400" />
-                    <h3 className="text-lg font-bold text-white">구조 성능 프로파일</h3>
-                  </div>
-                  <div className="space-y-4">
-                    {indicator.scores.map((score, i) => (
-                      <div key={i}>
-                        <div className="flex items-center justify-between mb-1.5">
-                          <span className="text-sm text-gray-400">{score.label}</span>
-                          <span className="text-sm font-mono text-white">{score.value.toFixed(1)} / {score.max.toFixed(1)}</span>
-                        </div>
-                        <div className="w-full h-2 bg-gray-800 rounded-full overflow-hidden">
-                          <div className="h-full rounded-full bg-gradient-to-r from-cyan-500 to-blue-500 transition-all duration-700" style={{ width: `${(score.value / score.max) * 100}%` }} />
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {indicator.marketFit.length > 0 && indicator.marketFit[0].label && (
-                <div className="bg-gray-900/40 border border-gray-800 rounded-2xl p-8 hover:border-purple-500/30 transition-colors">
-                  <div className="flex items-center gap-3 mb-6">
-                    <Activity className="h-5 w-5 text-purple-400" />
-                    <h3 className="text-lg font-bold text-white">시장 적합도</h3>
-                  </div>
-                  <div className="grid grid-cols-1 gap-3">
-                    {indicator.marketFit.map((item, i) => (
-                      <div key={i} className="flex items-center justify-between bg-gray-800/30 rounded-xl px-4 py-3 border border-gray-800/50">
-                        <span className="text-sm text-gray-300 font-medium">{item.label}</span>
-                        <FitBadge fit={item.fit} />
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
 
         </div>
       </section>
@@ -366,17 +323,4 @@ function SectionCard({ section, index, isFullWidth }: { section: ContentSection;
   )
 }
 
-/* ─── 적합도 뱃지 ─── */
-function FitBadge({ fit }: { fit: "high" | "mid" | "low" }) {
-  const config = {
-    high: { label: "높음", bg: "bg-cyan-500/20", text: "text-cyan-400", border: "border-cyan-500/30" },
-    mid:  { label: "보통", bg: "bg-yellow-500/20", text: "text-yellow-400", border: "border-yellow-500/30" },
-    low:  { label: "낮음", bg: "bg-gray-700/50", text: "text-gray-500", border: "border-gray-700" },
-  }
-  const c = config[fit]
-  return (
-    <span className={`px-3 py-1 rounded-full text-xs font-bold ${c.bg} ${c.text} border ${c.border}`}>
-      {c.label}
-    </span>
-  )
-}
+

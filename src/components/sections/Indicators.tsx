@@ -36,7 +36,7 @@ export default function Indicators() {
               <Loader2 className="h-10 w-10 text-cyan-500 animate-spin" />
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-stretch">
               {indicators.map((indicator, idx) => (
                 <IndicatorCard
                   key={indicator.id || idx}
@@ -55,40 +55,58 @@ export default function Indicators() {
 /* ─── 요약 카드 ─── */
 function IndicatorCard({ indicator, idx }: { indicator: Indicator; idx: number }) {
   return (
-    <Link to={`/indicators/${idx}`}>
-    <Card
-      className="glass-card glass-card-hover border-0 rounded-2xl transition-all duration-500 group cursor-pointer overflow-hidden hover:-translate-y-2 hover:shadow-2xl hover:shadow-cyan-500/5"
-    >
-      {/* 차트 이미지 / 미리보기 영역 */}
-      <div className="relative h-40 bg-gradient-to-br from-[#0a1020] to-[#0d0a20] overflow-hidden">
-        {indicator.image ? (
-          <img src={indicator.image} alt={indicator.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
-        ) : (
-          <>
-            <ChartPreviewSVG />
-            {/* TP / SL 라벨 */}
-            <div className="absolute top-4 right-6 bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 text-[10px] font-bold px-2 py-0.5 rounded-md backdrop-blur-sm">TP</div>
-            <div className="absolute bottom-4 right-6 bg-red-500/10 border border-red-500/30 text-red-400 text-[10px] font-bold px-2 py-0.5 rounded-md backdrop-blur-sm">SL</div>
-          </>
-        )}
-        {/* Hover overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-[#08061a] via-transparent to-transparent opacity-60" />
-      </div>
+    <Link to={`/indicators/${idx}`} className="flex h-full">
+      <Card className="glass-card glass-card-hover border-0 rounded-2xl transition-all duration-500 group cursor-pointer overflow-hidden hover:-translate-y-2 hover:shadow-2xl hover:shadow-cyan-500/5 flex flex-col h-full w-full">
 
-      <CardHeader className="pb-2 pt-5">
-        <CardTitle className="text-lg font-bold group-hover:text-cyan-400 transition-colors duration-300">
-          {indicator.name}
-        </CardTitle>
-        <p className="text-xs text-gray-600">{indicator.subtitle}</p>
-      </CardHeader>
-      <CardContent className="pb-5">
-        <p className="text-sm text-gray-400 leading-relaxed line-clamp-2">{indicator.content}</p>
-        <div className="mt-4 flex items-center gap-1 text-sm text-cyan-500 group-hover:text-cyan-400 transition-colors font-medium">
-          상세보기
-          <ArrowRight className="h-3.5 w-3.5 group-hover:translate-x-1 transition-transform duration-300" />
+        {/* 차트 이미지 / 미리보기 영역 */}
+        <div className="relative h-72 bg-gradient-to-br from-[#0a1020] to-[#0d0a20] overflow-hidden flex-shrink-0">
+          {indicator.image ? (
+            <img src={indicator.image} alt={indicator.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
+          ) : (
+            <>
+              <ChartPreviewSVG />
+              <div className="absolute top-4 right-6 bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 text-[10px] font-bold px-2 py-0.5 rounded-md backdrop-blur-sm">TP</div>
+              <div className="absolute bottom-4 right-6 bg-red-500/10 border border-red-500/30 text-red-400 text-[10px] font-bold px-2 py-0.5 rounded-md backdrop-blur-sm">SL</div>
+            </>
+          )}
+          <div className="absolute inset-0 bg-gradient-to-t from-[#08061a] via-transparent to-transparent opacity-60" />
         </div>
-      </CardContent>
-    </Card>
+
+        {/* 컨텐츠 영역 */}
+        <div className="flex flex-col flex-1 px-8 pt-6 pb-7">
+          {/* 이름 + 부제목 */}
+          <CardHeader className="p-0 pb-4">
+            <CardTitle className="text-xl font-bold group-hover:text-cyan-400 transition-colors duration-300">
+              {indicator.name}
+            </CardTitle>
+            <p className="text-sm text-gray-500 mt-1">{indicator.subtitle}</p>
+          </CardHeader>
+
+          {/* 설명 */}
+          <CardContent className="p-0 flex-1">
+            <p className="text-sm text-gray-400 leading-relaxed line-clamp-4">{indicator.content}</p>
+
+            {/* 태그 */}
+            {indicator.tags && indicator.tags.length > 0 && (
+              <div className="mt-4 flex flex-wrap gap-1.5">
+                {indicator.tags.map((tag) => (
+                  <span key={tag} className="text-[10px] px-2 py-0.5 rounded bg-gray-800/60 border border-gray-700/40 text-gray-500">
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            )}
+          </CardContent>
+
+          {/* 상세보기 CTA */}
+          <div className="mt-6 pt-4 border-t border-gray-800/50">
+            <div className="flex items-center gap-1.5 text-sm text-cyan-500 group-hover:text-cyan-400 transition-colors font-medium">
+              상세보기
+              <ArrowRight className="h-3.5 w-3.5 group-hover:translate-x-1 transition-transform duration-300" />
+            </div>
+          </div>
+        </div>
+      </Card>
     </Link>
   )
 }
