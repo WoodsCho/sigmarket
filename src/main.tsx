@@ -5,6 +5,7 @@ import { Amplify } from "aws-amplify";
 import App from "./App.tsx";
 import AdminPage from "./pages/AdminPage.tsx";
 import IndicatorDetailPage from "./pages/IndicatorDetailPage.tsx";
+import SignalsPage from "./pages/SignalsPage.tsx";
 import "./index.css";
 
 Amplify.configure({
@@ -22,6 +23,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
       <Routes>
         <Route path="/" element={<App />} />
         <Route path="/indicators/:id" element={<IndicatorDetailPage />} />
+        <Route path="/signals" element={<SignalsPage />} />
         <Route path="/admin" element={<AdminPage />} />
       </Routes>
     </BrowserRouter>

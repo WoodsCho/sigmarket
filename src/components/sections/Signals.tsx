@@ -1,4 +1,5 @@
 import { Info, AlertTriangle } from "lucide-react"
+import { useNavigate } from "react-router-dom"
 import { useSignals } from "../../hooks/useSignals"
 import type { Signal } from "../../types"
 
@@ -10,6 +11,7 @@ const POS_STYLES: Record<string, { text: string; bg: string }> = {
 
 export default function Signals() {
   const { signals, isLoading, isLive } = useSignals()
+  const navigate = useNavigate()
 
   return (
     <section id="signals" className="relative pt-40 pb-12">
@@ -22,9 +24,12 @@ export default function Signals() {
           <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 gap-4">
             <div>
               <div className="flex items-center gap-3 mb-2">
-                <h2 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-white to-gray-400">
+                <button
+                  onClick={() => navigate("/signals")}
+                  className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-white to-gray-400 hover:from-cyan-400 hover:to-purple-400 transition-all duration-300 cursor-pointer text-left"
+                >
                   실시간 시그널 현황
-                </h2>
+                </button>
                 <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-pink-500/10 border border-pink-500/30 text-pink-500 text-xs font-bold tracking-wider uppercase">
                   <span className={`w-1.5 h-1.5 rounded-full ${isLive ? "bg-pink-500 animate-pulse" : "bg-gray-500"}`} />
                   {isLive ? "Live" : "Demo"}

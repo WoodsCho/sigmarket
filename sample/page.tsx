@@ -135,7 +135,7 @@ export default function Page() {
               <div className="lg:col-span-3 space-y-6">
                 {/* Main Headline */}
                 <h1 className="text-4xl lg:text-5xl font-bold leading-tight text-balance">
-                  조건이 충족되면,
+                   충족되면,조건이
                   <br />
                   신호는 즉시 발생합니다
                 </h1>
