@@ -1,4 +1,4 @@
-import { Header, Hero, Signals, Indicators, Philosophy, Footer } from "./components/sections"
+import { Header, Hero, Signals, Indicators, Pricing, Philosophy, Footer } from "./components/sections"
 import "./App.css"
 
 function App() {
@@ -9,6 +9,7 @@ function App() {
         <Hero />
         <Signals />
         <Indicators />
+        <Pricing />
         <Philosophy />
       </main>
       <Footer />
