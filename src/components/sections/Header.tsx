@@ -104,15 +104,15 @@ export default function Header() {
       )}
 
       {/* ─── 네비게이션 ─── */}
-      <div className="container mx-auto px-6 py-4">
-        <nav className="flex items-center justify-between max-w-6xl mx-auto">
+      <div className="w-full px-6 py-4">
+        <nav className="flex items-center justify-between w-full">
           {/* 로고 */}
           <div className="flex items-center cursor-pointer" onClick={() => navigate("/")}>
             <img src="/images/sigmarket-logo.png" alt="시그마켓" className="h-6" />
           </div>
 
-          {/* 데스크탑 네비 */}
-          <div className="hidden md:flex items-center gap-1">
+          {/* 데스크탑 네비 + CTA — 오른쪽 정렬 */}
+          <div className="hidden md:flex items-center gap-1 ml-auto">
             {navItems.map((item) => (
               <a
                 key={item.href}
@@ -125,7 +125,7 @@ export default function Header() {
           </div>
 
           {/* 데스크탑 CTA 버튼 */}
-          <div className="hidden md:flex items-center gap-3">
+          <div className="hidden md:flex items-center gap-3 ml-4">
             <button
               onClick={() => navigate("/login")}
               className="px-4 py-2 text-sm text-gray-400 hover:text-white transition-colors rounded-lg"
