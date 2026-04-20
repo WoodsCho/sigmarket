@@ -1,6 +1,7 @@
 import { Info, AlertTriangle, Clock } from "lucide-react"
 import { useNavigate } from "react-router-dom"
 import { useSignals } from "../../hooks/useSignals"
+import { SignalTableSkeleton } from "../ui/skeleton"
 import type { Signal } from "../../types"
 
 /* ─── 포지션 스타일 ─── */
@@ -30,7 +31,7 @@ export default function Signals() {
                 >
                   실시간 시그널 현황
                 </button>
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-pink-500/10 border border-pink-500/30 text-pink-500 text-xs font-bold tracking-wider uppercase">
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-pink-500/10 border border-pink-500/30 text-pink-500 text-xs font-bold tracking-wider uppercase">
                   <span className={`w-1.5 h-1.5 rounded-full ${isLive ? "bg-pink-500 animate-pulse" : "bg-gray-500"}`} />
                   {isLive ? "Live" : "Demo"}
                 </span>
@@ -52,13 +53,10 @@ export default function Signals() {
 
           {/* ── 로딩 ── */}
           {isLoading ? (
-            <div className="text-center py-20">
-              <div className="inline-block h-10 w-10 rounded-full border-2 border-cyan-500 border-t-transparent animate-spin" />
-              <p className="text-gray-500 mt-4 text-sm">시그널 로딩 중...</p>
-            </div>
+            <SignalTableSkeleton rows={4} />
           ) : (
             /* ── 테이블 카드 ── */
-            <div className="bg-[#0d1117] border border-gray-700/50 rounded-xl shadow-2xl overflow-hidden">
+            <div className="bg-[#0d1117] border border-gray-700/50 rounded-2xl shadow-2xl overflow-hidden">
 
               <div className="overflow-x-auto w-full bg-[#0d1117]">
                 <table className="w-full text-left border-collapse whitespace-nowrap">

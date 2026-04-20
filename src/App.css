@@ -1,2 +1,143 @@
-/* Custom styles for App component */
+/* ═══ 유틸리티 클래스 ═══ */
+
+/* 그라디언트 텍스트 */
+.text-gradient {
+  background: linear-gradient(to right, #22d3ee, #a78bfa, #ec4899);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* 글래스 카드 */
+.glass-card {
+  background: linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0) 100%);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255,255,255,0.08);
+}
+.glass-card-hover:hover {
+  background: linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.03) 100%);
+  border-color: rgba(255,255,255,0.15);
+}
+
+/* 그라디언트 보더 (Philosophy 등) */
+.gradient-border {
+  background: linear-gradient(to right, rgba(6,182,212,0.2), rgba(139,92,246,0.2), rgba(236,72,153,0.2));
+}
+
+/* ═══ 글로벌 폴리시 ═══ */
+
+/* 스무스 스크롤 */
+html {
+  scroll-behavior: smooth;
+}
+
+/* 텍스트 선택 색상 */
+::selection {
+  background: rgba(6,182,212,0.3);
+  color: #fff;
+}
+
+/* 커스텀 스크롤바 (Webkit) */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(107,114,128,0.4);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(107,114,128,0.6);
+}
+
+/* 커스텀 스크롤바 (터미널 내부용) */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(107,114,128,0.3);
+  border-radius: 2px;
+}
+
+/* Firefox 스크롤바 */
+* {
+  scrollbar-color: rgba(107,114,128,0.4) transparent;
+  scrollbar-width: thin;
+}
+
+/* 포커스 비저블 */
+:focus-visible {
+  outline: 2px solid rgba(6,182,212,0.5);
+  outline-offset: 2px;
+}
+
+button:focus-visible,
+a:focus-visible {
+  outline: 2px solid rgba(6,182,212,0.5);
+  outline-offset: 2px;
+  border-radius: 8px;
+}
+
+/* ═══ Hero 진입 애니메이션 ═══ */
+
+@keyframes hero-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes hero-table-row-in {
+  from {
+    opacity: 0;
+    transform: translateX(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes hero-stat-pop {
+  0% {
+    opacity: 0;
+    transform: scale(0.92) translateY(8px);
+  }
+  60% {
+    transform: scale(1.02) translateY(0);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.hero-fade-in {
+  opacity: 0;
+  animation: hero-fade-in 0.8s ease-out forwards;
+}
+
+.hero-delay-1 { animation-delay: 0.1s; }
+.hero-delay-2 { animation-delay: 0.2s; }
+.hero-delay-3 { animation-delay: 0.3s; }
+.hero-delay-4 { animation-delay: 0.45s; }
+.hero-delay-5 { animation-delay: 0.55s; }
+
+.hero-table-row {
+  opacity: 0;
+  animation: hero-table-row-in 0.5s ease-out forwards;
+}
+
+.hero-stat-card {
+  opacity: 0;
+  animation: hero-stat-pop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
 

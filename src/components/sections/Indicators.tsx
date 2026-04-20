@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom"
-import { ArrowRight, Loader2 } from "lucide-react"
+import { ArrowRight } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card"
+import { IndicatorGridSkeleton } from "../ui/skeleton"
 import { useIndicators } from "../../hooks/useIndicators"
 import type { Indicator } from "../../types"
 
@@ -32,9 +33,7 @@ export default function Indicators() {
           </div>
 
           {isLoading ? (
-            <div className="flex justify-center py-20">
-              <Loader2 className="h-10 w-10 text-cyan-500 animate-spin" />
-            </div>
+            <IndicatorGridSkeleton count={3} />
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-stretch">
               {indicators.map((indicator, idx) => (
