@@ -3,7 +3,72 @@ import { ArrowRight, TrendingUp, BarChart3, Zap } from "lucide-react"
 import { dummyRankings } from "../../data"
 import type { RankingEntry } from "../../types"
 
-/* ─── 색상 매핑 ─── */
+/* ─── 스파클 파티클 ─── */
+const SPARKLES = [
+  // 핵심 중앙 밀집 (left 44~56%, top 0~12%)
+  { top: "2%",  left: "47%",  size: 2.5, delay: "0s",    dur: "3.8s" },
+  { top: "5%",  left: "51%",  size: 1.5, delay: "0.7s",  dur: "3.2s" },
+  { top: "1%",  left: "53%",  size: 2,   delay: "1.5s",  dur: "4.0s" },
+  { top: "8%",  left: "49%",  size: 1.5, delay: "0.3s",  dur: "3.5s" },
+  { top: "4%",  left: "55%",  size: 2,   delay: "2.0s",  dur: "3.1s" },
+  { top: "10%", left: "52%",  size: 1.5, delay: "1.1s",  dur: "4.2s" },
+  { top: "3%",  left: "45%",  size: 2,   delay: "0.5s",  dur: "3.6s" },
+  { top: "7%",  left: "44%",  size: 1.5, delay: "1.9s",  dur: "2.9s" },
+  { top: "12%", left: "48%",  size: 2,   delay: "2.6s",  dur: "3.3s" },
+  { top: "6%",  left: "57%",  size: 1.5, delay: "0.9s",  dur: "3.9s" },
+  // 바깥으로 옅게 퍼지는 별 (크기 더 작게)
+  { top: "0%",  left: "41%",  size: 1.5, delay: "1.4s",  dur: "3.0s" },
+  { top: "14%", left: "54%",  size: 1.5, delay: "2.9s",  dur: "2.7s" },
+  { top: "9%",  left: "60%",  size: 1,   delay: "0.4s",  dur: "4.4s" },
+  { top: "16%", left: "46%",  size: 1,   delay: "1.7s",  dur: "3.8s" },
+  { top: "3%",  left: "62%",  size: 1,   delay: "2.3s",  dur: "3.5s" },
+]
+
+function SparkleLayer() {
+  return (
+    <div className="absolute inset-0 pointer-events-none overflow-hidden">
+      {SPARKLES.map((s, i) => (
+        <div
+          key={i}
+          className="absolute"
+          style={{ top: s.top, left: s.left }}
+        >
+          {/* 십자 스파클 */}
+          <div
+            style={{
+              width: s.size,
+              height: s.size * 4,
+              background: 'linear-gradient(to bottom, transparent, rgba(190,235,255,0.45), transparent)',
+              borderRadius: 99,
+              position: 'absolute',
+              top: '50%',
+              left: '50%',
+              transform: 'translate(-50%, -50%)',
+              animation: `sparkle-float ${s.dur} ease-in-out infinite`,
+              animationDelay: s.delay,
+            }}
+          />
+          <div
+            style={{
+              width: s.size * 4,
+              height: s.size,
+              background: 'linear-gradient(to right, transparent, rgba(190,235,255,0.45), transparent)',
+              borderRadius: 99,
+              position: 'absolute',
+              top: '50%',
+              left: '50%',
+              transform: 'translate(-50%, -50%)',
+              animation: `sparkle-float ${s.dur} ease-in-out infinite`,
+              animationDelay: s.delay,
+            }}
+          />
+        </div>
+      ))}
+    </div>
+  )
+}
+
+
 const POS_STYLES: Record<string, { text: string; bg: string }> = {
   LONG: { text: "text-cyan-400", bg: "bg-cyan-400/10" },
   SHORT: { text: "text-pink-500", bg: "bg-pink-500/10" },
@@ -74,6 +139,8 @@ export default function Hero() {
       <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-pink-600/5 blur-[140px] rounded-full pointer-events-none animate-[glow-breathe_6s_ease-in-out_infinite_3s]" />
       {/* 그리드 패턴 */}
       <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{ backgroundImage: 'linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)', backgroundSize: '60px 60px' }} />
+      {/* 스파클 파티클 */}
+      <SparkleLayer />
       {/* 상단 → 하단 페이드 */}
       <div className="absolute bottom-0 left-0 right-0 h-40 bg-gradient-to-t from-[var(--theme-bg)] to-transparent pointer-events-none" />
 
