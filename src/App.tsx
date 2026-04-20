@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react"
 import { ChevronUp } from "lucide-react"
-import { Header, Hero, Signals, Indicators, Pricing, Philosophy, Footer } from "./components/sections"
+import { Header, Hero, Stats, Signals, Indicators, Testimonials, Pricing, Philosophy, Footer } from "./components/sections"
 import { useFadeIn } from "./hooks/useFadeIn"
 import "./App.css"
 
@@ -32,8 +32,10 @@ function App() {
       <Header />
       <main>
         <Hero />
+        <FadeInSection><Stats /></FadeInSection>
         <FadeInSection><Signals /></FadeInSection>
         <FadeInSection><Indicators /></FadeInSection>
+        <FadeInSection><Testimonials /></FadeInSection>
         <FadeInSection><Pricing /></FadeInSection>
         <FadeInSection><Philosophy /></FadeInSection>
       </main>
