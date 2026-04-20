@@ -65,10 +65,13 @@ export default function Hero() {
     <section className="relative overflow-hidden pt-24 lg:pt-32 pb-20">
 
       {/* ─── 배경 레이어 ─── */}
+      {/* 상단 은은한 원형 글로우 (LuxAlgo 스타일) — 브리딩 애니메이션 */}
+      <div className="absolute -top-[200px] left-1/2 -translate-x-1/2 w-[900px] h-[600px] rounded-full pointer-events-none animate-[glow-breathe_6s_ease-in-out_infinite]" style={{ background: 'radial-gradient(ellipse at center, rgba(56,189,248,0.12) 0%, rgba(99,102,241,0.07) 40%, transparent 70%)' }} />
+      <div className="absolute -top-[100px] left-1/2 -translate-x-1/2 w-[600px] h-[400px] rounded-full bg-blue-500/[0.08] blur-[100px] pointer-events-none animate-[glow-breathe_5s_ease-in-out_infinite_1s]" />
       {/* 글로우 오브 */}
-      <div className="absolute top-1/4 left-[15%] w-[500px] h-[500px] bg-cyan-600/8 blur-[180px] rounded-full pointer-events-none" />
-      <div className="absolute top-1/3 right-[10%] w-[400px] h-[400px] bg-purple-600/8 blur-[160px] rounded-full pointer-events-none" />
-      <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-pink-600/5 blur-[140px] rounded-full pointer-events-none" />
+      <div className="absolute top-1/4 left-[15%] w-[500px] h-[500px] bg-cyan-600/8 blur-[180px] rounded-full pointer-events-none animate-[glow-breathe_7s_ease-in-out_infinite_0.5s]" />
+      <div className="absolute top-1/3 right-[10%] w-[400px] h-[400px] bg-purple-600/8 blur-[160px] rounded-full pointer-events-none animate-[glow-breathe_8s_ease-in-out_infinite_2s]" />
+      <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-pink-600/5 blur-[140px] rounded-full pointer-events-none animate-[glow-breathe_6s_ease-in-out_infinite_3s]" />
       {/* 그리드 패턴 */}
       <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{ backgroundImage: 'linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)', backgroundSize: '60px 60px' }} />
       {/* 상단 → 하단 페이드 */}

@@ -55,6 +55,11 @@
     50% { opacity: 1; }
   }
 
+  @keyframes glow-breathe {
+    0%, 100% { opacity: 0.5; transform: scale(1); }
+    50% { opacity: 1; transform: scale(1.08); }
+  }
+
   @keyframes gradient-x {
     0%, 100% { background-position: 0% 50%; }
     50% { background-position: 100% 50%; }
