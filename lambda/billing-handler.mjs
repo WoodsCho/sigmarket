@@ -1,0 +1,277 @@
+/**
+ * Toss Payments 정기구독 Lambda Handler
+ *
+ * ============================================
+ * 환경 변수 (Lambda 콘솔에서 설정):
+ * ============================================
+ * TOSS_SECRET_KEY          : 토스페이먼츠 시크릿 키 (test_sk_... 또는 live_sk_...)
+ * SUBSCRIPTIONS_TABLE_NAME : DynamoDB 구독 테이블 이름 (예: Subscriptions)
+ * COGNITO_USER_POOL_ID     : Cognito 유저풀 ID (예: ap-northeast-2_4UqFR7cjW)
+ *
+ * ============================================
+ * 필요한 IAM 권한:
+ * ============================================
+ * - dynamodb:PutItem, GetItem, UpdateItem (Subscriptions 테이블)
+ * - cognito-idp:AdminAddUserToGroup, AdminRemoveUserFromGroup
+ *
+ * ============================================
+ * DynamoDB Subscriptions 테이블:
+ * ============================================
+ * - 파티션 키: userId (String)
+ * - 속성: billingKey, customerKey, plan, billing, amount,
+ *         status, paymentKey, orderId, nextPaymentAt, createdAt, updatedAt
+ *
+ * ============================================
+ * API Gateway 엔드포인트:
+ * ============================================
+ * POST /billing/authorize  - 빌링키 발급 + 첫 결제 + Cognito 그룹 추가
+ * POST /billing/cancel     - 구독 취소 + Cognito 그룹 제거
+ * GET  /billing/status     - 구독 상태 조회 (?userId=...)
+ */
+
+import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
+import { DynamoDBDocumentClient, PutCommand, GetCommand, UpdateCommand } from "@aws-sdk/lib-dynamodb";
+import {
+  CognitoIdentityProviderClient,
+  AdminAddUserToGroupCommand,
+  AdminRemoveUserFromGroupCommand,
+  ListUsersCommand,
+} from "@aws-sdk/client-cognito-identity-provider";
+
+const TOSS_SECRET_KEY = process.env.TOSS_SECRET_KEY || "";
+const TABLE_NAME = process.env.SUBSCRIPTIONS_TABLE_NAME || "";
+const USER_POOL_ID = process.env.COGNITO_USER_POOL_ID || "";
+const TOSS_API_BASE = "https://api.tosspayments.com/v1";
+
+const ddbClient = new DynamoDBClient({});
+const docClient = DynamoDBDocumentClient.from(ddbClient);
+const cognitoClient = new CognitoIdentityProviderClient({ region: "ap-northeast-2" });
+
+const CORS_HEADERS = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "Content-Type, Authorization",
+  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+  "Content-Type": "application/json",
+};
+
+const PLAN_AMOUNTS = {
+  "standard-monthly":     49000,
+  "standard-yearly":     468000,  // 39000 × 12
+  "professional-monthly": 99000,
+  "professional-yearly":  948000, // 79000 × 12
+};
+
+const ORDER_NAMES = {
+  "standard-monthly":     "Sigmarket Standard 월간 구독",
+  "standard-yearly":      "Sigmarket Standard 연간 구독",
+  "professional-monthly": "Sigmarket Professional 월간 구독",
+  "professional-yearly":  "Sigmarket Professional 연간 구독",
+};
+
+function tossAuth() {
+  return "Basic " + Buffer.from(TOSS_SECRET_KEY + ":").toString("base64");
+}
+
+// JWT payload를 서명 검증 없이 디코드 (API Gateway Cognito Authorizer가 서명 검증)
+function decodeJwt(token) {
+  try {
+    const parts = token.split(".");
+    if (parts.length !== 3) return null;
+    const payload = parts[1].replace(/-/g, "+").replace(/_/g, "/");
+    return JSON.parse(Buffer.from(payload, "base64").toString("utf8"));
+  } catch (_e) {
+    return null;
+  }
+}
+
+function verifyTokenAndGetSub(event) {
+  const authHeader = event.headers?.Authorization || event.headers?.authorization || "";
+  const token = authHeader.replace(/^Bearer\s+/i, "");
+  if (!token) return null;
+  return decodeJwt(token);
+}
+
+function getNextPaymentAt(billing) {
+  const d = new Date();
+  if (billing === "yearly") d.setFullYear(d.getFullYear() + 1);
+  else d.setMonth(d.getMonth() + 1);
+  return d.toISOString();
+}
+
+// sub로 실제 Cognito username 조회
+async function getCognitoUsernameBySubOrEmail(sub, email) {
+  // sub로만 조회 (email은 중복 계정이 있을 수 있어 제외)
+  try {
+    const res = await cognitoClient.send(new ListUsersCommand({
+      UserPoolId: USER_POOL_ID,
+      Filter: `sub = "${sub}"`,
+      Limit: 1,
+    }));
+    if (res.Users?.[0]?.Username) {
+      console.log("getCognitoUsername: found username=", res.Users[0].Username, "for sub=", sub);
+      return res.Users[0].Username;
+    }
+  } catch (e) {
+    console.error("getCognitoUsername ListUsers error:", e?.message);
+  }
+  console.error("getCognitoUsername: no user found for sub=", sub);
+  return null;
+}
+
+async function removeFromPlanGroups(cognitoUsername) {
+  for (const group of ["free", "standard", "professional"]) {
+    try {
+      await cognitoClient.send(
+        new AdminRemoveUserFromGroupCommand({ UserPoolId: USER_POOL_ID, Username: cognitoUsername, GroupName: group })
+      );
+    } catch (_e) { /* ignore if not in group */ }
+  }
+}
+
+function ok(body) {
+  return { statusCode: 200, headers: CORS_HEADERS, body: JSON.stringify(body) };
+}
+
+function err(statusCode, message) {
+  return { statusCode, headers: CORS_HEADERS, body: JSON.stringify({ error: message }) };
+}
+
+export const handler = async (event) => {
+  const path = event.path || event.rawPath || "";
+  const method = event.httpMethod || event.requestContext?.http?.method || "";
+
+  console.log("billing-handler:", method, path);
+
+  if (method === "OPTIONS") {
+    return { statusCode: 200, headers: CORS_HEADERS, body: "" };
+  }
+
+  try {
+    // ─── POST /billing/authorize ───────────────────────────────────────────
+    if (method === "POST" && path.endsWith("/billing/authorize")) {
+      const body = event.isBase64Encoded
+        ? Buffer.from(event.body || "", "base64").toString("utf8")
+        : (event.body || "{}")
+      const { authKey, customerKey, userId, plan, billing } = JSON.parse(body);
+      const claims = verifyTokenAndGetSub(event);
+      console.log("authorize claims.sub:", claims?.sub, "userId:", userId);
+      if (!claims || claims.sub !== userId) return err(401, "Unauthorized");
+      const cognitoUsername = await getCognitoUsernameBySubOrEmail(claims.sub, claims.email);
+      console.log("authorize cognitoUsername resolved:", cognitoUsername);
+
+      console.log("authorize: env check TABLE_NAME=", TABLE_NAME, "POOL=", USER_POOL_ID, "HAS_KEY=", !!TOSS_SECRET_KEY);
+      const planBillingKey = `${plan}-${billing}`;
+      const amount = PLAN_AMOUNTS[planBillingKey];
+      if (!amount) return err(400, "유효하지 않은 플랜입니다");
+
+      // 1. 빌링키 발급
+      console.log("authorize: step1 issue billingKey for authKey=", authKey?.slice(0,10));
+      const issueRes = await fetch(`${TOSS_API_BASE}/billing/authorizations/issue`, {
+        method: "POST",
+        headers: { Authorization: tossAuth(), "Content-Type": "application/json" },
+        body: JSON.stringify({ authKey, customerKey }),
+      });
+      const issueData = await issueRes.json();
+      console.log("authorize: step1 result ok=", issueRes.ok, "status=", issueRes.status);
+      if (!issueRes.ok) return err(400, issueData.message || "빌링키 발급 실패");
+      const { billingKey } = issueData;
+
+      // 2. 첫 결제 실행
+      console.log("authorize: step2 charge billingKey=", billingKey?.slice(0,10));
+      const orderId = `${plan}-${billing}-${userId.slice(0, 8)}-${Date.now()}`;
+      const payRes = await fetch(`${TOSS_API_BASE}/billing/${billingKey}`, {
+        method: "POST",
+        headers: { Authorization: tossAuth(), "Content-Type": "application/json" },
+        body: JSON.stringify({
+          customerKey,
+          amount,
+          orderId,
+          orderName: ORDER_NAMES[planBillingKey],
+          customerEmail: claims.email || "",
+          customerName: (claims.email || "고객").split("@")[0],
+        }),
+      });
+      const payData = await payRes.json();
+      console.log("authorize: step2 result ok=", payRes.ok, "status=", payRes.status);
+      if (!payRes.ok) return err(400, payData.message || "결제 실패");
+
+      // 3. DynamoDB 저장
+      console.log("authorize: step3 DynamoDB PutItem userId=", userId);
+      const now = new Date().toISOString();
+      const nextPaymentAt = getNextPaymentAt(billing);
+      await docClient.send(new PutCommand({
+        TableName: TABLE_NAME,
+        Item: {
+          userId, billingKey, customerKey, plan, billing, amount,
+          status: "active",
+          paymentKey: payData.paymentKey,
+          orderId,
+          nextPaymentAt,
+          createdAt: now,
+          updatedAt: now,
+        },
+      }));
+      console.log("authorize: step3 DynamoDB OK");
+
+      // 4. Cognito 그룹 업데이트
+      console.log("authorize: step4 Cognito group update cognitoUsername=", cognitoUsername, "plan=", plan);
+      await removeFromPlanGroups(cognitoUsername);
+      await cognitoClient.send(
+        new AdminAddUserToGroupCommand({ UserPoolId: USER_POOL_ID, Username: cognitoUsername, GroupName: plan })
+      );
+      console.log("authorize: step4 Cognito OK");
+
+      return ok({ success: true, plan, billing, amount, nextPaymentAt });
+    }
+
+    // ─── POST /billing/cancel ──────────────────────────────────────────────
+    if (method === "POST" && path.endsWith("/billing/cancel")) {
+      const { userId } = JSON.parse(event.body || "{}");
+
+      const claims = verifyTokenAndGetSub(event);
+      if (!claims || claims.sub !== userId) return err(401, "Unauthorized");
+      const cognitoUsername = await getCognitoUsernameBySubOrEmail(claims.sub, claims.email);
+
+      const result = await docClient.send(new GetCommand({ TableName: TABLE_NAME, Key: { userId } }));
+      if (!result.Item) return err(404, "구독 정보를 찾을 수 없습니다");
+      if (result.Item.status === "cancelled") return err(400, "이미 취소된 구독입니다");
+
+      await docClient.send(new UpdateCommand({
+        TableName: TABLE_NAME,
+        Key: { userId },
+        UpdateExpression: "SET #status = :cancelled, updatedAt = :now",
+        ExpressionAttributeNames: { "#status": "status" },
+        ExpressionAttributeValues: { ":cancelled": "cancelled", ":now": new Date().toISOString() },
+      }));
+
+      await removeFromPlanGroups(cognitoUsername);
+
+      return ok({ success: true });
+    }
+
+    // ─── GET /billing/status ───────────────────────────────────────────────
+    if (method === "GET" && path.endsWith("/billing/status")) {
+      const userId = event.queryStringParameters?.userId;
+
+      const claims = verifyTokenAndGetSub(event);
+      if (!claims || claims.sub !== userId) return err(401, "Unauthorized");
+
+      const result = await docClient.send(new GetCommand({ TableName: TABLE_NAME, Key: { userId } }));
+      if (!result.Item) return ok({ status: "none" });
+
+      const { plan, billing, amount, status, nextPaymentAt, createdAt } = result.Item;
+      return ok({ plan, billing, amount, status, nextPaymentAt, createdAt });
+    }
+
+    return err(404, "Not found");
+
+  } catch (e) {
+    console.error("billing-handler error:", JSON.stringify({
+      message: e?.message,
+      name: e?.name,
+      code: e?.Code || e?.code,
+      stack: e?.stack,
+    }));
+    return err(500, e?.message || "서버 오류가 발생했습니다");
+  }
+};

@@ -6,6 +6,8 @@ import {
 } from "lucide-react"
 import { signIn, signOut, getCurrentUser, fetchAuthSession, confirmSignIn } from "aws-amplify/auth"
 import { QRCodeSVG } from "qrcode.react"
+import { useAuth } from "../contexts/AuthContext"
+import { useNavigate } from "react-router-dom"
 import type { Indicator, ContentSection } from "../types"
 
 /* ─── 환경 변수 ─── */
@@ -208,8 +210,18 @@ function LoginGate({ onLogin }: { onLogin: () => void }) {
 /*           관리자 대시보드                     */
 /* ========================================== */
 export default function AdminPage() {
+  const { user, isAdmin, isLoading } = useAuth()
+  const navigate = useNavigate()
   const [authed, setAuthed] = useState(false)
   const [checking, setChecking] = useState(true)
+
+  // admin 그룹 체크 — 비로그인이거나 admin 아니면 차단
+  useEffect(() => {
+    if (isLoading) return
+    if (!user || !isAdmin) {
+      navigate("/", { replace: true })
+    }
+  }, [user, isAdmin, isLoading])
 
   useEffect(() => {
     getCurrentUser()

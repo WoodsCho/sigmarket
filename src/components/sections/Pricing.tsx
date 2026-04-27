@@ -1,5 +1,7 @@
 import { useState } from "react"
+import { useNavigate } from "react-router-dom"
 import { Check, Zap, Star, Crown } from "lucide-react"
+import { useAuth } from "../../contexts/AuthContext"
 
 /* ─── 플랜 데이터 ─── */
 const PLANS = [
@@ -89,6 +91,18 @@ function formatPrice(price: number) {
 
 export default function Pricing() {
   const [billing, setBilling] = useState<"monthly" | "yearly">("monthly")
+  const navigate = useNavigate()
+  const { user } = useAuth()
+
+  function handleCta(planKey: string) {
+    if (planKey === "free") {
+      navigate(user ? "/profile" : "/signup")
+      return
+    }
+    // "pro" key → use "professional" as plan param
+    const planParam = planKey === "pro" ? "professional" : planKey
+    navigate(`/payment?plan=${planParam}&billing=${billing}`)
+  }
 
   return (
     <section id="pricing" className="relative py-24">
@@ -222,6 +236,7 @@ export default function Pricing() {
 
                   {/* CTA */}
                   <button
+                    onClick={() => handleCta(plan.key)}
                     className={`w-full py-3 rounded-xl font-semibold text-sm transition-all duration-300 ${plan.ctaClass}`}
                   >
                     {plan.ctaText}
@@ -233,7 +248,7 @@ export default function Pricing() {
 
           {/* ── 하단 안내 ── */}
           <p className="text-center text-xs text-gray-600 mt-10 leading-relaxed">
-            구독은 언제든지 취소할 수 있습니다. 결제는 Stripe를 통해 안전하게 처리됩니다.
+            구독은 언제든지 취소할 수 있습니다. 결제는 토스페이먼츠를 통해 안전하게 처리됩니다.
           </p>
         </div>
       </div>

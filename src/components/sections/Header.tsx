@@ -1,7 +1,14 @@
 import { useState, useEffect, useRef } from "react"
 import { useNavigate } from "react-router-dom"
-import { Menu, X, Flame, ArrowRight } from "lucide-react"
+import { Menu, X, Flame, ArrowRight, LogOut, User } from "lucide-react"
 import { navItems } from "../../data"
+import { useAuth } from "../../contexts/AuthContext"
+
+const PLAN_STYLES = {
+  free:         { label: "Free",         className: "bg-cyan-500/15 text-cyan-400 border-cyan-500/30" },
+  standard:     { label: "Standard",     className: "bg-purple-500/15 text-purple-400 border-purple-500/30" },
+  professional: { label: "Professional", className: "bg-pink-500/15 text-pink-400 border-pink-500/30" },
+}
 
 /* ─── 카운트다운 훅 ─── */
 function useCountdown(targetDate: Date) {
@@ -27,6 +34,7 @@ const BANNER_KEY = "sigmarket-promo-closed"
 
 export default function Header() {
   const navigate = useNavigate()
+  const { user, signOut, plan } = useAuth()
   const [mobileOpen, setMobileOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
   const [bannerVisible, setBannerVisible] = useState(
@@ -105,13 +113,13 @@ export default function Header() {
 
       {/* ─── 네비게이션 ─── */}
       <div className="w-full px-6 py-4">
-        <nav className="flex items-center justify-between w-full">
+        <nav className="relative flex items-center justify-between max-w-6xl mx-auto w-full">
           {/* 로고 */}
           <div className="flex items-center cursor-pointer" onClick={() => navigate("/")}>
             <img src="/images/sigmarket-logo.png" alt="시그마켓" className="h-6" />
           </div>
 
-          {/* 데스크탑 네비 + CTA — 오른쪽 정렬 */}
+          {/* 데스크탑 네비 — 우측 정렬 */}
           <div className="hidden md:flex items-center gap-1 ml-auto">
             {navItems.map((item) => (
               <a
@@ -126,19 +134,43 @@ export default function Header() {
 
           {/* 데스크탑 CTA 버튼 */}
           <div className="hidden md:flex items-center gap-3 ml-4">
-            <button
-              onClick={() => navigate("/login")}
-              className="px-4 py-2 text-sm text-gray-400 hover:text-white transition-colors rounded-lg"
-            >
-              Log In
-            </button>
-            <a
-              href="#pricing"
-              className="group flex items-center gap-1.5 px-5 py-2 text-sm font-medium text-white rounded-full border border-white/15 bg-white/[0.04] hover:bg-white/[0.08] hover:border-white/25 transition-all duration-300"
-            >
-              Sign Up
-              <ArrowRight className="w-3.5 h-3.5 text-gray-400 group-hover:text-white group-hover:translate-x-0.5 transition-all duration-300" />
-            </a>
+            {user ? (
+              <>
+                <button
+                  onClick={() => navigate("/profile")}
+                  className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/[0.04] border border-white/10 hover:bg-white/[0.07] transition-colors"
+                >
+                  <User className="w-3.5 h-3.5 text-cyan-400" />
+                  <span className="text-sm text-gray-300 max-w-[140px] truncate">{user.signInDetails?.loginId || user.username}</span>
+                  <span className={`px-1.5 py-0.5 rounded text-[9px] font-bold uppercase border ${PLAN_STYLES[plan].className}`}>
+                    {PLAN_STYLES[plan].label}
+                  </span>
+                </button>
+                <button
+                  onClick={async () => { await signOut(); navigate("/") }}
+                  className="flex items-center gap-1.5 px-4 py-2 text-sm text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition-colors"
+                >
+                  <LogOut className="w-3.5 h-3.5" />
+                  로그아웃
+                </button>
+              </>
+            ) : (
+              <>
+                <button
+                  onClick={() => navigate("/login")}
+                  className="px-4 py-2 text-sm text-gray-400 hover:text-white transition-colors rounded-lg"
+                >
+                  Log In
+                </button>
+                <button
+                  onClick={() => navigate("/signup")}
+                  className="group flex items-center gap-1.5 px-5 py-2 text-sm font-medium text-white rounded-full border border-white/15 bg-white/[0.04] hover:bg-white/[0.08] hover:border-white/25 transition-all duration-300"
+                >
+                  Sign Up
+                  <ArrowRight className="w-3.5 h-3.5 text-gray-400 group-hover:text-white group-hover:translate-x-0.5 transition-all duration-300" />
+                </button>
+              </>
+            )}
           </div>
 
           {/* 모바일 햄버거 */}
@@ -170,20 +202,43 @@ export default function Header() {
             </a>
           ))}
           <div className="border-t border-white/[0.06] mt-2 pt-3 flex flex-col gap-1">
-            <button
-              onClick={() => { setMobileOpen(false); navigate("/login") }}
-              className="px-4 py-2.5 text-sm text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition-all duration-200 text-left"
-            >
-              Log In
-            </button>
-            <a
-              href="#pricing"
-              onClick={() => setMobileOpen(false)}
-              className="mx-4 mt-1 flex items-center justify-center gap-1.5 px-5 py-2.5 text-sm font-medium text-white rounded-full border border-white/15 bg-white/[0.04] hover:bg-white/[0.08] transition-all duration-300"
-            >
-              Sign Up
-              <ArrowRight className="w-3.5 h-3.5" />
-            </a>
+            {user ? (
+              <>
+                <button
+                  onClick={() => { setMobileOpen(false); navigate("/profile") }}
+                  className="flex items-center gap-2 px-4 py-2"
+                >
+                  <User className="w-3.5 h-3.5 text-cyan-400 flex-shrink-0" />
+                  <span className="text-sm text-gray-300 truncate">{user.signInDetails?.loginId || user.username}</span>
+                  <span className={`ml-auto px-1.5 py-0.5 rounded text-[9px] font-bold uppercase border ${PLAN_STYLES[plan].className}`}>
+                    {PLAN_STYLES[plan].label}
+                  </span>
+                </button>
+                <button
+                  onClick={async () => { setMobileOpen(false); await signOut(); navigate("/") }}
+                  className="flex items-center gap-2 px-4 py-2.5 text-sm text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition-all duration-200 text-left"
+                >
+                  <LogOut className="w-3.5 h-3.5" />
+                  로그아웃
+                </button>
+              </>
+            ) : (
+              <>
+                <button
+                  onClick={() => { setMobileOpen(false); navigate("/login") }}
+                  className="px-4 py-2.5 text-sm text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition-all duration-200 text-left"
+                >
+                  Log In
+                </button>
+                <button
+                  onClick={() => { setMobileOpen(false); navigate("/signup") }}
+                  className="mx-4 mt-1 flex items-center justify-center gap-1.5 px-5 py-2.5 text-sm font-medium text-white rounded-full border border-white/15 bg-white/[0.04] hover:bg-white/[0.08] transition-all duration-300"
+                >
+                  Sign Up
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </button>
+              </>
+            )}
           </div>
         </div>
       </div>

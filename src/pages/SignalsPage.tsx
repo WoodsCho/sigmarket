@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { ArrowLeft, Info, AlertTriangle, TrendingUp } from "lucide-react"
+import { ArrowLeft, Info, AlertTriangle, TrendingUp, ChevronLeft, ChevronRight } from "lucide-react"
 import { useNavigate } from "react-router-dom"
 import { Header, Footer } from "../components/sections"
 import { useSignals } from "../hooks/useSignals"
@@ -166,8 +166,14 @@ function SignalRow({ signal }: { signal: Signal }) {
 }
 
 /* ─── 실시간 시그널 섹션 ─── */
+const PAGE_SIZE = 20
+
 function SignalsSection() {
   const { signals, isLoading, isLive } = useSignals()
+  const [page, setPage] = useState(0)
+
+  const totalPages = Math.max(1, Math.ceil(signals.length / PAGE_SIZE))
+  const pagedSignals = signals.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE)
 
   return (
     <div>
@@ -201,7 +207,7 @@ function SignalsSection() {
         </div>
       ) : (
         <div className="bg-[#0d1117] border border-gray-700/50 rounded-md shadow-2xl overflow-hidden">
-          <div className="overflow-x-auto overflow-y-auto max-h-[840px] w-full bg-[#0d1117] custom-scrollbar">
+          <div className="overflow-x-auto w-full bg-[#0d1117] custom-scrollbar">
             <table className="w-full text-left border-collapse whitespace-nowrap font-mono">
               <thead className="sticky top-0 z-10">
                 <tr className="bg-[#161b22] text-gray-500 text-[10px] uppercase tracking-widest border-b border-gray-700/50">
@@ -213,12 +219,50 @@ function SignalsSection() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-800/30 text-xs">
-                {signals.map((signal, idx) => (
+                {pagedSignals.map((signal, idx) => (
                   <SignalRow key={signal.id || idx} signal={signal} />
                 ))}
               </tbody>
             </table>
           </div>
+
+          {/* 페이지네이션 */}
+          {totalPages > 1 && (
+            <div className="bg-[#0a0e16] border-t border-gray-700/50 px-6 py-3 flex items-center justify-between">
+              <span className="text-[11px] text-gray-500 font-mono">
+                {page * PAGE_SIZE + 1}–{Math.min((page + 1) * PAGE_SIZE, signals.length)} / {signals.length}
+              </span>
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => setPage(p => Math.max(0, p - 1))}
+                  disabled={page === 0}
+                  className="p-1.5 rounded-lg text-gray-500 hover:text-white hover:bg-gray-700/50 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </button>
+                {Array.from({ length: totalPages }, (_, i) => (
+                  <button
+                    key={i}
+                    onClick={() => setPage(i)}
+                    className={`w-7 h-7 rounded-lg text-[11px] font-mono transition-colors ${
+                      i === page
+                        ? "bg-cyan-500/20 border border-cyan-500/40 text-cyan-400 font-bold"
+                        : "text-gray-500 hover:text-white hover:bg-gray-700/50"
+                    }`}
+                  >
+                    {i + 1}
+                  </button>
+                ))}
+                <button
+                  onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
+                  disabled={page === totalPages - 1}
+                  className="p-1.5 rounded-lg text-gray-500 hover:text-white hover:bg-gray-700/50 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          )}
 
           <div className="bg-[#161b22] border-t border-gray-700/50 p-5 px-6 flex flex-col gap-2">
             <div className="flex items-start gap-3">
