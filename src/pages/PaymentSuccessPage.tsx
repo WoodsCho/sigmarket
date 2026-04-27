@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react"
 import { useNavigate, useSearchParams } from "react-router-dom"
 import { useAuth } from "../contexts/AuthContext"
 import { fetchAuthSession } from "aws-amplify/auth"
-import { CheckCircle, XCircle, RefreshCw } from "lucide-react"
+import { CheckCircle, XCircle } from "lucide-react"
 
 const BILLING_API_URL = (import.meta.env.VITE_BILLING_API_URL as string) || ""
 
