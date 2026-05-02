@@ -215,10 +215,10 @@ export default function AdminPage() {
   const [authed, setAuthed] = useState(false)
   const [checking, setChecking] = useState(true)
 
-  // admin 그룹 체크 — 비로그인이거나 admin 아니면 차단
+  // admin 그룹 체크 — 로그인은 됐지만 admin 아닌 경우만 차단
   useEffect(() => {
     if (isLoading) return
-    if (!user || !isAdmin) {
+    if (user && !isAdmin) {
       navigate("/", { replace: true })
     }
   }, [user, isAdmin, isLoading])
