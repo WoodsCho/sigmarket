@@ -22,6 +22,17 @@ Amplify.configure({
     Cognito: {
       userPoolId: "ap-northeast-2_pQDdR9CWJ",
       userPoolClientId: "6imvm8src98uubrm6dgorg9fcf",
+      loginWith: {
+        oauth: {
+          // AWS 콘솔에서 설정한 Cognito 호스팅 도메인
+          // 예: sigmarket.auth.ap-northeast-2.amazoncognito.com
+          domain: import.meta.env.VITE_COGNITO_DOMAIN || "",
+          scopes: ["openid", "email", "profile"],
+          redirectSignIn: [window.location.origin],
+          redirectSignOut: [window.location.origin],
+          responseType: "code",
+        },
+      },
     },
   },
 });

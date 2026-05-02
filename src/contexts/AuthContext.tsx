@@ -11,7 +11,7 @@ interface AuthContextValue {
   plan: Plan
   isLoading: boolean
   signOut: () => Promise<void>
-  refreshUser: () => Promise<void>
+  refreshUser: () => Promise<boolean>
 }
 
 const AuthContext = createContext<AuthContextValue>({
@@ -20,7 +20,7 @@ const AuthContext = createContext<AuthContextValue>({
   plan: "free",
   isLoading: true,
   signOut: async () => {},
-  refreshUser: async () => {},
+  refreshUser: async () => false,
 })
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -29,21 +29,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [plan, setPlan] = useState<Plan>("free")
   const [isLoading, setIsLoading] = useState(true)
 
-  const refreshUser = async () => {
+  const refreshUser = async (): Promise<boolean> => {
     try {
       const current = await getCurrentUser()
       setUser(current)
       const session = await fetchAuthSession({ forceRefresh: true })
       const groups = (session.tokens?.idToken?.payload?.["cognito:groups"] as string[]) || []
       console.log("[AuthContext] refreshUser groups:", groups, "idToken payload:", session.tokens?.idToken?.payload)
-      setIsAdmin(groups.includes("admin"))
+      const admin = groups.includes("admin")
+      setIsAdmin(admin)
       if (groups.includes("professional")) setPlan("professional")
       else if (groups.includes("standard")) setPlan("standard")
       else setPlan("free")
+      return admin
     } catch {
       setUser(null)
       setIsAdmin(false)
       setPlan("free")
+      return false
     }
   }
 

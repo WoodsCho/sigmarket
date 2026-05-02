@@ -598,18 +598,20 @@ function IndicatorEditor({
         ))}
       </fieldset>
 
-      {/* 레거시 내용 (content) — 섹션이 없을 때 폴백용 */}
-      {(!form.sections || form.sections.length === 0) && (
-        <div>
-          <label className="block text-sm text-gray-400 mb-1">내용 (content) — 섹션 미사용 시 단순 텍스트</label>
-          <textarea
-            value={form.content}
-            onChange={(e) => set("content", e.target.value)}
-            rows={4}
-            className="w-full bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-cyan-500 resize-y"
-          />
-        </div>
-      )}
+      {/* 카드 간략 설명 (content) — 목록 카드에 표시되는 짧은 소개 */}
+      <div>
+        <label className="block text-sm text-gray-400 mb-1">
+          카드 설명 (content)
+          <span className="text-gray-600 ml-2 text-xs">커스텀 보조지표 목록 카드에 표시되는 짧은 소개</span>
+        </label>
+        <textarea
+          value={form.content}
+          onChange={(e) => set("content", e.target.value)}
+          rows={4}
+          placeholder="카드에 표시될 간략한 설명을 입력하세요"
+          className="w-full bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-cyan-500 resize-y"
+        />
+      </div>
 
       {/* 전략 ID */}
       <div>
