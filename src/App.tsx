@@ -38,7 +38,7 @@ function App() {
           <section
             key={id}
             id={id}
-            className="min-h-screen md:h-screen md:snap-start overflow-hidden"
+            className="md:h-screen md:snap-start overflow-hidden"
           >
             <Component />
           </section>

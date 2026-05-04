@@ -110,13 +110,13 @@ function StatCard({ icon: Icon, label, value, suffix, color, delay }: {
   icon: typeof TrendingUp; label: string; value: string; suffix?: string; color: string; delay: string
 }) {
   return (
-    <div className={`hero-stat-card flex items-center gap-3 px-4 py-3 rounded-xl bg-white/[0.03] border border-white/[0.06] backdrop-blur-sm`} style={{ animationDelay: delay }}>
-      <div className={`p-2 rounded-lg ${color}`}>
-        <Icon className="w-4 h-4" />
+    <div className={`hero-stat-card flex items-center gap-2 px-3 py-2.5 rounded-xl bg-white/[0.03] border border-white/[0.06] backdrop-blur-sm`} style={{ animationDelay: delay }}>
+      <div className={`p-1.5 rounded-lg ${color} shrink-0`}>
+        <Icon className="w-3.5 h-3.5" />
       </div>
-      <div>
-        <p className="text-[11px] text-gray-500">{label}</p>
-        <p className="text-sm font-bold text-white">{value}{suffix && <span className="text-xs text-gray-400 ml-0.5">{suffix}</span>}</p>
+      <div className="min-w-0">
+        <p className="text-[10px] text-gray-500 whitespace-nowrap">{label}</p>
+        <p className="text-xs font-bold text-white whitespace-nowrap">{value}{suffix && <span className="text-[10px] text-gray-400 ml-0.5">{suffix}</span>}</p>
       </div>
     </div>
   )
@@ -198,7 +198,7 @@ export default function Hero() {
           </div>
 
           {/* 미니 스탯 */}
-          <div className="hero-fade-in hero-delay-5 flex flex-wrap justify-center lg:justify-start gap-3">
+          <div className="hero-fade-in hero-delay-5 flex flex-nowrap justify-center lg:justify-start gap-2">
             <StatCard icon={TrendingUp} label="최고 수익률" value={`+${topReturn}%`} color="bg-cyan-500/10 text-cyan-400" delay="0.6s" />
             <StatCard icon={BarChart3} label="평균 수익률" value={`+${avgReturn}%`} color="bg-purple-500/10 text-purple-400" delay="0.75s" />
             <StatCard icon={Zap} label="인디케이터" value="10+" suffix="개" color="bg-pink-500/10 text-pink-400" delay="0.9s" />
