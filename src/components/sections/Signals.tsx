@@ -182,7 +182,10 @@ export default function Signals() {
 
 function SignalRow({ signal, idx }: { signal: Signal; idx: number }) {
   const pos = POS_STYLES[signal.position] || POS_STYLES.LONG
+  // RAYUSDT.P/USDT → RAYUSDT.P → RAY  (USDT, USDT.P, BTC 등 quote 제거)
   const baseSymbol = signal.symbol.split("/")[0]
+    .replace(/USDT\.?P?$/i, "")
+    .replace(/(BTC|ETH|BNB|BUSD|USD|PERP)$/i, "")
   const isEven = idx % 2 === 0
 
   return (

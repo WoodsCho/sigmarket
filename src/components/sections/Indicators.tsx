@@ -95,7 +95,7 @@ function IndicatorCard({ indicator, idx }: { indicator: Indicator; idx: number }
 
           {/* 설명 */}
           <CardContent className="p-0 flex-1">
-            <p className="text-sm text-gray-400 leading-relaxed line-clamp-4">
+            <p className="text-sm text-gray-400 leading-relaxed line-clamp-6">
               {indicator.description || indicator.content}
             </p>
 
