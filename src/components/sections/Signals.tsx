@@ -11,7 +11,7 @@ const POS_STYLES: Record<string, { text: string; bg: string; border: string; bar
   SHORT: { text: "text-pink-400",  bg: "bg-pink-400/10",  border: "border-pink-400/25",  bar: "bg-pink-500", glow: "shadow-pink-500/20" },
 }
 
-const PAGE_SIZE = 20
+const PAGE_SIZE = 10
 
 export default function Signals() {
   const { signals, isLoading, isLive } = useSignals()
@@ -115,10 +115,7 @@ export default function Signals() {
 
                 {/* ── 페이지네이션 ── */}
                 {totalPages > 1 && (
-                  <div className="bg-[#0a0e16] border-t border-gray-700/40 px-6 py-3 flex items-center justify-between">
-                    <span className="text-[11px] text-gray-500 font-mono">
-                      {page * PAGE_SIZE + 1}–{Math.min((page + 1) * PAGE_SIZE, signals.length)} / {signals.length}
-                    </span>
+                  <div className="bg-[#0a0e16] border-t border-gray-700/40 px-6 py-3 flex items-center justify-center gap-4">
                     <div className="flex items-center gap-1">
                       <button
                         onClick={() => setPage(p => Math.max(0, p - 1))}
@@ -148,6 +145,9 @@ export default function Signals() {
                         <ChevronRight className="w-4 h-4" />
                       </button>
                     </div>
+                    <span className="text-[11px] text-gray-500 font-mono">
+                      {page * PAGE_SIZE + 1}–{Math.min((page + 1) * PAGE_SIZE, signals.length)} / {signals.length}
+                    </span>
                   </div>
                 )}
 

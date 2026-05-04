@@ -74,13 +74,12 @@ function IndicatorCard({ indicator, idx }: { indicator: Indicator; idx: number }
       <Card className="glass-card glass-card-hover border-0 rounded-2xl transition-all duration-500 group cursor-pointer overflow-hidden hover:-translate-y-2 hover:shadow-2xl hover:shadow-cyan-500/5 flex flex-col h-full w-full">
 
         {/* 차트 이미지 / 미리보기 영역 */}
-        <div className="relative h-48 overflow-hidden flex-shrink-0 rounded-t-2xl">
+        <div className="relative h-96 overflow-hidden flex-shrink-0 rounded-t-2xl">
           {indicator.image ? (
             <img src={indicator.image} alt={indicator.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
           ) : (
             <ChartPreviewSVG />
           )}
-          <div className="absolute inset-0 bg-gradient-to-t from-[#08061a]/80 via-transparent to-transparent" />
         </div>
 
         {/* 컨텐츠 영역 */}
