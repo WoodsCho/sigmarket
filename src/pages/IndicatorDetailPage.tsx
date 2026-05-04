@@ -164,16 +164,31 @@ function SectionCard({ section, index, isFullWidth }: { section: ContentSection;
   const Icon = SECTION_ICONS[index % SECTION_ICONS.length]
 
   return (
-    <div
-      className={`
-        ${isFullWidth ? "md:col-span-2" : ""}
-        ${isFullWidth
-          ? "bg-gradient-to-br from-gray-900/80 to-gray-800/40 border-gray-700 shadow-xl"
-          : "bg-gray-900/40 border-gray-800"}
-        border rounded-2xl p-8 md:p-10
-        ${color.hover} transition-colors group relative
-      `}
-    >
+    <div className={`${isFullWidth ? "md:col-span-2" : ""} flex flex-col gap-4`}>
+      {/* ─── 섹션 이미지 (카드 위 분리) ─── */}
+      {section.image && (
+        <div className="flex justify-center">
+          <img
+            src={section.image}
+            alt={section.title || "섹션 이미지"}
+            className="object-contain max-h-[480px]"
+          />
+        </div>
+      )}
+
+      {/* ─── 카드 본문 ─── */}
+      <div
+        className={`
+          ${section.cardTransparent
+            ? ""
+            : isFullWidth
+              ? "bg-gradient-to-br from-gray-900/80 to-gray-800/40 border-gray-700 shadow-xl border rounded-2xl p-8 md:p-10"
+              : "bg-gray-900/40 border-gray-800 border rounded-2xl p-8 md:p-10"
+          }
+          ${section.cardTransparent ? "" : `${color.hover} transition-colors`}
+          group relative
+        `}
+      >
       {/* 배경 글로우 */}
       {isFullWidth && (
         <div className={`absolute top-0 right-0 w-64 h-64 ${color.bg} blur-[80px] rounded-full pointer-events-none opacity-50 overflow-hidden`} />
@@ -182,9 +197,6 @@ function SectionCard({ section, index, isFullWidth }: { section: ContentSection;
       <div className="relative z-10">
         {/* ─── 헤더 ─── */}
         <div className="flex items-center gap-3 mb-6">
-          <span className={`w-8 h-8 rounded-lg bg-gray-800 flex items-center justify-center ${color.text} font-bold font-mono text-sm border border-gray-700`}>
-            {index + 1}
-          </span>
           {section.title ? (
             <h3 className={`${isFullWidth ? "text-2xl" : "text-xl"} font-bold text-white tracking-tight`}>
               {section.title}
@@ -318,6 +330,7 @@ function SectionCard({ section, index, isFullWidth }: { section: ContentSection;
             )}
           </>
         )}
+      </div>
       </div>
     </div>
   )

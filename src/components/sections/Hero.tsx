@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react"
 import { ArrowRight, TrendingUp, BarChart3, Zap } from "lucide-react"
 import { dummyRankings } from "../../data"
 import type { RankingEntry } from "../../types"
+import FreeTrialModal from "../FreeTrialModal"
 
 /* ─── 스파클 파티클 ─── */
 const SPARKLES = [
@@ -122,11 +123,13 @@ function StatCard({ icon: Icon, label, value, suffix, color, delay }: {
 
 export default function Hero() {
   const [period, setPeriod] = useState<Period>("daily")
+  const [trialOpen, setTrialOpen] = useState(false)
   const rankings = dummyRankings
   const topReturn = useCountUp(44)
   const avgReturn = useCountUp(18)
 
   return (
+    <>
     <section className="relative overflow-hidden pt-24 lg:pt-32 pb-20">
 
       {/* ─── 배경 레이어 ─── */}
@@ -177,7 +180,9 @@ export default function Hero() {
 
           {/* CTA 버튼 그룹 */}
           <div className="hero-fade-in hero-delay-4 flex flex-wrap items-center gap-4 mb-12">
-            <button className="group relative px-7 py-3.5 rounded-xl bg-gradient-to-r from-cyan-500 via-purple-500 to-pink-500 text-white font-bold text-sm transition-all duration-300 hover:shadow-[0_0_40px_rgba(168,85,247,0.35)] hover:scale-[1.03] active:scale-[0.98]">
+            <button
+              onClick={() => setTrialOpen(true)}
+              className="group relative px-7 py-3.5 rounded-xl bg-gradient-to-r from-cyan-500 via-purple-500 to-pink-500 text-white font-bold text-sm transition-all duration-300 hover:shadow-[0_0_40px_rgba(168,85,247,0.35)] hover:scale-[1.03] active:scale-[0.98]">
               <span className="relative z-10 flex items-center gap-2">
                 3일 무료 체험하기
                 <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
@@ -341,5 +346,8 @@ export default function Hero() {
 
       </div>
     </section>
+
+    <FreeTrialModal open={trialOpen} onClose={() => setTrialOpen(false)} />
+    </>
   )
 }

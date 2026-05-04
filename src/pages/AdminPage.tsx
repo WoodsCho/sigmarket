@@ -9,6 +9,7 @@ import { QRCodeSVG } from "qrcode.react"
 import { useAuth } from "../contexts/AuthContext"
 import { useNavigate } from "react-router-dom"
 import type { Indicator, ContentSection } from "../types"
+import ImageUploader from "../components/ui/ImageUploader"
 
 /* ─── 환경 변수 ─── */
 const ADMIN_SECRET = import.meta.env.VITE_ADMIN_SECRET || ""
@@ -527,16 +528,15 @@ function IndicatorEditor({
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Field label="제목 (name)" value={form.name} onChange={(v) => set("name", v)} required />
         <Field label="부제목 (subtitle)" value={form.subtitle} onChange={(v) => set("subtitle", v)} />
-        <Field label="이미지 URL" value={form.image || ""} onChange={(v) => set("image", v)} placeholder="https://..." />
         <Field label="태그 (쉼표 구분)" value={tagInput} onChange={setTagInput} placeholder="주식, 해외선물, 코인" />
       </div>
 
-      {/* 이미지 미리보기 */}
-      {form.image && (
-        <div className="w-full h-40 bg-zinc-900 rounded-lg overflow-hidden border border-zinc-800">
-          <img src={form.image} alt="preview" className="w-full h-full object-cover" />
-        </div>
-      )}
+      {/* 대표 이미지 업로드 */}
+      <ImageUploader
+        label="대표 이미지"
+        value={form.image || ""}
+        onChange={(url) => set("image", url)}
+      />
 
       {/* ═══ 상세 설명 섹션 에디터 ═══ */}
       <fieldset className="space-y-4">
@@ -780,6 +780,21 @@ function SectionEditor({
                 ▣ 100% (전체)
               </button>
             </div>
+            {/* 카드 투명 배경 */}
+            <button
+              type="button"
+              onClick={() => update("cardTransparent", !section.cardTransparent)}
+              className={`mt-2 flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
+                section.cardTransparent
+                  ? "bg-cyan-500/20 border-cyan-500/50 text-cyan-400"
+                  : "bg-zinc-900 border-zinc-700 text-gray-400 hover:border-zinc-600"
+              }`}
+            >
+              <span className={`w-3.5 h-3.5 rounded-sm border-2 flex items-center justify-center ${section.cardTransparent ? "border-cyan-400 bg-cyan-400/20" : "border-gray-600"}`}>
+                {section.cardTransparent && <span className="w-1.5 h-1.5 bg-cyan-400 rounded-sm" />}
+              </span>
+              카드 투명 배경 (테두리/배경 없이)
+            </button>
           </div>
 
           {/* 본문 */}
@@ -803,6 +818,31 @@ function SectionEditor({
               placeholder='예: "단기 신호가 장기 흐름과 같은 방향인지" 즉각적으로 체크할 수 있습니다.'
               className="w-full bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-cyan-500"
             />
+          </div>
+
+          {/* 🖼 섹션 이미지 업로드 */}
+          <div className="space-y-2">
+            <ImageUploader
+              label="🖼 섹션 이미지 (선택)"
+              value={section.image || ""}
+              onChange={(url) => update("image", url)}
+            />
+            {section.image && (
+              <button
+                type="button"
+                onClick={() => update("imageTransparent", !section.imageTransparent)}
+                className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
+                  section.imageTransparent
+                    ? "bg-cyan-500/20 border-cyan-500/50 text-cyan-400"
+                    : "bg-zinc-900 border-zinc-700 text-gray-400 hover:border-zinc-600"
+                }`}
+              >
+                <span className={`w-3.5 h-3.5 rounded-sm border-2 flex items-center justify-center ${section.imageTransparent ? "border-cyan-400 bg-cyan-400/20" : "border-gray-600"}`}>
+                  {section.imageTransparent && <span className="w-1.5 h-1.5 bg-cyan-400 rounded-sm" />}
+                </span>
+                투명 배경 (테두리 없이 표시)
+              </button>
+            )}
           </div>
 
           {/* ● 불릿 리스트 */}

@@ -2,8 +2,8 @@ import { TrendingUp, Activity, Zap } from "lucide-react"
 import type { SystemFeature, Indicator, NavItem, RankingEntry } from "../types"
 
 export const navItems: NavItem[] = [
-  { href: "#signals", label: "signal" },
-  { href: "#indicators", label: "indicator" },
+  { href: "/signals", label: "signal" },
+  { href: "/indicators", label: "indicator" },
   { href: "https://youtube.com", label: "youtube" },
   { href: "https://tradingview.com", label: "tradingview" },
 ]

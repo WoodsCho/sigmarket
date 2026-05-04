@@ -107,7 +107,14 @@ export default function LoginPage() {
               {/* Google 로그인 */}
               <button
                 type="button"
-                onClick={() => signInWithRedirect({ provider: "Google" })}
+                onClick={async () => {
+                  try {
+                    await signInWithRedirect({ provider: "Google" })
+                  } catch (err: any) {
+                    console.error("[Google Login Error]", err)
+                    setError(err.message || "Google 로그인 중 오류가 발생했습니다.")
+                  }
+                }}
                 className="flex items-center justify-center gap-3 w-full py-2.5 rounded-xl bg-white text-gray-800 text-sm font-semibold border border-gray-200 hover:bg-gray-50 hover:shadow-md transition-all duration-200 mb-4"
               >
                 <svg width="18" height="18" viewBox="0 0 48 48">

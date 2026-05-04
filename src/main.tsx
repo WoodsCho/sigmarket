@@ -5,6 +5,7 @@ import { Amplify } from "aws-amplify";
 import App from "./App.tsx";
 import AdminPage from "./pages/AdminPage.tsx";
 import IndicatorDetailPage from "./pages/IndicatorDetailPage.tsx";
+import IndicatorsListPage from "./pages/IndicatorsListPage.tsx";
 import SignalsPage from "./pages/SignalsPage.tsx";
 import LoginPage from "./pages/LoginPage.tsx";
 import SignUpPage from "./pages/SignUpPage.tsx";
@@ -14,8 +15,11 @@ import ProfilePage from "./pages/ProfilePage.tsx";
 import PaymentPage from "./pages/PaymentPage.tsx";
 import PaymentSuccessPage from "./pages/PaymentSuccessPage.tsx";
 import PaymentFailPage from "./pages/PaymentFailPage.tsx";
+import OAuthCallbackPage from "./pages/OAuthCallbackPage.tsx";
 import { AuthProvider } from "./contexts/AuthContext.tsx";
 import "./index.css";
+
+const callbackUrl = `${window.location.origin}/oauth/callback`;
 
 Amplify.configure({
   Auth: {
@@ -24,11 +28,9 @@ Amplify.configure({
       userPoolClientId: "6imvm8src98uubrm6dgorg9fcf",
       loginWith: {
         oauth: {
-          // AWS 콘솔에서 설정한 Cognito 호스팅 도메인
-          // 예: sigmarket.auth.ap-northeast-2.amazoncognito.com
           domain: import.meta.env.VITE_COGNITO_DOMAIN || "",
           scopes: ["openid", "email", "profile"],
-          redirectSignIn: [window.location.origin],
+          redirectSignIn: [callbackUrl],
           redirectSignOut: [window.location.origin],
           responseType: "code",
         },
@@ -43,6 +45,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
       <AuthProvider>
         <Routes>
           <Route path="/" element={<App />} />
+          <Route path="/indicators" element={<IndicatorsListPage />} />
           <Route path="/indicators/:id" element={<IndicatorDetailPage />} />
           <Route path="/signals" element={<SignalsPage />} />
           <Route path="/admin" element={<AdminPage />} />
@@ -54,6 +57,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
           <Route path="/payment" element={<PaymentPage />} />
           <Route path="/payment/success" element={<PaymentSuccessPage />} />
           <Route path="/payment/fail" element={<PaymentFailPage />} />
+          <Route path="/oauth/callback" element={<OAuthCallbackPage />} />
         </Routes>
       </AuthProvider>
     </BrowserRouter>

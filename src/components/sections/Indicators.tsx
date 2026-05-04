@@ -5,8 +5,11 @@ import { IndicatorGridSkeleton } from "../ui/skeleton"
 import { useIndicators } from "../../hooks/useIndicators"
 import type { Indicator } from "../../types"
 
+export { IndicatorCard, ChartPreviewSVG }
+
 export default function Indicators() {
   const { indicators, isLoading, isLive } = useIndicators()
+  const preview = indicators.slice(0, 3)
 
   return (
     <section id="indicators" className="relative py-24">
@@ -15,7 +18,7 @@ export default function Indicators() {
       <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-[radial-gradient(ellipse_at_center,_rgba(139,92,246,0.06)_0%,_transparent_70%)]" />
 
       <div className="relative container mx-auto px-6">
-        <div className="max-w-6xl mx-auto">
+        <div className="max-w-screen-2xl mx-auto">
           <div className="text-center mb-16">
             <p className="text-sm text-purple-400 font-medium mb-3 uppercase tracking-wider">Custom Indicators</p>
             <h2 className="text-4xl lg:text-5xl font-bold mb-4">
@@ -35,15 +38,28 @@ export default function Indicators() {
           {isLoading ? (
             <IndicatorGridSkeleton count={3} />
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-stretch">
-              {indicators.map((indicator, idx) => (
-                <IndicatorCard
-                  key={indicator.id || idx}
-                  indicator={indicator}
-                  idx={idx}
-                />
-              ))}
-            </div>
+            <>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 items-stretch">
+                {preview.map((indicator, idx) => (
+                  <IndicatorCard
+                    key={indicator.id || idx}
+                    indicator={indicator}
+                    idx={idx}
+                  />
+                ))}
+              </div>
+
+              {/* 전체보기 버튼 */}
+              <div className="flex justify-center mt-12">
+                <Link
+                  to="/indicators"
+                  className="group flex items-center gap-2 px-8 py-3 rounded-xl border border-purple-500/30 text-purple-400 hover:bg-purple-500/10 hover:border-purple-500/50 transition-all duration-300 text-sm font-medium"
+                >
+                  전체 보조지표 보기
+                  <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                </Link>
+              </div>
+            </>
           )}
         </div>
       </div>
@@ -58,17 +74,13 @@ function IndicatorCard({ indicator, idx }: { indicator: Indicator; idx: number }
       <Card className="glass-card glass-card-hover border-0 rounded-2xl transition-all duration-500 group cursor-pointer overflow-hidden hover:-translate-y-2 hover:shadow-2xl hover:shadow-cyan-500/5 flex flex-col h-full w-full">
 
         {/* 차트 이미지 / 미리보기 영역 */}
-        <div className="relative h-72 bg-gradient-to-br from-[#0a1020] to-[#0d0a20] overflow-hidden flex-shrink-0">
+        <div className="relative h-48 overflow-hidden flex-shrink-0 rounded-t-2xl">
           {indicator.image ? (
             <img src={indicator.image} alt={indicator.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
           ) : (
-            <>
-              <ChartPreviewSVG />
-              <div className="absolute top-4 right-6 bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 text-[10px] font-bold px-2 py-0.5 rounded-md backdrop-blur-sm">TP</div>
-              <div className="absolute bottom-4 right-6 bg-red-500/10 border border-red-500/30 text-red-400 text-[10px] font-bold px-2 py-0.5 rounded-md backdrop-blur-sm">SL</div>
-            </>
+            <ChartPreviewSVG />
           )}
-          <div className="absolute inset-0 bg-gradient-to-t from-[#08061a] via-transparent to-transparent opacity-60" />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#08061a]/80 via-transparent to-transparent" />
         </div>
 
         {/* 컨텐츠 영역 */}
@@ -112,41 +124,102 @@ function IndicatorCard({ indicator, idx }: { indicator: Indicator; idx: number }
 
 /* ─── 차트 미리보기 SVG ─── */
 function ChartPreviewSVG({ large = false }: { large?: boolean }) {
-  const h = large ? 208 : 160
+  const W = 400
+  const H = large ? 220 : 180
+
+  // 캔들 데이터 (고정값 — 매번 동일하게 렌더)
+  const candles = [
+    { x: 28,  o: 130, c: 118, h: 112, l: 134 },
+    { x: 52,  o: 118, c: 128, h: 112, l: 132 },
+    { x: 76,  o: 128, c: 122, h: 118, l: 130 },
+    { x: 100, o: 122, c: 108, h: 104, l: 126 },
+    { x: 124, o: 108, c: 116, h: 104, l: 120 },
+    { x: 148, o: 116, c: 100, h: 96,  l: 120 },
+    { x: 172, o: 100, c: 112, h: 94,  l: 116 },
+    { x: 196, o: 112, c: 106, h: 102, l: 116 },
+    { x: 220, o: 106, c: 90,  h: 86,  l: 110 },
+    { x: 244, o: 90,  c: 102, h: 84,  l: 106 },
+    { x: 268, o: 102, c: 95,  h: 90,  l: 108 },
+    { x: 292, o: 95,  c: 82,  h: 78,  l: 98  },
+    { x: 316, o: 82,  c: 96,  h: 76,  l: 100 },
+    { x: 340, o: 96,  c: 88,  h: 84,  l: 100 },
+    { x: 364, o: 88,  c: 76,  h: 72,  l: 92  },
+  ]
+
+  // 매수/매도 시그널 위치
+  const buys  = [candles[1], candles[6], candles[9], candles[12]]
+  const sells = [candles[3], candles[8], candles[11], candles[14]]
+
+  const isUp = (c: typeof candles[0]) => c.c <= c.o
+
   return (
     <svg
-      viewBox={`0 0 400 ${h}`}
+      viewBox={`0 0 ${W} ${H}`}
       fill="none"
-      className="absolute inset-0 w-full h-full opacity-40"
-      preserveAspectRatio="none"
+      className="absolute inset-0 w-full h-full"
+      preserveAspectRatio="xMidYMid meet"
     >
-      {/* 캔들스틱 모양 */}
-      {[40, 70, 100, 130, 160, 190, 220, 250, 280, 310, 340, 370].map((x, i) => {
-        const isUp = [0, 2, 3, 5, 7, 8, 10, 11].includes(i)
-        const bodyH = 8 + Math.random() * 20
-        const wickH = bodyH + 6 + Math.random() * 10
-        const baseY = 30 + Math.sin(i * 0.5) * 20 + (i < 6 ? i * 4 : (12 - i) * 4)
+      {/* 배경 */}
+      <rect width={W} height={H} fill="#0b0e1a" />
+
+      {/* 수평 그리드 */}
+      {[0.25, 0.5, 0.75].map((r, i) => (
+        <line key={i} x1="0" y1={H * r} x2={W} y2={H * r}
+          stroke="#1e2235" strokeWidth="1" />
+      ))}
+
+      {/* 캔들 */}
+      {candles.map((c, i) => {
+        const up = isUp(c)
+        const col = up ? "#06b6d4" : "#f43f5e"
         return (
           <g key={i}>
-            <line
-              x1={x} y1={baseY - wickH / 2}
-              x2={x} y2={baseY + wickH / 2}
-              stroke={isUp ? "#06b6d4" : "#ef4444"}
-              strokeWidth="1"
-              opacity="0.6"
-            />
+            <line x1={c.x} y1={c.h} x2={c.x} y2={c.l}
+              stroke={col} strokeWidth="1.2" opacity="0.7" />
             <rect
-              x={x - 6} y={baseY - bodyH / 2}
-              width="12" height={bodyH}
-              fill={isUp ? "#06b6d4" : "#ef4444"}
-              rx="1"
-              opacity="0.6"
+              x={c.x - 7} y={Math.min(c.o, c.c)}
+              width="14" height={Math.max(Math.abs(c.o - c.c), 2)}
+              fill={up ? "#06b6d4" : "#f43f5e"}
+              fillOpacity={up ? 0.85 : 0.8}
+              rx="1.5"
             />
           </g>
         )
       })}
-      {/* 트렌드 라인 */}
-      <line x1="30" y1={h * 0.7} x2="380" y2={h * 0.3} stroke="#06b6d4" strokeWidth="0.5" strokeDasharray="4 4" opacity="0.3" />
+
+      {/* 매수 화살표 (위쪽 삼각형, 캔들 아래) */}
+      {buys.map((c, i) => (
+        <g key={i}>
+          <polygon
+            points={`${c.x},${c.l + 16} ${c.x - 8},${c.l + 28} ${c.x + 8},${c.l + 28}`}
+            fill="#06b6d4" opacity="0.9"
+          />
+          <text x={c.x} y={c.l + 42} textAnchor="middle"
+            fill="#06b6d4" fontSize="7.5" fontWeight="bold" opacity="0.85">BUY</text>
+        </g>
+      ))}
+
+      {/* 매도 화살표 (아래쪽 삼각형, 캔들 위) */}
+      {sells.map((c, i) => (
+        <g key={i}>
+          <polygon
+            points={`${c.x},${c.h - 16} ${c.x - 8},${c.h - 28} ${c.x + 8},${c.h - 28}`}
+            fill="#f43f5e" opacity="0.9"
+          />
+          <text x={c.x} y={c.h - 32} textAnchor="middle"
+            fill="#f43f5e" fontSize="7.5" fontWeight="bold" opacity="0.85">SELL</text>
+        </g>
+      ))}
+
+      {/* 현재가 점선 */}
+      <line x1="0" y1={candles[candles.length - 1].c} x2={W} y2={candles[candles.length - 1].c}
+        stroke="#06b6d4" strokeWidth="0.8" strokeDasharray="5 4" opacity="0.5" />
+      <rect x={W - 52} y={candles[candles.length - 1].c - 8} width="50" height="16"
+        fill="#06b6d4" fillOpacity="0.15" rx="3" />
+      <text x={W - 27} y={candles[candles.length - 1].c + 4.5}
+        textAnchor="middle" fill="#06b6d4" fontSize="8" fontWeight="bold" opacity="0.9">
+        79,748
+      </text>
     </svg>
   )
 }

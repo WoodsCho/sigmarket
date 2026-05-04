@@ -2,6 +2,7 @@ import { useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { Check, Zap, Star, Crown } from "lucide-react"
 import { useAuth } from "../../contexts/AuthContext"
+import FreeTrialModal from "../FreeTrialModal"
 
 /* ─── 플랜 데이터 ─── */
 const PLANS = [
@@ -91,12 +92,13 @@ function formatPrice(price: number) {
 
 export default function Pricing() {
   const [billing, setBilling] = useState<"monthly" | "yearly">("monthly")
+  const [trialOpen, setTrialOpen] = useState(false)
   const navigate = useNavigate()
-  const { user } = useAuth()
+  const { user: _user } = useAuth()
 
   function handleCta(planKey: string) {
     if (planKey === "free") {
-      navigate(user ? "/profile" : "/signup")
+      setTrialOpen(true)
       return
     }
     // "pro" key → use "professional" as plan param
@@ -105,6 +107,7 @@ export default function Pricing() {
   }
 
   return (
+    <>
     <section id="pricing" className="relative py-24">
       {/* bg */}
       <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#0a081e] to-transparent pointer-events-none" />
@@ -253,5 +256,8 @@ export default function Pricing() {
         </div>
       </div>
     </section>
+
+    <FreeTrialModal open={trialOpen} onClose={() => setTrialOpen(false)} />
+    </>
   )
 }

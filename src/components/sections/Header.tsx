@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react"
-import { useNavigate } from "react-router-dom"
+import { useNavigate, Link } from "react-router-dom"
 import { Menu, X, Flame, ArrowRight, LogOut, User } from "lucide-react"
 import { navItems } from "../../data"
 import { useAuth } from "../../contexts/AuthContext"
@@ -121,7 +121,16 @@ export default function Header() {
 
           {/* 데스크탑 네비 — 우측 정렬 */}
           <div className="hidden md:flex items-center gap-1 ml-auto">
-            {navItems.map((item) => (
+            {navItems.map((item) =>
+              item.href.startsWith("/") ? (
+                <Link
+                  key={item.href}
+                  to={item.href}
+                  className="relative px-4 py-2 text-sm text-gray-400 hover:text-white transition-all duration-300 rounded-lg hover:bg-white/5 inline-block"
+                >
+                  {item.label}
+                </Link>
+              ) : (
               <a
                 key={item.href}
                 href={item.href}
@@ -129,7 +138,8 @@ export default function Header() {
               >
                 {item.label}
               </a>
-            ))}
+              )
+            )}
           </div>
 
           {/* 데스크탑 CTA 버튼 */}
@@ -191,7 +201,17 @@ export default function Header() {
         }`}
       >
         <div className="px-6 pb-4 flex flex-col gap-1 bg-[#08061a]/95 backdrop-blur-xl">
-          {navItems.map((item) => (
+          {navItems.map((item) =>
+            item.href.startsWith("/") ? (
+              <Link
+                key={item.href}
+                to={item.href}
+                onClick={() => setMobileOpen(false)}
+                className="px-4 py-2.5 text-sm text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition-all duration-200"
+              >
+                {item.label}
+              </Link>
+            ) : (
             <a
               key={item.href}
               href={item.href}
@@ -200,7 +220,8 @@ export default function Header() {
             >
               {item.label}
             </a>
-          ))}
+            )
+          )}
           <div className="border-t border-white/[0.06] mt-2 pt-3 flex flex-col gap-1">
             {user ? (
               <>

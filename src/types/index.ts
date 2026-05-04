@@ -28,6 +28,9 @@ export interface ContentSection {
   body: string                 // 본문 (여러 줄 가능)
   layout?: "full" | "half"     // 카드 너비: full(100%) | half(50%) — 기본값 half
   highlight?: string           // 💡 강조 문구
+  image?: string               // 섹션 내 이미지 URL (S3)
+  imageTransparent?: boolean   // 이미지 투명 배경 (테두리/배경 없이 표시)
+  cardTransparent?: boolean    // 카드 자체 투명 배경
   bullets?: string[]           // ● 불릿 리스트
   infoCards?: {                // TP/SL 같은 정보 카드
     badge: string              // 뱃지 텍스트 (예: "TP", "SL")

@@ -57,14 +57,19 @@
 
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { DynamoDBDocumentClient, ScanCommand, PutCommand, GetCommand, DeleteCommand } from "@aws-sdk/lib-dynamodb";
+import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
 const TABLE_NAME = process.env.INDICATOR_TABLE_NAME || "";
 const ADMIN_SECRET = process.env.ADMIN_SECRET || "";
 const COGNITO_USER_POOL_ID = process.env.COGNITO_USER_POOL_ID || "";
 const AWS_REGION = process.env.AWS_REGION || "ap-northeast-2";
+const IMAGE_BUCKET = process.env.IMAGE_BUCKET_NAME || "";   // ← Lambda 환경변수에 추가 필요
+const IMAGE_CDN = process.env.IMAGE_CDN_URL || "";          // ← CloudFront 또는 S3 public URL
 
 const ddbClient = new DynamoDBClient({});
 const docClient = DynamoDBDocumentClient.from(ddbClient);
+const s3Client = new S3Client({ region: AWS_REGION });
 
 /* ─── 안전한 JSON 파싱 (잘못된 데이터로 전체 API 안 터지게) ─── */
 function safeJsonParse(val, fallback = []) {
@@ -508,6 +513,53 @@ export const handler = async (event) => {
   if (event.httpMethod === "POST") {
     try {
       const body = JSON.parse(event.body || "{}");
+
+      // ─── 이미지 업로드용 Presigned URL 발급 ───
+      if (body._action === "upload-url") {
+        // 관리자 인증 필요
+        const authHeader = event.headers?.Authorization || event.headers?.authorization || "";
+        const token = authHeader.replace("Bearer ", "");
+        const jwtValid = await verifyJwt(token);
+        const secretValid = ADMIN_SECRET && body.secret === ADMIN_SECRET;
+        if (!jwtValid && !secretValid) {
+          return { statusCode: 401, headers, body: JSON.stringify({ error: "Unauthorized" }) };
+        }
+
+        if (!IMAGE_BUCKET) {
+          return { statusCode: 500, headers, body: JSON.stringify({ error: "IMAGE_BUCKET_NAME not configured" }) };
+        }
+
+        const { fileName, fileType } = body;
+        if (!fileName || !fileType) {
+          return { statusCode: 400, headers, body: JSON.stringify({ error: "fileName and fileType are required" }) };
+        }
+
+        // 안전한 파일 이름 생성 (타임스탬프 + 원본 확장자)
+        const ext = fileName.split(".").pop()?.toLowerCase() || "jpg";
+        const allowedExts = ["jpg", "jpeg", "png", "gif", "webp", "avif"];
+        if (!allowedExts.includes(ext)) {
+          return { statusCode: 400, headers, body: JSON.stringify({ error: "허용되지 않는 파일 형식입니다." }) };
+        }
+        const key = `indicators/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+
+        const command = new PutObjectCommand({
+          Bucket: IMAGE_BUCKET,
+          Key: key,
+          ContentType: fileType,
+        });
+        const uploadUrl = await getSignedUrl(s3Client, command, { expiresIn: 300 }); // 5분
+
+        // 업로드 후 접근할 최종 URL
+        const publicUrl = IMAGE_CDN
+          ? `${IMAGE_CDN.replace(/\/$/, "")}/${key}`
+          : `https://${IMAGE_BUCKET}.s3.${AWS_REGION}.amazonaws.com/${key}`;
+
+        return {
+          statusCode: 200,
+          headers,
+          body: JSON.stringify({ uploadUrl, publicUrl, key }),
+        };
+      }
 
       // ─── 시그널 실행 (인증 불필요, 전략 코드 미노출) ───
       if (body._action === "signals") {

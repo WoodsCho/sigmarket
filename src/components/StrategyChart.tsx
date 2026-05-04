@@ -135,8 +135,8 @@ export default function StrategyChart({ fixedStrategyId }: StrategyChartProps = 
   const [activeSymbol, setActiveSymbol] = useState("BTCUSDT")
   const [activeInterval, setActiveInterval] = useState("1h")
   const [signalCount, setSignalCount] = useState({ buy: 0, sell: 0 })
-  const [tradeStats, setTradeStats] = useState({ trades: 0, winRate: 0, totalPnl: 0, avgPnl: 0, wins: 0, losses: 0 })
-  const [tradeList, setTradeList] = useState<TradeResult[]>([])
+  const [, setTradeStats] = useState({ trades: 0, winRate: 0, totalPnl: 0, avgPnl: 0, wins: 0, losses: 0 })
+  const [, setTradeList] = useState<TradeResult[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [showSymbolDropdown, setShowSymbolDropdown] = useState(false)
   const isEmbedded = !!fixedStrategyId
@@ -282,7 +282,7 @@ export default function StrategyChart({ fixedStrategyId }: StrategyChartProps = 
   useEffect(() => {
     if (!chartContainerRef.current) return
 
-    const chartBgColor = getComputedStyle(document.documentElement).getPropertyValue('--theme-bg-card').trim() || "#0c0a1e"
+    const chartBgColor = "#090c14"
 
     const chart = createChart(chartContainerRef.current, {
       layout: {
@@ -384,9 +384,9 @@ export default function StrategyChart({ fixedStrategyId }: StrategyChartProps = 
   return (
     <div className="mb-16">
       <div className="gradient-border overflow-hidden">
-        <div className="bg-[var(--theme-bg-card)] rounded-2xl overflow-hidden">
+        <div className="bg-[#090c14] rounded-2xl overflow-hidden">
           {/* 종목 & 인터벌 선택 */}
-          <div className="p-4 border-b border-white/5 bg-white/[0.02]">
+          <div className="p-4 border-b border-white/[0.06] bg-[#0b0e17]">
             <div className="flex items-center gap-3 flex-wrap">
               {/* 종목 드롭다운 */}
               <div className="relative" onClick={(e) => e.stopPropagation()}>
@@ -450,7 +450,7 @@ export default function StrategyChart({ fixedStrategyId }: StrategyChartProps = 
 
           {/* 전략 선택 탭 (임베디드 모드에선 전략명만 표시) */}
           {isEmbedded ? (
-            <div className="p-4 border-b border-white/5 bg-white/[0.01]">
+            <div className="p-4 border-b border-white/[0.06] bg-[#0b0e17]">
               <div className="flex items-center justify-between flex-wrap gap-3">
                 <p className="text-[11px] text-gray-600">
                   {strategies.find((s) => s.id === activeStrategy)?.description}
@@ -469,7 +469,7 @@ export default function StrategyChart({ fixedStrategyId }: StrategyChartProps = 
               </div>
             </div>
           ) : (
-            <div className="p-4 border-b border-white/5 bg-white/[0.01]">
+            <div className="p-4 border-b border-white/[0.06] bg-[#0b0e17]">
               <div className="flex items-center justify-between flex-wrap gap-3">
                 <div className="flex items-center gap-2">
                   <span className="text-xs text-gray-500 uppercase tracking-wider font-semibold mr-2">전략 선택</span>
@@ -508,92 +508,9 @@ export default function StrategyChart({ fixedStrategyId }: StrategyChartProps = 
           {/* 차트 영역 */}
           <div ref={chartContainerRef} style={{ height: "400px", width: "100%" }} />
 
-          {/* 하단 거래 통계 */}
-          <div className="p-4 border-t border-white/5 bg-white/[0.02]">
-            <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-3 mb-4">
-              <div className="bg-white/[0.03] rounded-lg p-3 border border-white/5">
-                <p className="text-[10px] text-gray-500 uppercase tracking-wider mb-1">총 거래</p>
-                <p className="text-lg font-bold text-white">{tradeStats.trades}<span className="text-xs text-gray-500 ml-1">회</span></p>
-              </div>
-              <div className="bg-white/[0.03] rounded-lg p-3 border border-white/5">
-                <p className="text-[10px] text-gray-500 uppercase tracking-wider mb-1">승률</p>
-                <p className={`text-lg font-bold ${tradeStats.winRate >= 50 ? "text-cyan-400" : "text-red-400"}`}>
-                  {tradeStats.winRate.toFixed(1)}%
-                </p>
-              </div>
-              <div className="bg-white/[0.03] rounded-lg p-3 border border-white/5">
-                <p className="text-[10px] text-gray-500 uppercase tracking-wider mb-1">총 수익률</p>
-                <p className={`text-lg font-bold ${tradeStats.totalPnl >= 0 ? "text-cyan-400" : "text-red-400"}`}>
-                  {tradeStats.totalPnl >= 0 ? "+" : ""}{tradeStats.totalPnl.toFixed(2)}%
-                </p>
-              </div>
-              <div className="bg-white/[0.03] rounded-lg p-3 border border-white/5">
-                <p className="text-[10px] text-gray-500 uppercase tracking-wider mb-1">평균 수익률</p>
-                <p className={`text-lg font-bold ${tradeStats.avgPnl >= 0 ? "text-cyan-400" : "text-red-400"}`}>
-                  {tradeStats.avgPnl >= 0 ? "+" : ""}{tradeStats.avgPnl.toFixed(2)}%
-                </p>
-              </div>
-              <div className="bg-white/[0.03] rounded-lg p-3 border border-white/5">
-                <p className="text-[10px] text-gray-500 uppercase tracking-wider mb-1">승/패</p>
-                <p className="text-lg font-bold">
-                  <span className="text-cyan-400">{tradeStats.wins}</span>
-                  <span className="text-gray-600 mx-1">/</span>
-                  <span className="text-red-400">{tradeStats.losses}</span>
-                </p>
-              </div>
-              <div className="bg-white/[0.03] rounded-lg p-3 border border-white/5">
-                <p className="text-[10px] text-gray-500 uppercase tracking-wider mb-1">시그널</p>
-                <p className="text-lg font-bold">
-                  <span className="text-cyan-400">{signalCount.buy}</span>
-                  <span className="text-gray-600 text-xs mx-1">Buy</span>
-                  <span className="text-red-400 ml-1">{signalCount.sell}</span>
-                  <span className="text-gray-600 text-xs mx-1">Sell</span>
-                </p>
-              </div>
-            </div>
-
-            {/* 거래 내역 테이블 */}
-            {tradeList.length > 0 && (
-              <div className="max-h-40 overflow-y-auto rounded-lg border border-white/5">
-                <table className="w-full text-xs">
-                  <thead className="bg-white/[0.03] sticky top-0">
-                    <tr className="text-gray-500 uppercase tracking-wider">
-                      <th className="text-left px-3 py-2 font-semibold">#</th>
-                      <th className="text-left px-3 py-2 font-semibold">진입가</th>
-                      <th className="text-left px-3 py-2 font-semibold">청산가</th>
-                      <th className="text-right px-3 py-2 font-semibold">수익률</th>
-                      <th className="text-right px-3 py-2 font-semibold">결과</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {tradeList.map((t, idx) => (
-                      <tr key={idx} className="border-t border-white/5 hover:bg-white/[0.02]">
-                        <td className="px-3 py-2 text-gray-500">{idx + 1}</td>
-                        <td className="px-3 py-2 text-gray-300 font-mono">{t.buyPrice.toLocaleString(undefined, { maximumFractionDigits: 2 })}</td>
-                        <td className="px-3 py-2 text-gray-300 font-mono">{t.sellPrice.toLocaleString(undefined, { maximumFractionDigits: 2 })}</td>
-                        <td className={`px-3 py-2 text-right font-mono font-semibold ${t.pnl >= 0 ? "text-cyan-400" : "text-red-400"}`}>
-                          {t.pnl >= 0 ? "+" : ""}{t.pnl.toFixed(2)}%
-                        </td>
-                        <td className="px-3 py-2 text-right">
-                          <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-bold ${
-                            t.pnl >= 0 ? "bg-cyan-500/20 text-cyan-400" : "bg-red-500/20 text-red-400"
-                          }`}>
-                            {t.pnl >= 0 ? "WIN" : "LOSS"}
-                          </span>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-
-            <div className="flex items-center justify-between mt-3">
-              <p className="text-[11px] text-gray-600">
-                Buy → Sell 교대 방식 · 포지션당 1회 진입/청산
-              </p>
-              <span className="text-[10px] text-gray-700">Powered by Lightweight Charts™</span>
-            </div>
+          {/* 하단 푸터 */}
+          <div className="px-4 py-2 border-t border-white/[0.06] bg-[#0b0e17] flex items-center justify-end">
+            <span className="text-[10px] text-gray-700">Powered by Lightweight Charts™</span>
           </div>
         </div>
       </div>
