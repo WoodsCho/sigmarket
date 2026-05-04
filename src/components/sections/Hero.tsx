@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react"
+import { useNavigate } from "react-router-dom"
 import { ArrowRight, TrendingUp, BarChart3, Zap } from "lucide-react"
 import { dummyRankings } from "../../data"
 import type { RankingEntry } from "../../types"
@@ -122,6 +123,7 @@ function StatCard({ icon: Icon, label, value, suffix, color, delay }: {
 }
 
 export default function Hero() {
+  const navigate = useNavigate()
   const [period, setPeriod] = useState<Period>("daily")
   const [trialOpen, setTrialOpen] = useState(false)
   const rankings = dummyRankings
@@ -190,10 +192,10 @@ export default function Hero() {
               {/* 버튼 글로우 */}
               <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-cyan-500 via-purple-500 to-pink-500 blur-xl opacity-0 group-hover:opacity-40 transition-opacity duration-300 -z-10" />
             </button>
-            <a href="#indicators" className="flex items-center gap-1.5 px-5 py-3.5 text-sm text-gray-400 hover:text-white font-medium transition-colors duration-300">
+            <button onClick={() => navigate("/indicators")} className="flex items-center gap-1.5 px-5 py-3.5 text-sm text-gray-400 hover:text-white font-medium transition-colors duration-300">
               인디케이터 보기
               <ArrowRight className="w-3.5 h-3.5" />
-            </a>
+            </button>
           </div>
 
           {/* 미니 스탯 */}
