@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react"
+import { useLocation } from "react-router-dom"
 import { ChevronUp } from "lucide-react"
 import { Header, Hero, Stats, Signals, Indicators, Testimonials, Pricing, Philosophy } from "./components/sections"
 import "./App.css"
@@ -16,6 +17,18 @@ const SECTIONS = [
 function App() {
   const containerRef = useRef<HTMLDivElement>(null)
   const [showTop, setShowTop] = useState(false)
+  const location = useLocation()
+
+  // hash(#indicators 등)로 돌아올 때 해당 섹션으로 스크롤
+  useEffect(() => {
+    const hash = location.hash.replace("#", "")
+    if (!hash) return
+    const target = document.getElementById(hash)
+    if (target) {
+      // snap container 기준 스크롤
+      setTimeout(() => target.scrollIntoView({ behavior: "smooth" }), 50)
+    }
+  }, [location.hash])
 
   useEffect(() => {
     const el = containerRef.current

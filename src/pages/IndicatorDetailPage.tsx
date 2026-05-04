@@ -27,7 +27,7 @@ export default function IndicatorDetailPage() {
         <Header />
         <div className="flex flex-col items-center justify-center py-32">
           <p className="text-gray-400 text-lg mb-4">인디케이터를 찾을 수 없습니다.</p>
-          <button onClick={() => navigate("/")} className="flex items-center gap-2 text-cyan-500 hover:text-cyan-400 transition-colors">
+          <button onClick={() => navigate("/#indicators")} className="flex items-center gap-2 text-cyan-500 hover:text-cyan-400 transition-colors">
             <ArrowLeft className="h-4 w-4" /> 메인으로 돌아가기
           </button>
         </div>
@@ -43,12 +43,12 @@ export default function IndicatorDetailPage() {
       {/* 배경 글로우 */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-cyan-900/20 blur-[150px] rounded-full pointer-events-none z-0" />
 
-      <section className="relative z-10 container mx-auto px-6 py-16 lg:py-24">
-        <div className="max-w-5xl mx-auto">
+      <section className="relative z-10 container mx-auto px-6 pt-36 pb-20">
+        <div className="max-w-6xl mx-auto">
 
           {/* 뒤로가기 */}
           <button
-            onClick={() => navigate("/#indicators")}
+            onClick={() => navigate("/indicators")}
             className="flex items-center gap-2 text-sm text-gray-400 hover:text-white transition-colors mb-10"
           >
             <ArrowLeft className="h-4 w-4" />
