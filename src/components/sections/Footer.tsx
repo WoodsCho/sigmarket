@@ -12,7 +12,7 @@ export default function Footer() {
             {/* Brand */}
             <div>
               <img src="/images/sigmarket-logo.png" alt="시그마켓" className="h-6 mb-4" />
-              <p className="text-gray-500 text-sm leading-relaxed max-w-xs">
+              <p className="text-gray-500 text-s leading-relaxed max-w-xs">
                 TradingView 기반 커스텀 인디케이터 & 실시간 시그널 시스템
               </p>
             </div>

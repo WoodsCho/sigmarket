@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react"
 import { ChevronUp } from "lucide-react"
-import { Header, Hero, Stats, Signals, Indicators, Testimonials, Pricing, Philosophy, Footer } from "./components/sections"
+import { Header, Hero, Stats, Signals, Indicators, Testimonials, Pricing, Philosophy } from "./components/sections"
 import "./App.css"
 
 const SECTIONS = [
@@ -11,7 +11,6 @@ const SECTIONS = [
   { id: "testimonials", Component: Testimonials },
   { id: "pricing",      Component: Pricing      },
   { id: "philosophy",   Component: Philosophy   },
-  { id: "footer",       Component: Footer       },
 ]
 
 function App() {
