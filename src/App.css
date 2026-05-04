@@ -38,6 +38,15 @@ html {
   color: #fff;
 }
 
+/* snap-container 스크롤바 숨김 */
+#snap-container {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+#snap-container::-webkit-scrollbar {
+  display: none;
+}
+
 /* 커스텀 스크롤바 (Webkit) */
 ::-webkit-scrollbar {
   width: 6px;

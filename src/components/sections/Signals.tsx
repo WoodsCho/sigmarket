@@ -26,7 +26,7 @@ export default function Signals() {
   const pagedSignals = signals.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE)
 
   return (
-    <section id="signals" className="relative pt-32 pb-16">
+    <section id="signals" className="relative h-full flex flex-col justify-center overflow-y-auto pt-24 pb-16">
       {/* bg glow */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[500px] bg-purple-900/8 blur-[180px] rounded-full pointer-events-none z-0" />
 

@@ -108,7 +108,7 @@ export default function Pricing() {
 
   return (
     <>
-    <section id="pricing" className="relative py-24">
+    <section id="pricing" className="relative h-full overflow-y-auto py-20">
       {/* bg */}
       <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#0a081e] to-transparent pointer-events-none" />
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[500px] bg-purple-900/10 blur-[150px] rounded-full pointer-events-none" />

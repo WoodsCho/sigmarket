@@ -12,7 +12,7 @@ export default function Indicators() {
   const preview = indicators.slice(0, 3)
 
   return (
-    <section id="indicators" className="relative py-24">
+    <section id="indicators" className="relative h-full flex flex-col justify-center py-20">
       {/* Section bg */}
       <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#0a081e] to-transparent" />
       <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-[radial-gradient(ellipse_at_center,_rgba(139,92,246,0.06)_0%,_transparent_70%)]" />

@@ -46,9 +46,18 @@ export default function Header() {
   const countdown = useCountdown(endDate.current)
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 20)
-    window.addEventListener("scroll", onScroll, { passive: true })
-    return () => window.removeEventListener("scroll", onScroll)
+    const container = document.getElementById("snap-container")
+    const onScroll = () => {
+      const pos = container ? container.scrollTop : window.scrollY
+      setScrolled(pos > 20)
+    }
+    if (container) {
+      container.addEventListener("scroll", onScroll, { passive: true })
+      return () => container.removeEventListener("scroll", onScroll)
+    } else {
+      window.addEventListener("scroll", onScroll, { passive: true })
+      return () => window.removeEventListener("scroll", onScroll)
+    }
   }, [])
 
   const closeBanner = () => {
