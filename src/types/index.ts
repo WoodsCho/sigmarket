@@ -50,6 +50,7 @@ export interface Indicator {
   id?: string
   name: string            // 제목
   subtitle: string        // 부제목
+  description?: string    // 카드 미리보기용 소개 문구
   image?: string          // 이미지 URL
   content: string         // 내용 (레거시, 단순 텍스트)
   sections?: ContentSection[]  // 구조화된 섹션 (신규)

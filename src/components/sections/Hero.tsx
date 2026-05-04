@@ -132,7 +132,7 @@ export default function Hero() {
 
   return (
     <>
-    <section className="relative overflow-hidden h-full flex flex-col justify-center pt-20">
+    <section className="relative overflow-hidden min-h-screen md:h-full flex flex-col justify-center pt-32 md:pt-20">
 
       {/* ─── 배경 레이어 ─── */}
       {/* 상단 은은한 원형 글로우 (LuxAlgo 스타일) — 브리딩 애니메이션 */}
@@ -181,25 +181,24 @@ export default function Hero() {
           </p>
 
           {/* CTA 버튼 그룹 */}
-          <div className="hero-fade-in hero-delay-4 flex flex-wrap items-center gap-4 mb-12">
+          <div className="hero-fade-in hero-delay-4 flex flex-wrap items-center justify-center lg:justify-start gap-3 mb-8">
             <button
               onClick={() => setTrialOpen(true)}
-              className="group relative px-7 py-3.5 rounded-xl bg-gradient-to-r from-cyan-500 via-purple-500 to-pink-500 text-white font-bold text-sm transition-all duration-300 hover:shadow-[0_0_40px_rgba(168,85,247,0.35)] hover:scale-[1.03] active:scale-[0.98]">
+              className="group relative px-6 py-3 rounded-xl bg-gradient-to-r from-cyan-500 via-purple-500 to-pink-500 text-white font-bold text-sm transition-all duration-300 hover:shadow-[0_0_40px_rgba(168,85,247,0.35)] hover:scale-[1.03] active:scale-[0.98]">
               <span className="relative z-10 flex items-center gap-2">
                 3일 무료 체험하기
                 <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
               </span>
-              {/* 버튼 글로우 */}
               <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-cyan-500 via-purple-500 to-pink-500 blur-xl opacity-0 group-hover:opacity-40 transition-opacity duration-300 -z-10" />
             </button>
-            <button onClick={() => navigate("/indicators")} className="flex items-center gap-1.5 px-5 py-3.5 text-sm text-gray-400 hover:text-white font-medium transition-colors duration-300">
+            <button onClick={() => navigate("/indicators")} className="flex items-center gap-1.5 px-4 py-3 text-sm text-gray-400 hover:text-white font-medium transition-colors duration-300">
               인디케이터 보기
               <ArrowRight className="w-3.5 h-3.5" />
             </button>
           </div>
 
           {/* 미니 스탯 */}
-          <div className="hero-fade-in hero-delay-5 flex flex-wrap gap-3">
+          <div className="hero-fade-in hero-delay-5 flex flex-wrap justify-center lg:justify-start gap-3">
             <StatCard icon={TrendingUp} label="최고 수익률" value={`+${topReturn}%`} color="bg-cyan-500/10 text-cyan-400" delay="0.6s" />
             <StatCard icon={BarChart3} label="평균 수익률" value={`+${avgReturn}%`} color="bg-purple-500/10 text-purple-400" delay="0.75s" />
             <StatCard icon={Zap} label="인디케이터" value="10+" suffix="개" color="bg-pink-500/10 text-pink-400" delay="0.9s" />
@@ -211,7 +210,7 @@ export default function Hero() {
           {/* 터미널 글로우 */}
           <div className="absolute -inset-4 bg-gradient-to-r from-cyan-500/10 via-purple-500/10 to-pink-500/10 rounded-3xl blur-2xl opacity-60 pointer-events-none" />
 
-          <div className="relative bg-[#0d1117] border border-gray-700/40 rounded-2xl shadow-2xl shadow-black/40 flex flex-col h-[520px] overflow-hidden font-mono">
+          <div className="relative bg-[#0d1117] border border-gray-700/40 rounded-2xl shadow-2xl shadow-black/40 flex flex-col h-[340px] md:h-[440px] lg:h-[520px] overflow-hidden font-mono">
 
             {/* 터미널 타이틀바 */}
             <div className="px-5 py-3 border-b border-gray-700/40 flex justify-between items-center bg-[#161b22] shrink-0">

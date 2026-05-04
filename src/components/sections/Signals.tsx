@@ -26,15 +26,15 @@ export default function Signals() {
   const pagedSignals = signals.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE)
 
   return (
-    <section id="signals" className="relative h-full flex flex-col justify-center overflow-y-auto pt-24 pb-16">
+    <section id="signals" className="relative min-h-screen md:h-full flex flex-col justify-center overflow-x-hidden overflow-y-auto pt-20 md:pt-24 pb-10 md:pb-16">
       {/* bg glow */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[500px] bg-purple-900/8 blur-[180px] rounded-full pointer-events-none z-0" />
 
-      <div className="relative z-10 container mx-auto px-6">
+      <div className="relative z-10 w-full px-4 md:px-6">
         <div className="max-w-6xl mx-auto">
 
           {/* ── 섹션 헤더 ── */}
-          <div className="flex flex-col md:flex-row md:items-end justify-between mb-10 gap-6">
+          <div className="flex flex-col md:flex-row md:items-end justify-between mb-5 md:mb-10 gap-3 md:gap-6">
             <div>
               <p className="text-sm text-cyan-400 font-medium mb-3 uppercase tracking-wider">Live Signals</p>
               <div className="flex items-center gap-3 mb-3">
@@ -94,15 +94,15 @@ export default function Signals() {
 
               <div className="relative bg-[#0d1117] border border-gray-700/40 rounded-2xl shadow-2xl shadow-black/30 overflow-hidden">
 
-                <div className="overflow-x-auto w-full bg-[#0d1117]">
+                <div className="overflow-x-auto w-full max-w-full bg-[#0d1117]">
                   <table className="w-full text-left border-collapse whitespace-nowrap">
                     <thead>
                       <tr className="bg-[#0f1420] text-gray-500 text-[10px] uppercase tracking-widest border-b border-gray-700/40">
-                        <th className="px-5 py-3.5 font-semibold w-36">시각</th>
-                        <th className="px-5 py-3.5 font-semibold">종목</th>
-                        <th className="px-5 py-3.5 font-semibold">시그널 (지표)</th>
-                        <th className="px-5 py-3.5 font-semibold">진입가</th>
-                        <th className="px-5 py-3.5 font-semibold">포지션</th>
+                        <th className="px-3 md:px-5 py-2.5 md:py-3.5 font-semibold w-28 md:w-36">시각</th>
+                        <th className="px-3 md:px-5 py-2.5 md:py-3.5 font-semibold">종목</th>
+                        <th className="hidden md:table-cell px-5 py-3.5 font-semibold">시그널 (지표)</th>
+                        <th className="px-3 md:px-5 py-2.5 md:py-3.5 font-semibold">진입가</th>
+                        <th className="px-3 md:px-5 py-2.5 md:py-3.5 font-semibold">포지션</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-800/30 text-xs">
@@ -192,7 +192,7 @@ function SignalRow({ signal, idx }: { signal: Signal; idx: number }) {
     >
 
       {/* ── 시각 ── */}
-      <td className="relative px-5 py-3.5">
+      <td className="relative px-3 md:px-5 py-2.5 md:py-3.5">
         {/* 포지션 컬러 바 */}
         <div className={`absolute inset-y-0 left-0 w-[2px] ${pos.bar} opacity-0 group-hover:opacity-100 transition-opacity duration-200`} />
         {signal.isNew ? (
@@ -209,7 +209,7 @@ function SignalRow({ signal, idx }: { signal: Signal; idx: number }) {
       </td>
 
       {/* ── 종목 ── */}
-      <td className="px-5 py-3.5">
+      <td className="px-3 md:px-5 py-2.5 md:py-3.5">
         <div className="flex items-center gap-2.5">
           {/* 코인 아이콘 or 폴백 */}
           <div className="w-7 h-7 rounded-full bg-gray-800/80 border border-gray-700/50 flex-shrink-0 overflow-hidden flex items-center justify-center">
@@ -234,7 +234,7 @@ function SignalRow({ signal, idx }: { signal: Signal; idx: number }) {
       </td>
 
       {/* ── 시그널 (지표) ── */}
-      <td className="px-5 py-3.5">
+      <td className="hidden md:table-cell px-5 py-3.5">
         {signal.indicator && signal.indicator !== "—" ? (
           <span className="inline-flex items-center px-2.5 py-1 rounded-lg bg-purple-500/10 border border-purple-500/20 text-[11px] text-purple-300 font-medium">
             {signal.indicator}
@@ -245,12 +245,12 @@ function SignalRow({ signal, idx }: { signal: Signal; idx: number }) {
       </td>
 
       {/* ── 진입가 ── */}
-      <td className="px-5 py-3.5">
+      <td className="px-3 md:px-5 py-2.5 md:py-3.5">
         <span className="font-mono text-[13px] text-gray-300 font-medium tabular-nums">{signal.price}</span>
       </td>
 
       {/* ── 포지션 ── */}
-      <td className="px-5 py-3.5">
+      <td className="px-3 md:px-5 py-2.5 md:py-3.5">
         <span className={`inline-flex items-center px-3 py-1 rounded-lg text-[11px] font-bold tracking-wider border ${pos.text} ${pos.bg} ${pos.border} group-hover:shadow-sm group-hover:${pos.glow} transition-shadow`}>
           {signal.position}
         </span>

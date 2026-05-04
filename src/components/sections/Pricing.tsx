@@ -108,12 +108,12 @@ export default function Pricing() {
 
   return (
     <>
-    <section id="pricing" className="relative h-full overflow-y-auto py-20">
+    <section id="pricing" className="relative min-h-screen md:h-full overflow-x-hidden overflow-y-auto py-20">
       {/* bg */}
       <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#0a081e] to-transparent pointer-events-none" />
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[500px] bg-purple-900/10 blur-[150px] rounded-full pointer-events-none" />
 
-      <div className="relative container mx-auto px-6">
+      <div className="relative w-full px-4 md:px-6">
         <div className="max-w-6xl mx-auto">
 
           {/* ── 헤더 ── */}
@@ -155,7 +155,7 @@ export default function Pricing() {
           </div>
 
           {/* ── 플랜 카드 ── */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch">
+          <div className="flex overflow-x-auto snap-x snap-mandatory gap-5 pb-4 -mx-4 px-4 md:mx-0 md:px-0 md:grid md:grid-cols-3 md:gap-6 md:overflow-visible md:pb-0 items-stretch [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
             {PLANS.map((plan) => {
               const Icon = plan.icon
               const c = COLOR_MAP[plan.color]
@@ -165,9 +165,9 @@ export default function Pricing() {
               const isPro = plan.key === "pro"
 
               return (
+                <div key={plan.key} className="shrink-0 w-[82vw] md:w-auto snap-center flex flex-col">
                 <div
-                  key={plan.key}
-                  className={`relative flex flex-col rounded-2xl border ${plan.border} bg-gradient-to-b ${plan.gradient} bg-[#0d1117] p-7 transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl ${
+                  className={`relative flex flex-col h-full rounded-2xl border ${plan.border} bg-gradient-to-b ${plan.gradient} bg-[#0d1117] p-7 transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl ${
                     isPopular ? "ring-1 ring-purple-500/40" : ""
                   } ${isPro ? "ring-1 ring-pink-500/30" : ""}`}
                 >
@@ -244,6 +244,7 @@ export default function Pricing() {
                   >
                     {plan.ctaText}
                   </button>
+                </div>
                 </div>
               )
             })}

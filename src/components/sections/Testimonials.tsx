@@ -72,7 +72,7 @@ export default function Testimonials() {
   const t = TESTIMONIALS[current]
 
   return (
-    <section className="relative h-full flex flex-col justify-center py-20">
+    <section className="relative min-h-screen md:h-full flex flex-col justify-center overflow-x-hidden py-20">
       {/* bg */}
       <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#0a081e]/40 to-transparent pointer-events-none" />
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[400px] bg-purple-900/8 blur-[180px] rounded-full pointer-events-none" />

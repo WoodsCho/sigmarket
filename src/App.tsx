@@ -32,13 +32,13 @@ function App() {
       <div
         id="snap-container"
         ref={containerRef}
-        className="h-screen overflow-y-scroll snap-y snap-mandatory bg-[var(--theme-bg)] text-white"
+        className="h-screen overflow-y-scroll md:snap-y md:snap-mandatory bg-[var(--theme-bg)] text-white"
       >
         {SECTIONS.map(({ id, Component }) => (
           <section
             key={id}
             id={id}
-            className="h-screen snap-start overflow-hidden"
+            className="min-h-screen md:h-screen md:snap-start overflow-hidden"
           >
             <Component />
           </section>

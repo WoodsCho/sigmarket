@@ -288,7 +288,8 @@ export default function StrategyChart({ fixedStrategyId }: StrategyChartProps = 
       layout: {
         background: { type: ColorType.Solid, color: chartBgColor },
         textColor: "#6b7280",
-        fontSize: 12,
+        fontSize: 11,
+        fontFamily: "'Inter', 'Helvetica Neue', Arial, sans-serif",
       },
       grid: {
         vertLines: { color: "rgba(255,255,255,0.03)" },
@@ -311,12 +312,12 @@ export default function StrategyChart({ fixedStrategyId }: StrategyChartProps = 
     })
 
     const candleSeries = chart.addSeries(CandlestickSeries, {
-      upColor: "#06b6d4",
-      downColor: "#ef4444",
-      borderUpColor: "#06b6d4",
-      borderDownColor: "#ef4444",
-      wickUpColor: "#06b6d4",
-      wickDownColor: "#ef4444",
+      upColor: "#26a69a",
+      downColor: "#ef5350",
+      borderUpColor: "#26a69a",
+      borderDownColor: "#ef5350",
+      wickUpColor: "#26a69a",
+      wickDownColor: "#ef5350",
     })
 
     chartRef.current = chart
@@ -383,10 +384,10 @@ export default function StrategyChart({ fixedStrategyId }: StrategyChartProps = 
 
   return (
     <div className="mb-16">
-      <div className="gradient-border overflow-hidden">
+      <div className="rounded-2xl overflow-hidden border border-white/20 shadow-lg bg-[#090c14]">
         <div className="bg-[#090c14] rounded-2xl overflow-hidden">
           {/* 종목 & 인터벌 선택 */}
-          <div className="p-4 border-b border-white/[0.06] bg-[#0b0e17]">
+          <div className="p-3 border-b border-white/[0.06] bg-[#0b0e17]">
             <div className="flex items-center gap-3 flex-wrap">
               {/* 종목 드롭다운 */}
               <div className="relative" onClick={(e) => e.stopPropagation()}>
@@ -450,7 +451,7 @@ export default function StrategyChart({ fixedStrategyId }: StrategyChartProps = 
 
           {/* 전략 선택 탭 (임베디드 모드에선 전략명만 표시) */}
           {isEmbedded ? (
-            <div className="p-4 border-b border-white/[0.06] bg-[#0b0e17]">
+            <div className="px-4 py-2 border-b border-white/[0.06] bg-[#0b0e17]">
               <div className="flex items-center justify-between flex-wrap gap-3">
                 <p className="text-[11px] text-gray-600">
                   {strategies.find((s) => s.id === activeStrategy)?.description}
@@ -469,18 +470,18 @@ export default function StrategyChart({ fixedStrategyId }: StrategyChartProps = 
               </div>
             </div>
           ) : (
-            <div className="p-4 border-b border-white/[0.06] bg-[#0b0e17]">
+            <div className="px-4 py-2 border-b border-white/[0.06] bg-[#0b0e17]">
               <div className="flex items-center justify-between flex-wrap gap-3">
                 <div className="flex items-center gap-2">
-                  <span className="text-xs text-gray-500 uppercase tracking-wider font-semibold mr-2">전략 선택</span>
+                  <span className="text-xs text-gray-500 uppercase tracking-wider font-semibold mr-2">전략</span>
                   {strategies.map((s) => (
                     <button
                       key={s.id}
                       onClick={() => updateStrategy(s.id)}
-                      className={`px-4 py-2 rounded-lg text-xs font-semibold border transition-all duration-300 ${
+                      className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all duration-200 ${
                         activeStrategy === s.id
                           ? `${s.activeColor} ${s.color}`
-                          : "border-white/5 text-gray-500 hover:border-white/10 hover:text-gray-400"
+                          : "border border-white/5 text-gray-500 hover:border-white/10 hover:text-gray-400"
                       }`}
                     >
                       {s.name}
@@ -498,10 +499,6 @@ export default function StrategyChart({ fixedStrategyId }: StrategyChartProps = 
                   </span>
                 </div>
               </div>
-              <p className="text-[11px] text-gray-600 mt-2">
-                {strategies.find((s) => s.id === activeStrategy)?.description}
-                <span className="ml-2 text-gray-700">· BINANCE:{activeSymbol} · {activeInterval.toUpperCase()}</span>
-              </p>
             </div>
           )}
 

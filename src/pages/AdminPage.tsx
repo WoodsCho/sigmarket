@@ -1,15 +1,16 @@
-import { useState, useEffect, useCallback } from "react"
+﻿import { useState, useEffect, useCallback, useRef } from "react"
 import {
   Plus, Trash2, Edit3, Save, X, LogOut,
-  Loader2, Eye, EyeOff, ArrowUp, ArrowDown,
-  ChevronDown, ChevronUp, GripVertical,
+  Loader2, Eye, EyeOff, ArrowUp, ArrowDown, ImagePlus,
 } from "lucide-react"
 import { signIn, signOut, getCurrentUser, fetchAuthSession, confirmSignIn } from "aws-amplify/auth"
 import { QRCodeSVG } from "qrcode.react"
 import { useAuth } from "../contexts/AuthContext"
 import { useNavigate } from "react-router-dom"
-import type { Indicator, ContentSection } from "../types"
+import type { Indicator } from "../types"
 import ImageUploader from "../components/ui/ImageUploader"
+import MDEditor, { commands } from "@uiw/react-md-editor"
+import "@uiw/react-md-editor/markdown-editor.css"
 
 /* ─── 환경 변수 ─── */
 const ADMIN_SECRET = import.meta.env.VITE_ADMIN_SECRET || ""
@@ -21,6 +22,7 @@ function emptyIndicator(): Indicator {
   return {
     name: "",
     subtitle: "",
+    description: "",
     image: "",
     content: "",
     sections: [],
@@ -510,6 +512,48 @@ function IndicatorEditor({
 }) {
   const [form, setForm] = useState({ ...indicator })
   const [tagInput, setTagInput] = useState(indicator.tags.join(", "))
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const mdApiRef = useRef<any>(null)
+  const [imgUploading, setImgUploading] = useState(false)
+
+  const uploadImage = async (file: File) => {
+    if (!API_URL) return
+    setImgUploading(true)
+    try {
+      const session = await fetchAuthSession()
+      const token = session.tokens?.idToken?.toString() || ""
+      const res = await fetch(API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+        body: JSON.stringify({ _action: "upload-url", fileName: file.name, fileType: file.type }),
+      })
+      if (!res.ok) throw new Error("presigned URL 발급 실패")
+      const { uploadUrl, publicUrl } = await res.json()
+      await fetch(uploadUrl, { method: "PUT", headers: { "Content-Type": file.type }, body: file })
+      if (mdApiRef.current) {
+        mdApiRef.current.replaceSelection(`\n![image](${publicUrl})\n`)
+      }
+    } catch (err: any) {
+      console.error("이미지 업로드 실패:", err)
+    } finally {
+      setImgUploading(false)
+    }
+  }
+
+  const uploadImageCommand: commands.ICommand = {
+    name: "upload-image",
+    keyCommand: "upload-image",
+    buttonProps: { "aria-label": "이미지 업로드", title: "이미지 업로드" },
+    icon: (
+      <span style={{ display: "flex", alignItems: "center", gap: 4 }}>
+        <ImagePlus style={{ width: 14, height: 14 }} />
+      </span>
+    ),
+    execute: (_state, api) => {
+      mdApiRef.current = api
+      fileInputRef.current?.click()
+    },
+  }
 
   const set = <K extends keyof typeof form>(key: K, val: (typeof form)[K]) =>
     setForm((prev) => ({ ...prev, [key]: val }))
@@ -531,6 +575,15 @@ function IndicatorEditor({
         <Field label="태그 (쉼표 구분)" value={tagInput} onChange={setTagInput} placeholder="주식, 해외선물, 코인" />
       </div>
 
+      {/* 소개 문구 */}
+      <Field
+        label="소개 (description) — 카드 미리보기용"
+        value={form.description || ""}
+        onChange={(v) => set("description", v)}
+        placeholder="카드에 표시될 짧은 소개 문구를 입력하세요"
+        multiline
+      />
+
       {/* 대표 이미지 업로드 */}
       <ImageUploader
         label="대표 이미지"
@@ -538,79 +591,51 @@ function IndicatorEditor({
         onChange={(url) => set("image", url)}
       />
 
-      {/* ═══ 상세 설명 섹션 에디터 ═══ */}
-      <fieldset className="space-y-4">
-        <div className="flex items-center justify-between">
-          <legend className="text-sm font-semibold text-gray-300">상세 설명 섹션</legend>
-          <button
-            type="button"
-            onClick={() => {
-              const sections = [...(form.sections || [])]
-              sections.push({ title: "", body: "", highlight: "", bullets: [], infoCards: [], gridItems: [] })
-              set("sections", sections)
-            }}
-            className="flex items-center gap-1 text-xs text-cyan-400 hover:text-cyan-300 transition-colors"
-          >
-            <Plus className="h-3.5 w-3.5" /> 섹션 추가
-          </button>
-        </div>
+      {/* 이미지 히든 인풋 */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={async (e) => {
+          const file = e.target.files?.[0]
+          if (file) await uploadImage(file)
+          e.target.value = ""
+        }}
+      />
 
-        {(!form.sections || form.sections.length === 0) && (
-          <div className="text-center py-8 border border-dashed border-zinc-700 rounded-xl">
-            <p className="text-gray-500 text-sm mb-3">아직 섹션이 없습니다</p>
-            <button
-              type="button"
-              onClick={() => set("sections", [{ title: "", body: "", highlight: "", bullets: [], infoCards: [], gridItems: [] }])}
-              className="text-xs text-cyan-400 hover:text-cyan-300"
-            >
-              + 첫 섹션 만들기
-            </button>
-          </div>
-        )}
-
-        {(form.sections || []).map((section, si) => (
-          <SectionEditor
-            key={si}
-            index={si}
-            section={section}
-            total={(form.sections || []).length}
-            onChange={(updated) => {
-              const sections = [...(form.sections || [])]
-              sections[si] = updated
-              set("sections", sections)
-            }}
-            onDelete={() => {
-              const sections = [...(form.sections || [])]
-              sections.splice(si, 1)
-              set("sections", sections)
-            }}
-            onMoveUp={si > 0 ? () => {
-              const sections = [...(form.sections || [])]
-              ;[sections[si - 1], sections[si]] = [sections[si], sections[si - 1]]
-              set("sections", sections)
-            } : undefined}
-            onMoveDown={si < (form.sections || []).length - 1 ? () => {
-              const sections = [...(form.sections || [])]
-              ;[sections[si], sections[si + 1]] = [sections[si + 1], sections[si]]
-              set("sections", sections)
-            } : undefined}
-          />
-        ))}
-      </fieldset>
-
-      {/* 카드 간략 설명 (content) — 목록 카드에 표시되는 짧은 소개 */}
+      {/* ═══ 마크다운 에디터 ═══ */}
       <div>
-        <label className="block text-sm text-gray-400 mb-1">
-          카드 설명 (content)
-          <span className="text-gray-600 ml-2 text-xs">커스텀 보조지표 목록 카드에 표시되는 짧은 소개</span>
+        <label className="block text-sm text-gray-400 mb-2">
+          상세 설명 (마크다운)
+          {imgUploading && <span className="ml-2 text-xs text-cyan-400 animate-pulse">이미지 업로드 중...</span>}
         </label>
-        <textarea
-          value={form.content}
-          onChange={(e) => set("content", e.target.value)}
-          rows={4}
-          placeholder="카드에 표시될 간략한 설명을 입력하세요"
-          className="w-full bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-cyan-500 resize-y"
-        />
+        <div data-color-mode="dark">
+          <MDEditor
+            value={form.content}
+            onChange={(v) => set("content", v ?? "")}
+            commands={[
+              commands.bold,
+              commands.italic,
+              commands.strikethrough,
+              commands.hr,
+              commands.title,
+              commands.divider,
+              commands.link,
+              commands.quote,
+              commands.code,
+              commands.codeBlock,
+              commands.divider,
+              commands.unorderedListCommand,
+              commands.orderedListCommand,
+              commands.checkedListCommand,
+              commands.divider,
+              uploadImageCommand,
+            ]}
+            height={500}
+            preview="live"
+          />
+        </div>
       </div>
 
       {/* 전략 ID */}
@@ -690,352 +715,6 @@ function IndicatorEditor({
   )
 }
 
-/* ─── 섹션 에디터 ─── */
-function SectionEditor({
-  index,
-  section,
-  total: _total,
-  onChange,
-  onDelete,
-  onMoveUp,
-  onMoveDown,
-}: {
-  index: number
-  section: ContentSection
-  total: number
-  onChange: (s: ContentSection) => void
-  onDelete: () => void
-  onMoveUp?: () => void
-  onMoveDown?: () => void
-}) {
-  const [expanded, setExpanded] = useState(true)
-  const colorLabels = ["cyan", "pink", "purple", "blue", "orange", "emerald"] as const
-
-  const update = <K extends keyof ContentSection>(key: K, val: ContentSection[K]) =>
-    onChange({ ...section, [key]: val })
-
-  return (
-    <div className="border border-zinc-700 rounded-xl overflow-hidden bg-zinc-900/50">
-      {/* 헤더 */}
-      <div
-        className="flex items-center gap-3 px-4 py-3 bg-zinc-900 cursor-pointer hover:bg-zinc-800/80 transition-colors"
-        onClick={() => setExpanded(!expanded)}
-      >
-        <div className="flex flex-col gap-0.5">
-          <button type="button" onClick={(e) => { e.stopPropagation(); onMoveUp?.() }} disabled={!onMoveUp} className="text-gray-500 hover:text-white disabled:opacity-20">
-            <ChevronUp className="h-3 w-3" />
-          </button>
-          <button type="button" onClick={(e) => { e.stopPropagation(); onMoveDown?.() }} disabled={!onMoveDown} className="text-gray-500 hover:text-white disabled:opacity-20">
-            <ChevronDown className="h-3 w-3" />
-          </button>
-        </div>
-        <GripVertical className="h-4 w-4 text-gray-600" />
-        <span className="w-6 h-6 rounded bg-zinc-700 flex items-center justify-center text-xs font-bold text-cyan-400">{index + 1}</span>
-        <span className="text-sm font-medium text-white flex-1 truncate">
-          {section.title || `섹션 ${index + 1}`}
-        </span>
-        <button type="button" onClick={(e) => { e.stopPropagation(); onDelete() }} className="text-gray-500 hover:text-red-400 transition-colors p-1">
-          <Trash2 className="h-3.5 w-3.5" />
-        </button>
-        {expanded ? <ChevronUp className="h-4 w-4 text-gray-500" /> : <ChevronDown className="h-4 w-4 text-gray-500" />}
-      </div>
-
-      {expanded && (
-        <div className="p-4 space-y-4">
-          {/* 제목 */}
-          <div>
-            <label className="block text-xs text-gray-500 mb-1">섹션 제목</label>
-            <input
-              value={section.title}
-              onChange={(e) => update("title", e.target.value)}
-              placeholder="예: 한눈에 보이는 가격의 흐름"
-              className="w-full bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-cyan-500"
-            />
-          </div>
-
-          {/* 레이아웃 */}
-          <div>
-            <label className="block text-xs text-gray-500 mb-1">카드 너비</label>
-            <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={() => update("layout", "half")}
-                className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium border transition-colors ${
-                  (!section.layout || section.layout === "half")
-                    ? "bg-cyan-500/20 border-cyan-500/50 text-cyan-400"
-                    : "bg-zinc-900 border-zinc-700 text-gray-400 hover:border-zinc-600"
-                }`}
-              >
-                ◧ 50% (반쪽)
-              </button>
-              <button
-                type="button"
-                onClick={() => update("layout", "full")}
-                className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium border transition-colors ${
-                  section.layout === "full"
-                    ? "bg-purple-500/20 border-purple-500/50 text-purple-400"
-                    : "bg-zinc-900 border-zinc-700 text-gray-400 hover:border-zinc-600"
-                }`}
-              >
-                ▣ 100% (전체)
-              </button>
-            </div>
-            {/* 카드 투명 배경 */}
-            <button
-              type="button"
-              onClick={() => update("cardTransparent", !section.cardTransparent)}
-              className={`mt-2 flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
-                section.cardTransparent
-                  ? "bg-cyan-500/20 border-cyan-500/50 text-cyan-400"
-                  : "bg-zinc-900 border-zinc-700 text-gray-400 hover:border-zinc-600"
-              }`}
-            >
-              <span className={`w-3.5 h-3.5 rounded-sm border-2 flex items-center justify-center ${section.cardTransparent ? "border-cyan-400 bg-cyan-400/20" : "border-gray-600"}`}>
-                {section.cardTransparent && <span className="w-1.5 h-1.5 bg-cyan-400 rounded-sm" />}
-              </span>
-              카드 투명 배경 (테두리/배경 없이)
-            </button>
-          </div>
-
-          {/* 본문 */}
-          <div>
-            <label className="block text-xs text-gray-500 mb-1">본문</label>
-            <textarea
-              value={section.body}
-              onChange={(e) => update("body", e.target.value)}
-              rows={3}
-              placeholder="설명 텍스트를 입력하세요..."
-              className="w-full bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-cyan-500 resize-y"
-            />
-          </div>
-
-          {/* 💡 강조 문구 */}
-          <div>
-            <label className="block text-xs text-gray-500 mb-1">💡 강조 문구 (선택)</label>
-            <input
-              value={section.highlight || ""}
-              onChange={(e) => update("highlight", e.target.value)}
-              placeholder='예: "단기 신호가 장기 흐름과 같은 방향인지" 즉각적으로 체크할 수 있습니다.'
-              className="w-full bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-cyan-500"
-            />
-          </div>
-
-          {/* 🖼 섹션 이미지 업로드 */}
-          <div className="space-y-2">
-            <ImageUploader
-              label="🖼 섹션 이미지 (선택)"
-              value={section.image || ""}
-              onChange={(url) => update("image", url)}
-            />
-            {section.image && (
-              <button
-                type="button"
-                onClick={() => update("imageTransparent", !section.imageTransparent)}
-                className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
-                  section.imageTransparent
-                    ? "bg-cyan-500/20 border-cyan-500/50 text-cyan-400"
-                    : "bg-zinc-900 border-zinc-700 text-gray-400 hover:border-zinc-600"
-                }`}
-              >
-                <span className={`w-3.5 h-3.5 rounded-sm border-2 flex items-center justify-center ${section.imageTransparent ? "border-cyan-400 bg-cyan-400/20" : "border-gray-600"}`}>
-                  {section.imageTransparent && <span className="w-1.5 h-1.5 bg-cyan-400 rounded-sm" />}
-                </span>
-                투명 배경 (테두리 없이 표시)
-              </button>
-            )}
-          </div>
-
-          {/* ● 불릿 리스트 */}
-          <div>
-            <div className="flex items-center justify-between mb-1">
-              <label className="text-xs text-gray-500">● 불릿 리스트 (선택)</label>
-              <button
-                type="button"
-                onClick={() => update("bullets", [...(section.bullets || []), ""])}
-                className="text-[10px] text-cyan-400 hover:text-cyan-300"
-              >
-                + 추가
-              </button>
-            </div>
-            {(section.bullets || []).map((b, bi) => (
-              <div key={bi} className="flex gap-2 mb-1.5">
-                <span className="text-cyan-400 text-sm mt-1.5">●</span>
-                <input
-                  value={b}
-                  onChange={(e) => {
-                    const bullets = [...(section.bullets || [])]
-                    bullets[bi] = e.target.value
-                    update("bullets", bullets)
-                  }}
-                  placeholder="불릿 항목"
-                  className="flex-1 bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-1.5 text-white text-sm focus:outline-none focus:border-cyan-500"
-                />
-                <button
-                  type="button"
-                  onClick={() => {
-                    const bullets = [...(section.bullets || [])]
-                    bullets.splice(bi, 1)
-                    update("bullets", bullets)
-                  }}
-                  className="text-gray-600 hover:text-red-400 text-xs"
-                >
-                  <X className="h-3.5 w-3.5" />
-                </button>
-              </div>
-            ))}
-          </div>
-
-          {/* 그리드 아이템 (상단/중단/하단 같은 박스들) */}
-          <div>
-            <div className="flex items-center justify-between mb-1">
-              <label className="text-xs text-gray-500">그리드 아이템 (선택)</label>
-              <button
-                type="button"
-                onClick={() => update("gridItems", [...(section.gridItems || []), ""])}
-                className="text-[10px] text-cyan-400 hover:text-cyan-300"
-              >
-                + 추가
-              </button>
-            </div>
-            <div className="grid grid-cols-2 gap-1.5">
-              {(section.gridItems || []).map((g, gi) => (
-                <div key={gi} className="flex gap-1">
-                  <input
-                    value={g}
-                    onChange={(e) => {
-                      const gridItems = [...(section.gridItems || [])]
-                      gridItems[gi] = e.target.value
-                      update("gridItems", gridItems)
-                    }}
-                    placeholder="예: 상단 / 중단 / 하단"
-                    className="flex-1 bg-zinc-900 border border-zinc-700 rounded px-2 py-1 text-white text-xs focus:outline-none focus:border-cyan-500"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const gridItems = [...(section.gridItems || [])]
-                      gridItems.splice(gi, 1)
-                      update("gridItems", gridItems)
-                    }}
-                    className="text-gray-600 hover:text-red-400"
-                  >
-                    <X className="h-3 w-3" />
-                  </button>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* TP/SL 정보 카드 */}
-          <div>
-            <div className="flex items-center justify-between mb-1">
-              <label className="text-xs text-gray-500">정보 카드 — TP / SL 등 (선택)</label>
-              <button
-                type="button"
-                onClick={() => update("infoCards", [...(section.infoCards || []), { badge: "TP", badgeColor: "cyan", title: "", description: "" }])}
-                className="text-[10px] text-cyan-400 hover:text-cyan-300"
-              >
-                + 추가
-              </button>
-            </div>
-            {(section.infoCards || []).map((card, ci) => (
-              <div key={ci} className="flex gap-2 mb-2 p-3 bg-zinc-900 border border-zinc-700 rounded-lg">
-                <div className="flex flex-col gap-1.5 flex-shrink-0">
-                  <input
-                    value={card.badge}
-                    onChange={(e) => {
-                      const infoCards = [...(section.infoCards || [])]
-                      infoCards[ci] = { ...infoCards[ci], badge: e.target.value }
-                      update("infoCards", infoCards)
-                    }}
-                    placeholder="TP"
-                    className="w-14 bg-zinc-800 border border-zinc-600 rounded px-1.5 py-1 text-white text-xs text-center focus:outline-none focus:border-cyan-500"
-                  />
-                  <select
-                    value={card.badgeColor}
-                    onChange={(e) => {
-                      const infoCards = [...(section.infoCards || [])]
-                      infoCards[ci] = { ...infoCards[ci], badgeColor: e.target.value as typeof card.badgeColor }
-                      update("infoCards", infoCards)
-                    }}
-                    className="w-14 bg-zinc-800 border border-zinc-600 rounded px-1 py-1 text-white text-[10px] focus:outline-none"
-                  >
-                    {colorLabels.map(c => <option key={c} value={c}>{c}</option>)}
-                  </select>
-                </div>
-                <div className="flex-1 space-y-1">
-                  <input
-                    value={card.title}
-                    onChange={(e) => {
-                      const infoCards = [...(section.infoCards || [])]
-                      infoCards[ci] = { ...infoCards[ci], title: e.target.value }
-                      update("infoCards", infoCards)
-                    }}
-                    placeholder="카드 제목 (예: 확장라인 Extension Line)"
-                    className="w-full bg-zinc-800 border border-zinc-600 rounded px-2 py-1 text-white text-xs focus:outline-none focus:border-cyan-500"
-                  />
-                  <input
-                    value={card.description}
-                    onChange={(e) => {
-                      const infoCards = [...(section.infoCards || [])]
-                      infoCards[ci] = { ...infoCards[ci], description: e.target.value }
-                      update("infoCards", infoCards)
-                    }}
-                    placeholder="카드 설명"
-                    className="w-full bg-zinc-800 border border-zinc-600 rounded px-2 py-1 text-white text-xs focus:outline-none focus:border-cyan-500"
-                  />
-                </div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    const infoCards = [...(section.infoCards || [])]
-                    infoCards.splice(ci, 1)
-                    update("infoCards", infoCards)
-                  }}
-                  className="text-gray-600 hover:text-red-400 self-start"
-                >
-                  <X className="h-3.5 w-3.5" />
-                </button>
-              </div>
-            ))}
-          </div>
-
-          {/* 조합 카드 (A + B = C) */}
-          <div>
-            <label className="text-xs text-gray-500 mb-1 block">조합 표시 — A + B = C (선택)</label>
-            {section.combo ? (
-              <div className="p-3 bg-zinc-900 border border-zinc-700 rounded-lg space-y-2">
-                <div className="grid grid-cols-3 gap-2">
-                  <div>
-                    <input value={section.combo.left.label} onChange={(e) => update("combo", { ...section.combo!, left: { ...section.combo!.left, label: e.target.value } })} placeholder="라벨 (예: 방향)" className="w-full bg-zinc-800 border border-zinc-600 rounded px-2 py-1 text-white text-xs focus:outline-none focus:border-cyan-500 mb-1" />
-                    <input value={section.combo.left.sub} onChange={(e) => update("combo", { ...section.combo!, left: { ...section.combo!.left, sub: e.target.value } })} placeholder="하위 (예: Sigma Box)" className="w-full bg-zinc-800 border border-zinc-600 rounded px-2 py-1 text-gray-400 text-[10px] focus:outline-none focus:border-cyan-500" />
-                  </div>
-                  <div>
-                    <input value={section.combo.right.label} onChange={(e) => update("combo", { ...section.combo!, right: { ...section.combo!.right, label: e.target.value } })} placeholder="라벨 (예: 타이밍)" className="w-full bg-zinc-800 border border-zinc-600 rounded px-2 py-1 text-white text-xs focus:outline-none focus:border-cyan-500 mb-1" />
-                    <input value={section.combo.right.sub} onChange={(e) => update("combo", { ...section.combo!, right: { ...section.combo!.right, sub: e.target.value } })} placeholder="하위 (예: RSI Spectrum)" className="w-full bg-zinc-800 border border-zinc-600 rounded px-2 py-1 text-gray-400 text-[10px] focus:outline-none focus:border-cyan-500" />
-                  </div>
-                  <div>
-                    <input value={section.combo.result} onChange={(e) => update("combo", { ...section.combo!, result: e.target.value })} placeholder="결과 (예: 단순해진 판단)" className="w-full bg-zinc-800 border border-zinc-600 rounded px-2 py-1 text-white text-xs focus:outline-none focus:border-cyan-500" />
-                  </div>
-                </div>
-                <button type="button" onClick={() => update("combo", undefined)} className="text-[10px] text-red-400 hover:text-red-300">조합 삭제</button>
-              </div>
-            ) : (
-              <button
-                type="button"
-                onClick={() => update("combo", { left: { label: "", sub: "" }, right: { label: "", sub: "" }, result: "" })}
-                className="text-[10px] text-cyan-400 hover:text-cyan-300"
-              >
-                + 조합 추가
-              </button>
-            )}
-          </div>
-        </div>
-      )}
-    </div>
-  )
-}
-
 /* ─── 입력 필드 헬퍼 ─── */
 function Field({
   label,
@@ -1043,23 +722,36 @@ function Field({
   onChange,
   placeholder,
   required,
+  multiline,
 }: {
   label: string
   value: string
   onChange: (v: string) => void
   placeholder?: string
   required?: boolean
+  multiline?: boolean
 }) {
   return (
     <div>
       <label className="block text-sm text-gray-400 mb-1">{label}</label>
-      <input
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder={placeholder}
-        required={required}
-        className="w-full bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-cyan-500"
-      />
+      {multiline ? (
+        <textarea
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder={placeholder}
+          required={required}
+          rows={3}
+          className="w-full bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-cyan-500 resize-none"
+        />
+      ) : (
+        <input
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder={placeholder}
+          required={required}
+          className="w-full bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-cyan-500"
+        />
+      )}
     </div>
   )
 }

@@ -12,7 +12,7 @@ export default function Indicators() {
   const preview = indicators.slice(0, 3)
 
   return (
-    <section id="indicators" className="relative h-full flex flex-col justify-center py-20">
+    <section id="indicators" className="relative min-h-screen md:h-full flex flex-col justify-center overflow-x-hidden py-20">
       {/* Section bg */}
       <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#0a081e] to-transparent" />
       <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-[radial-gradient(ellipse_at_center,_rgba(139,92,246,0.06)_0%,_transparent_70%)]" />
@@ -39,13 +39,14 @@ export default function Indicators() {
             <IndicatorGridSkeleton count={3} />
           ) : (
             <>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 items-stretch">
+              <div className="flex overflow-x-auto snap-x snap-mandatory gap-5 pb-4 -mx-4 px-4 md:mx-0 md:px-0 md:grid md:grid-cols-2 lg:grid-cols-3 md:gap-8 md:overflow-visible md:pb-0 items-stretch [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                 {preview.map((indicator, idx) => (
-                  <IndicatorCard
-                    key={indicator.id || idx}
-                    indicator={indicator}
-                    idx={idx}
-                  />
+                  <div key={indicator.id || idx} className="shrink-0 w-[80vw] md:w-auto snap-center">
+                    <IndicatorCard
+                      indicator={indicator}
+                      idx={idx}
+                    />
+                  </div>
                 ))}
               </div>
 
@@ -94,7 +95,9 @@ function IndicatorCard({ indicator, idx }: { indicator: Indicator; idx: number }
 
           {/* 설명 */}
           <CardContent className="p-0 flex-1">
-            <p className="text-sm text-gray-400 leading-relaxed line-clamp-4">{indicator.content}</p>
+            <p className="text-sm text-gray-400 leading-relaxed line-clamp-4">
+              {indicator.description || indicator.content}
+            </p>
 
             {/* 태그 */}
             {indicator.tags && indicator.tags.length > 0 && (

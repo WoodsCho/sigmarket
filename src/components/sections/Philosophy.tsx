@@ -2,7 +2,7 @@ import { principles } from "../../data"
 
 export default function Philosophy() {
   return (
-    <section id="philosophy" className="relative h-full flex flex-col justify-center py-20">
+    <section id="philosophy" className="relative min-h-screen md:h-full flex flex-col justify-center overflow-x-hidden py-20">
       <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#0a081e] to-transparent" />
 
       <div className="relative container mx-auto px-6">
