@@ -1,11 +1,13 @@
 import { useState } from "react"
-import { useNavigate, Link } from "react-router-dom"
+import { useNavigate, useLocation, Link } from "react-router-dom"
 import { signIn, confirmSignIn, signInWithRedirect } from "aws-amplify/auth"
 import { Eye, EyeOff, ArrowRight, Loader2 } from "lucide-react"
 import { useAuth } from "../contexts/AuthContext"
 
 export default function LoginPage() {
   const navigate = useNavigate()
+  const location = useLocation()
+  const from = (location.state as any)?.from || "/"
   const { refreshUser } = useAuth()
 
   const [email, setEmail] = useState("")
@@ -27,7 +29,7 @@ export default function LoginPage() {
         return
       }
       const admin = await refreshUser()
-      navigate(admin ? "/admin" : "/")
+      navigate(admin ? "/admin" : from)
     } catch (err: any) {
       const msg: Record<string, string> = {
         UserNotFoundException: "등록되지 않은 이메일입니다.",
@@ -47,7 +49,7 @@ export default function LoginPage() {
     try {
       await confirmSignIn({ challengeResponse: totpCode })
       const admin = await refreshUser()
-      navigate(admin ? "/admin" : "/")
+      navigate(admin ? "/admin" : from)
     } catch (err: any) {
       setError(err.message || "인증 코드가 올바르지 않습니다.")
     } finally {

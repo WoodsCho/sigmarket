@@ -94,11 +94,15 @@ export default function Pricing() {
   const [billing, setBilling] = useState<"monthly" | "yearly">("monthly")
   const [trialOpen, setTrialOpen] = useState(false)
   const navigate = useNavigate()
-  const { user: _user } = useAuth()
+  const { user } = useAuth()
 
   function handleCta(planKey: string) {
     if (planKey === "free") {
       setTrialOpen(true)
+      return
+    }
+    if (!user) {
+      navigate("/login", { state: { from: `/payment?plan=${planKey === "pro" ? "professional" : planKey}&billing=${billing}` } })
       return
     }
     // "pro" key → use "professional" as plan param

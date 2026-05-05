@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from "react"
-import { createChart, createSeriesMarkers, CandlestickSeries, type IChartApi, type ISeriesApi, type CandlestickData, type Time, ColorType } from "lightweight-charts"
+import { createChart, createSeriesMarkers, CandlestickSeries, LineSeries, type IChartApi, type ISeriesApi, type CandlestickData, type Time, ColorType } from "lightweight-charts"
 
 /* ─── 전략 정의 ─── */
 interface Strategy {
@@ -32,10 +32,12 @@ const symbols: SymbolOption[] = [
 ]
 
 const intervals = [
+  { id: "1m",  label: "1분" },
+  { id: "5m",  label: "5분" },
   { id: "15m", label: "15분" },
-  { id: "1h", label: "1시간" },
-  { id: "4h", label: "4시간" },
-  { id: "1d", label: "1일" },
+  { id: "1h",  label: "1시간" },
+  { id: "4h",  label: "4시간" },
+  { id: "1d",  label: "1일" },
 ]
 
 const strategies: Strategy[] = [
@@ -82,6 +84,14 @@ interface TradeResult {
   pnl: number // 수익률 %
 }
 
+/* ─── 박스 레벨 점 ─── */
+interface BoxLevelPoint {
+  time: Time
+  top: number
+  mid: number
+  btm: number
+}
+
 /* ─── 시그널 생성 결과 ─── */
 interface SignalResult {
   markers: Array<{
@@ -93,6 +103,11 @@ interface SignalResult {
     size: number
   }>
   trades: TradeResult[]
+  lines?: {
+    b1?: BoxLevelPoint[]
+    b2?: BoxLevelPoint[]
+    b3?: BoxLevelPoint[]
+  } | null
 }
 
 /* ─── API URL ─── */
@@ -126,6 +141,11 @@ export default function StrategyChart({ fixedStrategyId }: StrategyChartProps = 
   const chartRef = useRef<IChartApi | null>(null)
   const seriesRef = useRef<ISeriesApi<"Candlestick"> | null>(null)
   const markersRef = useRef<ReturnType<typeof createSeriesMarkers<Time>> | null>(null)
+  const lineSeriesRef = useRef<{
+    b1: { top: ISeriesApi<"Line">; mid: ISeriesApi<"Line">; btm: ISeriesApi<"Line"> }
+    b2: { top: ISeriesApi<"Line">; mid: ISeriesApi<"Line">; btm: ISeriesApi<"Line"> }
+    b3: { top: ISeriesApi<"Line">; mid: ISeriesApi<"Line">; btm: ISeriesApi<"Line"> }
+  } | null>(null)
   const candlesRef = useRef<CandlestickData<Time>[]>([])
   const isFetchingRef = useRef(false)  // 과거 데이터 로딩 중복 방지
   const signalResultRef = useRef<SignalResult>({ markers: [], trades: [] })  // 전체 시그널 결과
@@ -145,6 +165,8 @@ export default function StrategyChart({ fixedStrategyId }: StrategyChartProps = 
   // 인터벌별 최적 봉 수 (Binance 최대 1000)
   const getCandleLimit = (interval: string) => {
     switch (interval) {
+      case "1m":  return 500   // ~8시간
+      case "5m":  return 1000  // ~3.5일
       case "15m": return 1000  // ~10일
       case "1h":  return 720   // ~30일
       case "4h":  return 500   // ~83일
@@ -177,6 +199,7 @@ export default function StrategyChart({ fixedStrategyId }: StrategyChartProps = 
 
         const result = await fetchSignals(candles, strategy)
         markersRef.current?.setMarkers(result.markers)
+        applyLineData(result.lines)
         applyTradeStats(result)
 
         chartRef.current?.timeScale().fitContent()
@@ -188,6 +211,7 @@ export default function StrategyChart({ fixedStrategyId }: StrategyChartProps = 
         seriesRef.current.setData(demoCandles)
         const result = await fetchSignals(demoCandles, strategy)
         markersRef.current?.setMarkers(result.markers)
+        applyLineData(result.lines)
         applyTradeStats(result)
         chartRef.current?.timeScale().fitContent()
       })
@@ -230,6 +254,7 @@ export default function StrategyChart({ fixedStrategyId }: StrategyChartProps = 
         // 시그널 재계산
         const result = await fetchSignals(merged, activeStrategyRef.current)
         markersRef.current?.setMarkers(result.markers)
+        applyLineData(result.lines)
         applyTradeStats(result)
       })
       .finally(() => {
@@ -278,6 +303,18 @@ export default function StrategyChart({ fixedStrategyId }: StrategyChartProps = 
     updateVisibleStats()
   }, [updateVisibleStats])
 
+  const applyLineData = useCallback((lines: SignalResult["lines"]) => {
+    if (!lineSeriesRef.current) return
+    const boxKeys = ["b1", "b2", "b3"] as const
+    for (const box of boxKeys) {
+      const data = lines?.[box] ?? []
+      const ls = lineSeriesRef.current[box]
+      ls.top.setData(data.map(p => ({ time: p.time, value: p.top })))
+      ls.mid.setData(data.map(p => ({ time: p.time, value: p.mid })))
+      ls.btm.setData(data.map(p => ({ time: p.time, value: p.btm })))
+    }
+  }, [])
+
   // 차트 생성
   useEffect(() => {
     if (!chartContainerRef.current) return
@@ -324,6 +361,19 @@ export default function StrategyChart({ fixedStrategyId }: StrategyChartProps = 
     seriesRef.current = candleSeries
     markersRef.current = createSeriesMarkers(candleSeries)
 
+    const makeLineSeries = (color: string) => chart.addSeries(LineSeries, {
+      color,
+      lineWidth: 1,
+      priceLineVisible: false,
+      lastValueVisible: false,
+      crosshairMarkerVisible: false,
+    })
+    lineSeriesRef.current = {
+      b1: { top: makeLineSeries("#FFD700"), mid: makeLineSeries("#FFD700"), btm: makeLineSeries("#FFD700") },
+      b2: { top: makeLineSeries("#32CD32"), mid: makeLineSeries("#32CD32"), btm: makeLineSeries("#32CD32") },
+      b3: { top: makeLineSeries("#FF4444"), mid: makeLineSeries("#FF4444"), btm: makeLineSeries("#FF4444") },
+    }
+
     fetchCandles("BTCUSDT", "1h", fixedStrategyId || "sigma-box")
 
     // 차트 영역 변경 시: 과거 데이터 로딩 + 보이는 영역 통계 업데이트
@@ -346,6 +396,7 @@ export default function StrategyChart({ fixedStrategyId }: StrategyChartProps = 
     return () => {
       window.removeEventListener("resize", handleResize)
       chart.timeScale().unsubscribeVisibleLogicalRangeChange(onVisibleRangeChange)
+      lineSeriesRef.current = null
       chart.remove()
     }
   }, [fetchCandles, fetchOlderCandles, updateVisibleStats])
@@ -358,8 +409,9 @@ export default function StrategyChart({ fixedStrategyId }: StrategyChartProps = 
 
     const result = await fetchSignals(candlesRef.current, strategyId)
     markersRef.current?.setMarkers(result.markers)
+    applyLineData(result.lines)
     applyTradeStats(result)
-  }, [applyTradeStats])
+  }, [applyTradeStats, applyLineData])
 
   // 종목 변경
   const updateSymbol = useCallback((sym: string) => {
