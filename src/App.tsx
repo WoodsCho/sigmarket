@@ -1,17 +1,28 @@
-import { useEffect, useRef, useState } from "react"
+import { lazy, Suspense, useEffect, useRef, useState } from "react"
 import { useLocation } from "react-router-dom"
 import { ChevronUp } from "lucide-react"
-import { Header, Hero, Stats, Signals, Indicators, Testimonials, Pricing, Philosophy } from "./components/sections"
+import { Header, Hero } from "./components/sections"
 import "./App.css"
 
+// Hero/Header는 첫 화면에 바로 필요 — eager load
+// 나머지 섹션은 스크롤 시 로드 — lazy load
+const Stats        = lazy(() => import("./components/sections/Stats"))
+const Signals      = lazy(() => import("./components/sections/Signals"))
+const Indicators   = lazy(() => import("./components/sections/Indicators"))
+const Testimonials = lazy(() => import("./components/sections/Testimonials"))
+const Pricing      = lazy(() => import("./components/sections/Pricing"))
+const Philosophy   = lazy(() => import("./components/sections/Philosophy"))
+
+const SectionFallback = () => <div className="md:h-[100dvh] bg-[var(--theme-bg)]" />
+
 const SECTIONS = [
-  { id: "hero",         Component: Hero         },
-  { id: "stats",        Component: Stats        },
-  { id: "signals",      Component: Signals      },
-  { id: "indicators",   Component: Indicators   },
-  { id: "testimonials", Component: Testimonials },
-  { id: "pricing",      Component: Pricing      },
-  { id: "philosophy",   Component: Philosophy   },
+  { id: "hero",         Component: Hero,         lazy: false },
+  { id: "stats",        Component: Stats,        lazy: true  },
+  { id: "signals",      Component: Signals,      lazy: true  },
+  { id: "indicators",   Component: Indicators,   lazy: true  },
+  { id: "testimonials", Component: Testimonials, lazy: true  },
+  { id: "pricing",      Component: Pricing,      lazy: true  },
+  { id: "philosophy",   Component: Philosophy,   lazy: true  },
 ]
 
 function App() {
@@ -46,13 +57,19 @@ function App() {
         ref={containerRef}
         className="h-[100dvh] overflow-y-scroll md:snap-y md:snap-mandatory bg-[var(--theme-bg)] text-white"
       >
-        {SECTIONS.map(({ id, Component }) => (
+        {SECTIONS.map(({ id, Component, lazy: isLazy }) => (
           <section
             key={id}
             id={id}
             className="md:h-[100dvh] md:snap-start md:overflow-hidden"
           >
-            <Component />
+            {isLazy ? (
+              <Suspense fallback={<SectionFallback />}>
+                <Component />
+              </Suspense>
+            ) : (
+              <Component />
+            )}
           </section>
         ))}
       </div>
