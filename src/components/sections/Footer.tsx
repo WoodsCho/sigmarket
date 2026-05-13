@@ -2,7 +2,7 @@ import { navItems } from "../../data"
 
 export default function Footer() {
   return (
-    <footer className="relative min-h-screen md:h-full flex flex-col justify-center border-t border-white/5">
+    <footer className="relative min-h-[100dvh] md:h-full flex flex-col justify-center border-t border-white/5">
       {/* Top gradient line */}
       <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-gray-700/30 to-transparent" />
 

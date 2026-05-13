@@ -119,7 +119,7 @@ function LoginGate({ onLogin }: { onLogin: () => void }) {
 
   if (step === "newPassword") {
     return (
-      <div className="min-h-screen bg-[var(--theme-bg)] flex items-center justify-center">
+      <div className="min-h-[100dvh] bg-[var(--theme-bg)] flex items-center justify-center">
         <form onSubmit={handleNewPassword} className={formClass}>
           <h1 className="text-2xl font-bold text-white text-center">새 비밀번호 설정</h1>
           <p className="text-gray-400 text-sm text-center">첫 로그인 시 비밀번호를 변경해야 합니다.</p>
@@ -139,7 +139,7 @@ function LoginGate({ onLogin }: { onLogin: () => void }) {
   if (step === "totpSetup") {
     const secretKey = totpSetupUri.split("secret=")[1]?.split("&")[0] || ""
     return (
-      <div className="min-h-screen bg-[var(--theme-bg)] flex items-center justify-center">
+      <div className="min-h-[100dvh] bg-[var(--theme-bg)] flex items-center justify-center">
         <form onSubmit={handleTotpVerify} className={formClass}>
           <h1 className="text-2xl font-bold text-white text-center">MFA 설정</h1>
           <p className="text-gray-400 text-sm text-center">인증 앱(Google Authenticator 등)으로 QR 코드를 스캔하세요.</p>
@@ -170,7 +170,7 @@ function LoginGate({ onLogin }: { onLogin: () => void }) {
 
   if (step === "totpVerify") {
     return (
-      <div className="min-h-screen bg-[var(--theme-bg)] flex items-center justify-center">
+      <div className="min-h-[100dvh] bg-[var(--theme-bg)] flex items-center justify-center">
         <form onSubmit={handleTotpVerify} className={formClass}>
           <h1 className="text-2xl font-bold text-white text-center">2단계 인증</h1>
           <p className="text-gray-400 text-sm text-center">인증 앱의 6자리 코드를 입력하세요.</p>
@@ -189,7 +189,7 @@ function LoginGate({ onLogin }: { onLogin: () => void }) {
   }
 
   return (
-    <div className="min-h-screen bg-[var(--theme-bg)] flex items-center justify-center">
+    <div className="min-h-[100dvh] bg-[var(--theme-bg)] flex items-center justify-center">
       <form onSubmit={handleSubmit} className={formClass}>
         <h1 className="text-2xl font-bold text-white text-center">Admin Login</h1>
         <div>
@@ -240,7 +240,7 @@ export default function AdminPage() {
 
   if (checking) {
     return (
-      <div className="min-h-screen bg-[var(--theme-bg)] flex items-center justify-center">
+      <div className="min-h-[100dvh] bg-[var(--theme-bg)] flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-cyan-500" />
       </div>
     )
@@ -357,7 +357,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
   }
 
   return (
-    <div className="min-h-screen bg-[var(--theme-bg)] text-white">
+    <div className="min-h-[100dvh] bg-[var(--theme-bg)] text-white">
       {/* 헤더 */}
       <header className="sticky top-0 z-50 bg-[var(--theme-bg)]/90 backdrop-blur border-b border-zinc-800">
         <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">

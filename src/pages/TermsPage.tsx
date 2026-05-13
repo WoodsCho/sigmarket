@@ -40,7 +40,7 @@ export default function TermsPage() {
   const navigate = useNavigate()
 
   return (
-    <div className="min-h-screen bg-[#08061a] text-white">
+    <div className="min-h-[100dvh] bg-[#08061a] text-white">
       <div className="max-w-2xl mx-auto px-6 py-16">
         {/* 뒤로가기 */}
         <button

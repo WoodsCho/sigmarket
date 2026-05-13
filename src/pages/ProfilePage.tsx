@@ -88,7 +88,7 @@ export default function ProfilePage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-[#08061a] flex items-center justify-center">
+      <div className="min-h-[100dvh] bg-[#08061a] flex items-center justify-center">
         <div className="w-8 h-8 rounded-full border-2 border-cyan-500 border-t-transparent animate-spin" />
       </div>
     )
@@ -104,7 +104,7 @@ export default function ProfilePage() {
   const email = user.signInDetails?.loginId || user.username
 
   return (
-    <div className="min-h-screen bg-[#08061a] text-white">
+    <div className="min-h-[100dvh] bg-[#08061a] text-white">
       <Header />
 
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[400px] bg-purple-900/15 blur-[160px] rounded-full pointer-events-none" />

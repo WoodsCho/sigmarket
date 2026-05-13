@@ -10,7 +10,7 @@ export default function IndicatorsListPage() {
   const { indicators, isLoading } = useIndicators()
 
   return (
-    <div className="min-h-screen bg-[var(--theme-bg)] text-white relative overflow-x-hidden">
+    <div className="min-h-[100dvh] bg-[var(--theme-bg)] text-white relative overflow-x-hidden">
       <Header />
 
       {/* 배경 글로우 */}

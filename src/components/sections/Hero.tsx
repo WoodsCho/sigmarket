@@ -132,7 +132,7 @@ export default function Hero() {
 
   return (
     <>
-    <section className="relative overflow-hidden min-h-screen md:h-full flex flex-col justify-center pt-32 md:pt-20">
+    <section className="relative overflow-hidden min-h-[100dvh] md:h-full flex flex-col justify-center pt-32 md:pt-20">
 
       {/* ─── 배경 레이어 ─── */}
       {/* 상단 은은한 원형 글로우 (LuxAlgo 스타일) — 브리딩 애니메이션 */}

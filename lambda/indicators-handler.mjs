@@ -21,6 +21,7 @@
  *   id               (String)  - 고유 ID (예: sigma-box-1709xxx)
  *   name             (String)  - 지표 이름 (제목)
  *   subtitle         (String)  - 영문 부제
+ *   description      (String)  - 카드 미리보기용 소개 텍스트
  *   image            (String)  - 이미지 URL (옵션)
  *   content          (String)  - 내용 (상세 설명, 레거시)
  *   sections         (String)  - JSON 문자열: 구조화된 섹션 배열
@@ -595,6 +596,7 @@ export const handler = async (event) => {
         id,
         name: body.name,
         subtitle: body.subtitle || "",
+        description: body.description || "",
         content: body.content || "",
         image: body.image || "",
         // 배열은 JSON 문자열로 저장
