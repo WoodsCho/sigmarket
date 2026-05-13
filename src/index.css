@@ -56,8 +56,8 @@
   }
 
   @keyframes glow-breathe {
-    0%, 100% { opacity: 0.5; transform: scale(1); }
-    50% { opacity: 1; transform: scale(1.08); }
+    0%, 100% { opacity: 0.5; }
+    50% { opacity: 1; }
   }
 
   @keyframes sparkle {
@@ -127,6 +127,8 @@ body {
   background-color: var(--theme-bg);
   color: hsl(var(--foreground));
   overflow-x: hidden;
+  /* Safari 모바일 스크롤 가속 */
+  -webkit-overflow-scrolling: touch;
 }
 
 /* ── Gradient Text ── */
@@ -160,6 +162,7 @@ body {
 /* ── Glass Card ── */
 .glass-card {
   background: rgba(255, 255, 255, 0.03);
+  -webkit-backdrop-filter: blur(20px);
   backdrop-filter: blur(20px);
   border: 1px solid rgba(255, 255, 255, 0.06);
 }

@@ -41,7 +41,7 @@ export default function IndicatorDetailPage() {
       <Header />
 
       {/* 배경 글로우 */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-cyan-900/20 blur-[150px] rounded-full pointer-events-none z-0" />
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-cyan-900/20 blur-[70px] rounded-full pointer-events-none z-0" />
 
       <section className="relative z-10 container mx-auto px-6 pt-36 pb-20">
         <div className="max-w-6xl mx-auto">

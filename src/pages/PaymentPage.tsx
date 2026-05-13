@@ -107,7 +107,7 @@ export default function PaymentPage() {
     <div className="min-h-[100dvh] bg-[#08061a] text-white">
       <Header />
 
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[400px] bg-purple-900/15 blur-[160px] rounded-full pointer-events-none" />
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[400px] bg-purple-900/15 blur-[70px] rounded-full pointer-events-none" />
 
       <div className="relative z-10 container mx-auto px-6 pt-32 pb-20 max-w-lg">
         <button

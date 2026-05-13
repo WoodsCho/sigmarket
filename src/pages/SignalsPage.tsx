@@ -294,7 +294,7 @@ export default function SignalsPage() {
       <Header />
 
       {/* 배경 글로우 */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[500px] bg-purple-900/10 blur-[150px] rounded-full pointer-events-none z-0" />
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[500px] bg-purple-900/10 blur-[70px] rounded-full pointer-events-none z-0" />
 
       <section className="relative z-10 container mx-auto px-6 pt-32 pb-20">
         <div className="max-w-6xl mx-auto">
