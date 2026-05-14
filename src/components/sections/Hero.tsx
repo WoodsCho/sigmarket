@@ -254,13 +254,13 @@ export default function Hero() {
               <table className="w-full text-left border-collapse">
                 <thead className="sticky top-0 z-20 bg-[#161b22]/95 backdrop-blur-sm">
                   <tr className="text-gray-500 text-[10px] uppercase tracking-widest border-b border-gray-700/40">
-                    <th className="px-5 py-2.5 font-semibold w-10 text-center">#</th>
+                    <th className="px-3 py-2.5 font-semibold w-8 text-center">#</th>
                     <th className="px-3 py-2.5 font-semibold">종목</th>
-                    <th className="px-3 py-2.5 font-semibold">시그널</th>
-                    <th className="px-3 py-2.5 font-semibold">진입</th>
-                    <th className="px-3 py-2.5 font-semibold">성과</th>
-                    <th className="px-3 py-2.5 font-semibold">포지션</th>
-                    <th className="px-5 py-2.5 font-semibold text-right">수익률</th>
+                    <th className="px-3 py-2.5 font-semibold hidden sm:table-cell">시그널</th>
+                    <th className="px-3 py-2.5 font-semibold hidden sm:table-cell">진입</th>
+                    <th className="px-3 py-2.5 font-semibold hidden md:table-cell">성과</th>
+                    <th className="px-3 py-2.5 font-semibold hidden sm:table-cell">포지션</th>
+                    <th className="px-3 py-2.5 font-semibold text-right">수익률</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-800/20 text-xs">
@@ -274,7 +274,7 @@ export default function Hero() {
                         className="hero-table-row bg-[#0d1117] hover:bg-white/[0.03] transition-colors group"
                         style={{ animationDelay: `${0.4 + i * 0.04}s` }}
                       >
-                        <td className="px-5 py-2.5 text-center">
+                        <td className="px-3 py-2.5 text-center">
                           {entry.rank <= 3 ? (
                             <span className={`inline-flex items-center justify-center w-5 h-5 rounded-md text-[10px] font-bold ${
                               entry.rank === 1
@@ -303,29 +303,36 @@ export default function Hero() {
                                 }}
                               />
                             </div>
-                            <span className="text-[11px]">{entry.symbol}</span>
+                            <div className="flex flex-col min-w-0">
+                              <span className="text-[11px] leading-tight">{entry.symbol}</span>
+                              {/* 모바일에서만 시그널+포지션 인라인 표시 */}
+                              <div className="flex items-center gap-1 mt-0.5 sm:hidden">
+                                <span className="text-[9px] text-gray-500">{entry.signal}</span>
+                                <span className={`text-[9px] font-bold ${pos.text}`}>· {entry.position}</span>
+                              </div>
+                            </div>
                           </div>
                         </td>
-                        <td className="px-3 py-2.5">
+                        <td className="px-3 py-2.5 hidden sm:table-cell">
                           <span className="px-2 py-0.5 rounded-md bg-gray-800/40 border border-gray-700/30 text-[10px] text-gray-400">
                             {entry.signal}
                           </span>
                         </td>
-                        <td className="px-3 py-2.5">
+                        <td className="px-3 py-2.5 hidden sm:table-cell">
                           <div className="text-gray-400 text-[11px]">{entry.entryPrice}</div>
                           <div className="text-[9px] text-gray-600 mt-0.5">{entry.entryDate}</div>
                         </td>
-                        <td className="px-3 py-2.5 font-medium text-gray-300 text-[11px]">
+                        <td className="px-3 py-2.5 font-medium text-gray-300 text-[11px] hidden md:table-cell">
                           {entry.resultPrice}
                         </td>
-                        <td className="px-3 py-2.5">
+                        <td className="px-3 py-2.5 hidden sm:table-cell">
                           <span className={`${pos.text} font-bold ${pos.bg} px-2 py-0.5 rounded-md text-[10px] border ${
                             entry.position === "LONG" ? "border-cyan-400/20" : "border-pink-500/20"
                           }`}>
                             {entry.position}
                           </span>
                         </td>
-                        <td className={`px-5 py-2.5 text-right font-bold text-sm ${retCol}`}>
+                        <td className={`px-3 py-2.5 text-right font-bold text-sm ${retCol}`}>
                           +{entry.returnPct.toFixed(1)}%
                         </td>
                       </tr>
