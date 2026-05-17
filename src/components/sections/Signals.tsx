@@ -228,7 +228,8 @@ function SignalRow({ signal, idx }: { signal: Signal; idx: number }) {
             />
           </div>
           <div>
-            <div className="font-semibold text-gray-200 text-[13px] tracking-wide group-hover:text-white transition-colors">{signal.symbol}</div>
+            <div className="text-[9px] text-gray-600 font-medium leading-none mb-0.5">{signal.symbol.split("/")[1]}</div>
+            <div className="font-semibold text-gray-200 text-[13px] tracking-wide group-hover:text-white transition-colors">{signal.symbol.split("/")[0]}</div>
             {signal.exchange && (
               <div className="text-[10px] text-gray-600 mt-0.5">{signal.exchange}</div>
             )}
