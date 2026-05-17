@@ -146,10 +146,13 @@ function SignalRow({ signal }: { signal: Signal }) {
           <img
             src={`https://assets.coincap.io/assets/icons/${signal.symbol.split("/")[0].toLowerCase()}@2x.png`}
             alt={signal.symbol.split("/")[0]}
-            className="w-4 h-4 rounded-full"
+            className="w-4 h-4 rounded-full flex-shrink-0"
             onError={(e) => { (e.target as HTMLImageElement).style.display = "none" }}
           />
-          {signal.symbol}
+          <div className="flex flex-col leading-tight">
+            <span className="text-[8px] text-gray-600 font-medium">{signal.symbol.split("/")[1]}</span>
+            <span className="text-[11px] font-bold text-gray-200">{signal.symbol.split("/")[0]}</span>
+          </div>
         </div>
       </td>
       <td className="px-6 py-3 text-gray-300">

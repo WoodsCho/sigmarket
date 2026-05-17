@@ -67,9 +67,23 @@ export function useSignals() {
             else timeAgo = `${Math.floor(diff / 86400)}일 전`;
           }
 
-          // symbol 표시 형식: "BTC" → "BTC/USDT"
-          const rawSymbol = (item.symbol || "").toUpperCase();
-          const displaySymbol = rawSymbol.includes("/") ? rawSymbol : `${rawSymbol}/USDT`;
+          // symbol 정규화: 다양한 형식 → "BASE/QUOTE"
+          // 예) "RAYUSDT.P" → "RAY/USDT", "BTCUSDT" → "BTC/USDT", "BTC/USDT" → "BTC/USDT"
+          const rawSymbol = (item.symbol || "").toUpperCase()
+          let displaySymbol = rawSymbol
+          if (!rawSymbol.includes("/")) {
+            // .P (perpetual) 같은 접미사 제거
+            const stripped = rawSymbol.replace(/\.(P|PERP|SWAP)$/i, "")
+            // 알려진 quote 통화 목록으로 BASE/QUOTE 분리
+            const quotes = ["USDT", "USDC", "BTC", "ETH", "BNB", "BUSD"]
+            const matched = quotes.find(q => stripped.endsWith(q))
+            if (matched) {
+              const base = stripped.slice(0, stripped.length - matched.length)
+              displaySymbol = `${base}/${matched}`
+            } else {
+              displaySymbol = `${stripped}/USDT`
+            }
+          }
 
           return {
             id: item.id,
@@ -79,7 +93,7 @@ export function useSignals() {
             price: item.price,
             position: (item.position as "LONG" | "SHORT") || "LONG",
             isNew: item.isNew ?? false,
-            icon: item.icon || SYMBOL_ICONS[rawSymbol.replace(/\/.*/, "")] || "●",
+            icon: item.icon || SYMBOL_ICONS[displaySymbol.split("/")[0]] || "●",
             source: item.source || "tradingview",
             exchange: item.exchange || "",
             indicator: item.indicator || "",
