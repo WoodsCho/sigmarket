@@ -215,12 +215,6 @@ export default function Hero() {
             {/* 터미널 타이틀바 */}
             <div className="px-3 py-3 border-b border-gray-700/40 flex justify-between items-center gap-2 bg-[#161b22] shrink-0 min-w-0">
               <div className="flex items-center gap-2 shrink-0">
-                {/* 트래픽 라이트 */}
-                <div className="flex items-center gap-1">
-                  <span className="w-2.5 h-2.5 rounded-full bg-red-500/60" />
-                  <span className="w-2.5 h-2.5 rounded-full bg-yellow-500/60" />
-                  <span className="w-2.5 h-2.5 rounded-full bg-green-500/60" />
-                </div>
                 <span className="text-xs text-gray-400 font-medium">수익률 랭킹</span>
                 <span className="px-2 py-0.5 rounded-md text-[9px] font-bold bg-cyan-500/15 text-cyan-400 border border-cyan-500/25">
                   TOP 10
@@ -250,7 +244,7 @@ export default function Hero() {
             </div>
 
             {/* 테이블 바디 */}
-            <div className="md:overflow-y-auto custom-scrollbar flex-1 relative bg-[#0d1117]">
+            <div className="overflow-y-auto custom-scrollbar flex-1 relative bg-[#0d1117] max-h-[430px] md:max-h-none">
               <table className="w-full text-left border-collapse">
                 <thead className="sticky top-0 z-20 bg-[#161b22]/95 backdrop-blur-sm">
                   <tr className="text-gray-500 text-[10px] uppercase tracking-widest border-b border-gray-700/40">
