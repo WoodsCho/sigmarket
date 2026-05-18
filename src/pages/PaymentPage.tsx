@@ -44,7 +44,7 @@ export default function PaymentPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-[#08061a] flex items-center justify-center">
+      <div className="min-h-[100dvh] bg-[#08061a] flex items-center justify-center">
         <div className="w-8 h-8 rounded-full border-2 border-cyan-500 border-t-transparent animate-spin" />
       </div>
     )
@@ -104,10 +104,10 @@ export default function PaymentPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#08061a] text-white">
+    <div className="min-h-[100dvh] bg-[#08061a] text-white">
       <Header />
 
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[400px] bg-purple-900/15 blur-[160px] rounded-full pointer-events-none" />
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[400px] bg-purple-900/15 blur-[70px] rounded-full pointer-events-none" />
 
       <div className="relative z-10 container mx-auto px-6 pt-32 pb-20 max-w-lg">
         <button

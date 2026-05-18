@@ -33,7 +33,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const current = await getCurrentUser()
       setUser(current)
-      const session = await fetchAuthSession({ forceRefresh: true })
+      const session = await fetchAuthSession()
       const groups = (session.tokens?.idToken?.payload?.["cognito:groups"] as string[]) || []
       const admin = groups.includes("admin")
       setIsAdmin(admin)

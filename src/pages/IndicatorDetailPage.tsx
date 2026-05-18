@@ -12,7 +12,7 @@ export default function IndicatorDetailPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-[var(--theme-bg)] text-white flex items-center justify-center">
+      <div className="min-h-[100dvh] bg-[var(--theme-bg)] text-white flex items-center justify-center">
         <Loader2 className="h-8 w-8 text-cyan-500 animate-spin" />
       </div>
     )
@@ -23,7 +23,7 @@ export default function IndicatorDetailPage() {
 
   if (!indicator) {
     return (
-      <div className="min-h-screen bg-[var(--theme-bg)] text-white">
+      <div className="min-h-[100dvh] bg-[var(--theme-bg)] text-white">
         <Header />
         <div className="flex flex-col items-center justify-center py-32">
           <p className="text-gray-400 text-lg mb-4">인디케이터를 찾을 수 없습니다.</p>
@@ -37,11 +37,11 @@ export default function IndicatorDetailPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[var(--theme-bg)] text-white relative overflow-x-hidden">
+    <div className="min-h-[100dvh] bg-[var(--theme-bg)] text-white relative overflow-x-hidden">
       <Header />
 
       {/* 배경 글로우 */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-cyan-900/20 blur-[150px] rounded-full pointer-events-none z-0" />
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-cyan-900/20 blur-[70px] rounded-full pointer-events-none z-0" />
 
       <section className="relative z-10 container mx-auto px-6 pt-36 pb-20">
         <div className="max-w-6xl mx-auto">

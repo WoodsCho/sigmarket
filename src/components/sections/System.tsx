@@ -1,7 +1,7 @@
 export default function System() {
   return (
     <section id="system" className="relative py-16">
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[500px] bg-cyan-700/5 blur-[150px] rounded-full pointer-events-none" />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[500px] bg-cyan-700/5 blur-[70px] rounded-full pointer-events-none" />
 
       <div className="relative container mx-auto px-6">
         <div className="max-w-5xl mx-auto">

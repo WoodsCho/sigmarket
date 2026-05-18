@@ -35,6 +35,7 @@ export function useIndicators() {
           id: item.id,
           name: item.name,
           subtitle: item.subtitle || "",
+          description: item.description || "",
           content: item.content || "",
           image: item.image || undefined,
           strategyId: item.strategyId || "sigma-box",

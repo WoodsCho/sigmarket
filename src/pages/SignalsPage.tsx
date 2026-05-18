@@ -146,10 +146,13 @@ function SignalRow({ signal }: { signal: Signal }) {
           <img
             src={`https://assets.coincap.io/assets/icons/${signal.symbol.split("/")[0].toLowerCase()}@2x.png`}
             alt={signal.symbol.split("/")[0]}
-            className="w-4 h-4 rounded-full"
+            className="w-4 h-4 rounded-full flex-shrink-0"
             onError={(e) => { (e.target as HTMLImageElement).style.display = "none" }}
           />
-          {signal.symbol}
+          <div className="flex flex-col leading-tight">
+            <span className="text-[8px] text-gray-600 font-medium">{signal.symbol.split("/")[1]}</span>
+            <span className="text-[11px] font-bold text-gray-200">{signal.symbol.split("/")[0]}</span>
+          </div>
         </div>
       </td>
       <td className="px-6 py-3 text-gray-300">
@@ -290,11 +293,11 @@ export default function SignalsPage() {
   const navigate = useNavigate()
 
   return (
-    <div className="min-h-screen bg-[var(--theme-bg)] text-white relative overflow-x-hidden">
+    <div className="min-h-[100dvh] bg-[var(--theme-bg)] text-white relative overflow-x-hidden">
       <Header />
 
       {/* 배경 글로우 */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[500px] bg-purple-900/10 blur-[150px] rounded-full pointer-events-none z-0" />
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[500px] bg-purple-900/10 blur-[70px] rounded-full pointer-events-none z-0" />
 
       <section className="relative z-10 container mx-auto px-6 pt-32 pb-20">
         <div className="max-w-6xl mx-auto">

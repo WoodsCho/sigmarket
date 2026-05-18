@@ -58,9 +58,9 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#08061a] flex items-center justify-center px-4">
+    <div className="min-h-[100dvh] bg-[#08061a] flex items-center justify-center px-4">
       {/* 배경 글로우 */}
-      <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[400px] bg-cyan-900/20 blur-[160px] rounded-full pointer-events-none" />
+      <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[400px] bg-cyan-900/20 blur-[70px] rounded-full pointer-events-none" />
 
       <div className="relative w-full max-w-sm">
         {/* 로고 */}

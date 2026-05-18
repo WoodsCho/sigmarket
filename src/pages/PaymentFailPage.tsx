@@ -11,8 +11,8 @@ export default function PaymentFailPage() {
   try { message = decodeURIComponent(rawMessage) } catch { /* keep raw */ }
 
   return (
-    <div className="min-h-screen bg-[#08061a] flex flex-col items-center justify-center gap-5 text-white px-6">
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[300px] bg-red-900/10 blur-[120px] rounded-full pointer-events-none" />
+    <div className="min-h-[100dvh] bg-[#08061a] flex flex-col items-center justify-center gap-5 text-white px-6">
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[300px] bg-red-900/10 blur-[60px] rounded-full pointer-events-none" />
 
       <div className="relative w-16 h-16 rounded-full bg-red-500/10 border-2 border-red-500/30 flex items-center justify-center">
         <XCircle className="w-8 h-8 text-red-400" />

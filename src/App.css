@@ -204,6 +204,7 @@ a:focus-visible {
 .hero-fade-in {
   opacity: 0;
   animation: hero-fade-in 0.8s ease-out forwards;
+  will-change: opacity, transform;
 }
 
 .hero-delay-1 { animation-delay: 0.1s; }

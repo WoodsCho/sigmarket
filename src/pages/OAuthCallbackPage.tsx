@@ -31,7 +31,7 @@ export default function OAuthCallbackPage() {
   }, [])
 
   return (
-    <div className="min-h-screen bg-[#08061a] flex flex-col items-center justify-center gap-4">
+    <div className="min-h-[100dvh] bg-[#08061a] flex flex-col items-center justify-center gap-4">
       <Loader2 className="w-8 h-8 text-cyan-400 animate-spin" />
       <p className="text-gray-400 text-sm">로그인 처리 중...</p>
     </div>
