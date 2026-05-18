@@ -171,16 +171,8 @@ function run(candles) {
     }
   }
 
-  // ── markers 직접 생성 (교대 방식 없이 모든 신호 표시) ───────────────────
-  const markers = [];
-  for (const r of results) {
-    if (r.long)  markers.push({ time: r.time, position: "belowBar", color: "#00ff00", shape: "arrowUp",   text: "▲", size: 1 });
-    if (r.short) markers.push({ time: r.time, position: "aboveBar", color: "#ff4444", shape: "arrowDown", text: "▼", size: 1 });
-  }
-
   return {
-    markers,
-    trades: [],
-
+    signals: results,
+    lines: { b1: b1levels, b2: b2levels, b3: b3levels },
   };
 }
