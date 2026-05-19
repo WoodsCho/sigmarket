@@ -13,6 +13,7 @@ export interface Signal {
   exchange?: string            // 거래소 (예: "Binance", "Bybit", "OKX")
   indicator?: string           // 시그널 지표명 (예: "시그마 메서드 1차눌림")
   timeAgo?: string             // 실시간 알림 텍스트 (예: "방금 전", "3분 전")
+  createdAt?: string           // ISO 타임스탬프 (timeAgo 재계산용)
 }
 
 export interface SystemFeature {

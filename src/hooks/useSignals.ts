@@ -98,6 +98,7 @@ export function useSignals() {
             exchange: item.exchange || "",
             indicator: item.indicator || "",
             timeAgo,
+            createdAt: item.createdAt || "",
           };
         });
         setSignals(mapped);
@@ -119,6 +120,27 @@ export function useSignals() {
       return () => clearInterval(interval);
     }
   }, [fetchSignals]);
+
+  // createdAt 기준으로 timeAgo 재계산 (API fetch 없이)
+  useEffect(() => {
+    const calcTimeAgo = (createdAt: string) => {
+      if (!createdAt) return "";
+      const diff = Math.floor((Date.now() - new Date(createdAt).getTime()) / 1000);
+      if (diff < 60) return "방금 전";
+      if (diff < 3600) return `${Math.floor(diff / 60)}분 전`;
+      if (diff < 86400) return `${Math.floor(diff / 3600)}시간 전`;
+      return `${Math.floor(diff / 86400)}일 전`;
+    };
+
+    const update = () => {
+      setSignals(prev => prev.map(s => ({ ...s, timeAgo: calcTimeAgo(s.createdAt || "") })));
+    };
+
+    update(); // 마운트 즉시 1회 실행
+    const ticker = setInterval(update, 30000); // 30초마다 재계산
+
+    return () => clearInterval(ticker);
+  }, []);
 
   return { signals, isLoading, isLive };
 }

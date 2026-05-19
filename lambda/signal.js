@@ -14,7 +14,9 @@
  * ============================================
  * 필요한 IAM 권한:
  * ============================================
- * - dynamodb:PutItem (Signal 테이블)
+ * - dynamodb:PutItem   (Signal 테이블)
+ * - dynamodb:GetItem   (Signal 테이블 — 오픈 포지션 조회)
+ * - dynamodb:DeleteItem (Signal 테이블 — 오픈 포지션 삭제)
  * 
  * ============================================
  * API Gateway 설정:
@@ -38,7 +40,7 @@
  */
 
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
-import { DynamoDBDocumentClient, PutCommand, ScanCommand } from "@aws-sdk/lib-dynamodb";
+import { DynamoDBDocumentClient, PutCommand, ScanCommand, GetCommand, DeleteCommand, UpdateCommand } from "@aws-sdk/lib-dynamodb";
 
 const WEBHOOK_SECRET = process.env.WEBHOOK_SECRET || "";
 const TABLE_NAME = process.env.SIGNAL_TABLE_NAME || "";
@@ -52,6 +54,20 @@ const SYMBOL_ICONS = {
   AVAX: "▲", MATIC: "◈", LINK: "⬡", UNI: "🦄",
 };
 
+/**
+ * 수익률 계산
+ * LONG: (exitPrice - entryPrice) / entryPrice * 100
+ * SHORT: (entryPrice - exitPrice) / entryPrice * 100
+ */
+function calcProfitRate(position, entryPrice, exitPrice) {
+  const entry = parseFloat(entryPrice);
+  const exit = parseFloat(exitPrice);
+  if (isNaN(entry) || isNaN(exit) || entry === 0) return 0;
+  return position === "LONG"
+    ? parseFloat(((exit - entry) / entry * 100).toFixed(4))
+    : parseFloat(((entry - exit) / entry * 100).toFixed(4));
+}
+
 const headers = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "Content-Type",
@@ -60,6 +76,16 @@ const headers = {
 };
 
 export const handler = async (event) => {
+  // 인입 요청 로깅 (CloudWatch에서 확인)
+  console.log("EVENT", JSON.stringify({
+    method: event.httpMethod,
+    path: event.path,
+    resource: event.resource,
+    headers: event.headers,
+    query: event.queryStringParameters,
+    body: event.body,
+  }));
+
   // CORS preflight
   if (event.httpMethod === "OPTIONS") {
     return { statusCode: 200, headers, body: "" };
@@ -68,14 +94,26 @@ export const handler = async (event) => {
   // GET — 프론트엔드에서 시그널 목록 조회
   if (event.httpMethod === "GET") {
     try {
-      const result = await docClient.send(
-        new ScanCommand({
-          TableName: TABLE_NAME,
-          Limit: 20,
-        })
-      );
+      const allItems = [];
+      let lastKey = undefined;
+
+      // 페이지네이션으로 전체 Signal 레코드 수집
+      do {
+        const result = await docClient.send(
+          new ScanCommand({
+            TableName: TABLE_NAME,
+            FilterExpression: "#typename = :typename",
+            ExpressionAttributeNames: { "#typename": "__typename" },
+            ExpressionAttributeValues: { ":typename": "Signal" },
+            ExclusiveStartKey: lastKey,
+          })
+        );
+        allItems.push(...(result.Items || []));
+        lastKey = result.LastEvaluatedKey;
+      } while (lastKey);
+
       // createdAt 기준 내림차순 정렬
-      const signals = (result.Items || []).sort(
+      const signals = allItems.sort(
         (a, b) => (b.createdAt || "").localeCompare(a.createdAt || "")
       );
       return {
@@ -161,8 +199,45 @@ export const handler = async (event) => {
 
     const icon = SYMBOL_ICONS[symbol] || "●";
     const signalId = `${symbol}-${Date.now()}`;
+    const positionKey = `position-${symbol}`;
 
-    // DynamoDB에 저장
+    // ── 오픈 포지션 포인터 조회 ───────────────────────────
+    const posResult = await docClient.send(
+      new GetCommand({ TableName: TABLE_NAME, Key: { id: positionKey } })
+    );
+    const openPos = posResult.Item;
+
+    if (openPos && openPos.position !== position) {
+      // 반대 시그널 → 기존 시그널 레코드에 성과 칼럼 추가
+      const profitRate = calcProfitRate(openPos.position, openPos.price, body.price);
+
+      await docClient.send(
+        new UpdateCommand({
+          TableName: TABLE_NAME,
+          Key: { id: openPos.openSignalId },
+          UpdateExpression:
+            "SET profitRate = :pr, exitPrice = :ep, exitDate = :ed, exitTime = :et, #st = :s, updatedAt = :ua",
+          ExpressionAttributeNames: { "#st": "status" },
+          ExpressionAttributeValues: {
+            ":pr": profitRate,
+            ":ep": body.price,
+            ":ed": date,
+            ":et": time,
+            ":s": "closed",
+            ":ua": now.toISOString(),
+          },
+        })
+      );
+
+      // 포지션 포인터 삭제
+      await docClient.send(
+        new DeleteCommand({ TableName: TABLE_NAME, Key: { id: positionKey } })
+      );
+
+      console.log(`Signal closed: ${symbol} ${openPos.position} profitRate: ${profitRate}%`);
+    }
+
+    // ── 새 시그널 저장 ────────────────────────────────────
     await docClient.send(
       new PutCommand({
         TableName: TABLE_NAME,
@@ -175,6 +250,7 @@ export const handler = async (event) => {
           position,
           icon,
           indicator: body.indicator || null,
+          status: "open",
           isNew: true,
           source: "tradingview",
           createdAt: now.toISOString(),
@@ -183,6 +259,25 @@ export const handler = async (event) => {
         },
       })
     );
+
+    // ── 포지션 포인터 갱신 ────────────────────────────────
+    // 같은 방향 연속 시그널이면 포인터를 덮지 않음 (기존 오픈 시그널 id 보존)
+    if (!openPos || openPos.position !== position) {
+      await docClient.send(
+        new PutCommand({
+          TableName: TABLE_NAME,
+          Item: {
+            id: positionKey,
+            openSignalId: signalId,
+            position,
+            price: body.price,
+            indicator: body.indicator || null,
+            symbol,
+            createdAt: now.toISOString(),
+          },
+        })
+      );
+    }
 
     console.log(`Signal saved: ${symbol} ${position} @ ${body.price}`);
 

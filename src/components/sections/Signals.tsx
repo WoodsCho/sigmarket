@@ -99,7 +99,7 @@ export default function Signals() {
                     <thead>
                       <tr className="bg-[#0f1420] text-gray-500 text-[10px] uppercase tracking-widest border-b border-gray-700/40">
                         <th className="px-3 md:px-5 py-2.5 md:py-3.5 font-semibold w-28 md:w-36">시각</th>
-                        <th className="px-3 md:px-5 py-2.5 md:py-3.5 font-semibold">종목</th>
+                        <th className="px-3 md:px-5 py-2.5 md:py-3.5 font-semibold">종목 <span className="normal-case text-gray-600">/USDT</span></th>
                         <th className="hidden md:table-cell px-5 py-3.5 font-semibold">시그널 (지표)</th>
                         <th className="px-3 md:px-5 py-2.5 md:py-3.5 font-semibold">진입가</th>
                         <th className="px-3 md:px-5 py-2.5 md:py-3.5 font-semibold">포지션</th>
@@ -198,7 +198,7 @@ function SignalRow({ signal, idx }: { signal: Signal; idx: number }) {
       <td className="relative px-3 md:px-5 py-2.5 md:py-3.5">
         {/* 포지션 컬러 바 */}
         <div className={`absolute inset-y-0 left-0 w-[2px] ${pos.bar} opacity-0 group-hover:opacity-100 transition-opacity duration-200`} />
-        {signal.isNew ? (
+        {signal.isNew && (!signal.timeAgo || signal.timeAgo === "방금 전") ? (
           <span className="inline-flex items-center gap-1.5 text-pink-400 font-semibold text-[11px] bg-pink-500/10 border border-pink-500/20 px-2.5 py-1 rounded-full">
             <span className="w-1.5 h-1.5 rounded-full bg-pink-400 animate-pulse" />
             방금 전
@@ -222,13 +222,17 @@ function SignalRow({ signal, idx }: { signal: Signal; idx: number }) {
               className="w-full h-full object-cover"
               onError={(e) => {
                 const el = e.target as HTMLImageElement
-                el.style.display = "none"
-                el.parentElement!.innerHTML = `<span class="text-[9px] font-bold text-gray-400">${baseSymbol.slice(0, 2)}</span>`
+                if (!el.dataset.fallback) {
+                  el.dataset.fallback = "1"
+                  el.src = `https://cdn.jsdelivr.net/gh/spothq/cryptocurrency-icons/32/color/${baseSymbol.toLowerCase()}.png`
+                } else {
+                  el.style.display = "none"
+                  el.parentElement!.innerHTML = `<span class="text-[10px] font-bold text-gray-300">${baseSymbol.slice(0, 3)}</span>`
+                }
               }}
             />
           </div>
           <div>
-            <div className="text-[9px] text-gray-600 font-medium leading-none mb-0.5">{signal.symbol.split("/")[1]}</div>
             <div className="font-semibold text-gray-200 text-[13px] tracking-wide group-hover:text-white transition-colors">{signal.symbol.split("/")[0]}</div>
             {signal.exchange && (
               <div className="text-[10px] text-gray-600 mt-0.5">{signal.exchange}</div>

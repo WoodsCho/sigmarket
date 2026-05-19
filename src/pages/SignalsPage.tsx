@@ -65,7 +65,7 @@ function RankingSection() {
           <thead className="bg-[#161b22]">
             <tr className="text-gray-500 text-[10px] uppercase tracking-widest border-b border-gray-700/50">
               <th className="px-4 py-2.5 font-semibold w-10 text-center">#</th>
-              <th className="px-4 py-2.5 font-semibold">종목</th>
+              <th className="px-4 py-2.5 font-semibold">종목 <span className="normal-case text-gray-600">/USDT</span></th>
               <th className="px-4 py-2.5 font-semibold">시그널</th>
               <th className="px-4 py-2.5 font-semibold">진입가</th>
               <th className="px-4 py-2.5 font-semibold">진입시각</th>
@@ -147,10 +147,18 @@ function SignalRow({ signal }: { signal: Signal }) {
             src={`https://assets.coincap.io/assets/icons/${signal.symbol.split("/")[0].toLowerCase()}@2x.png`}
             alt={signal.symbol.split("/")[0]}
             className="w-4 h-4 rounded-full flex-shrink-0"
-            onError={(e) => { (e.target as HTMLImageElement).style.display = "none" }}
+            onError={(e) => {
+              const el = e.target as HTMLImageElement
+              const sym = signal.symbol.split("/")[0].toLowerCase()
+              if (!el.dataset.fallback) {
+                el.dataset.fallback = "1"
+                el.src = `https://cdn.jsdelivr.net/gh/spothq/cryptocurrency-icons/32/color/${sym}.png`
+              } else {
+                el.style.display = "none"
+              }
+            }}
           />
           <div className="flex flex-col leading-tight">
-            <span className="text-[8px] text-gray-600 font-medium">{signal.symbol.split("/")[1]}</span>
             <span className="text-[11px] font-bold text-gray-200">{signal.symbol.split("/")[0]}</span>
           </div>
         </div>
@@ -215,7 +223,7 @@ function SignalsSection() {
               <thead className="sticky top-0 z-10">
                 <tr className="bg-[#161b22] text-gray-500 text-[10px] uppercase tracking-widest border-b border-gray-700/50">
                   <th className="px-6 py-2.5 font-semibold w-32">실시간 알림</th>
-                  <th className="px-6 py-2.5 font-semibold">종목</th>
+                  <th className="px-6 py-2.5 font-semibold">종목 <span className="normal-case text-gray-600">/USDT</span></th>
                   <th className="px-6 py-2.5 font-semibold">시그널 (지표)</th>
                   <th className="px-6 py-2.5 font-semibold">진입</th>
                   <th className="px-6 py-2.5 font-semibold">포지션</th>
