@@ -99,6 +99,11 @@ export function useSignals() {
             indicator: item.indicator || "",
             timeAgo,
             createdAt: item.createdAt || "",
+            status: item.status || "",
+            profitRate: item.profitRate,
+            exitPrice: item.exitPrice,
+            exitDate: item.exitDate,
+            exitTime: item.exitTime,
           };
         });
         setSignals(mapped);

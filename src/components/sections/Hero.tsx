@@ -1,7 +1,8 @@
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, useMemo } from "react"
 import { useNavigate } from "react-router-dom"
 import { ArrowRight, TrendingUp, BarChart3, Zap } from "lucide-react"
 import { dummyRankings } from "../../data"
+import { useSignals } from "../../hooks/useSignals"
 import type { RankingEntry } from "../../types"
 import FreeTrialModal from "../FreeTrialModal"
 
@@ -126,9 +127,40 @@ export default function Hero() {
   const navigate = useNavigate()
   const [period, setPeriod] = useState<Period>("daily")
   const [trialOpen, setTrialOpen] = useState(false)
-  const rankings = dummyRankings
-  const topReturn = useCountUp(44)
-  const avgReturn = useCountUp(18)
+  const { signals } = useSignals()
+
+  const rankings = useMemo(() => {
+    const now = Date.now()
+    const cutoffMs: Record<Period, number> = {
+      daily:   1 * 86400 * 1000,
+      weekly:  7 * 86400 * 1000,
+      monthly: 30 * 86400 * 1000,
+    }
+    const ms = cutoffMs[period]
+    const closed = signals.filter((s) => {
+      if (s.status !== "closed" || s.profitRate == null) return false
+      if (s.createdAt && now - new Date(s.createdAt).getTime() > ms) return false
+      return true
+    })
+    if (closed.length === 0) return dummyRankings
+    return closed
+      .sort((a, b) => parseFloat(b.profitRate ?? "0") - parseFloat(a.profitRate ?? "0"))
+      .slice(0, 10)
+      .map((s, i): RankingEntry => ({
+        rank: i + 1,
+        symbol: s.symbol,
+        signal: s.indicator || "—",
+        entryPrice: s.price,
+        entryDate: `${s.date ?? ""} ${s.time ?? ""}`.trim(),
+        resultPrice: s.exitPrice || "—",
+        position: s.position,
+        returnPct: parseFloat(s.profitRate ?? "0"),
+        color: s.position === "SHORT" ? "pink" : "cyan",
+      }))
+  }, [signals, period])
+
+  const topReturn = useCountUp(Math.round(Math.max(...rankings.map(r => r.returnPct), 0)))
+  const avgReturn = useCountUp(rankings.length > 0 ? Math.round(rankings.reduce((s, r) => s + r.returnPct, 0) / rankings.length) : 0)
 
   return (
     <>
@@ -297,8 +329,13 @@ export default function Hero() {
                                 className="w-full h-full object-cover"
                                 onError={(e) => {
                                   const el = e.target as HTMLImageElement
-                                  el.style.display = "none"
-                                  el.parentElement!.innerHTML = `<span class="text-[8px] font-bold text-gray-500">${baseSymbol.slice(0,2).toUpperCase()}</span>`
+                                  if (!el.dataset.fallback) {
+                                    el.dataset.fallback = "1"
+                                    el.src = `https://cdn.jsdelivr.net/gh/spothq/cryptocurrency-icons/32/color/${baseSymbol}.png`
+                                  } else {
+                                    el.style.display = "none"
+                                    el.parentElement!.innerHTML = `<span class="text-[8px] font-bold text-gray-500">${baseSymbol.slice(0,2).toUpperCase()}</span>`
+                                  }
                                 }}
                               />
                             </div>
@@ -355,7 +392,7 @@ export default function Hero() {
                           </span>
                         </td>
                         <td className={`px-3 py-2.5 text-right font-bold text-sm ${retCol}`}>
-                          +{entry.returnPct.toFixed(1)}%
+                          {entry.returnPct >= 0 ? "+" : ""}{entry.returnPct.toFixed(2)}%
                         </td>
                       </tr>
                     )

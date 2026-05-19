@@ -14,6 +14,11 @@ export interface Signal {
   indicator?: string           // 시그널 지표명 (예: "시그마 메서드 1차눌림")
   timeAgo?: string             // 실시간 알림 텍스트 (예: "방금 전", "3분 전")
   createdAt?: string           // ISO 타임스탬프 (timeAgo 재계산용)
+  status?: string              // "open" | "closed"
+  profitRate?: string          // 수익률 (%) — closed 상태일 때
+  exitPrice?: string           // 청산가 — closed 상태일 때
+  exitDate?: string            // 청산 날짜
+  exitTime?: string            // 청산 시간
 }
 
 export interface SystemFeature {

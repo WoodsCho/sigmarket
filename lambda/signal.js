@@ -10,6 +10,8 @@
  * ============================================
  * WEBHOOK_SECRET    : TradingView Alert에 넣을 비밀키 (예: sigmarket-webhook-secret-2025)
  * SIGNAL_TABLE_NAME : 직접 생성한 DynamoDB 테이블 이름 (예: Signal)
+ * FREE_TRIAL_TABLE  : 무료 체험 사용자 테이블 (예: FreeTrial)
+ * TELEGRAM_BOT_TOKEN: BotFather 토큰 (예: 123456:ABC-DEF...)
  * 
  * ============================================
  * 필요한 IAM 권한:
@@ -17,6 +19,7 @@
  * - dynamodb:PutItem   (Signal 테이블)
  * - dynamodb:GetItem   (Signal 테이블 — 오픈 포지션 조회)
  * - dynamodb:DeleteItem (Signal 테이블 — 오픈 포지션 삭제)
+ * - dynamodb:Scan      (FreeTrial 테이블 — 텔레그램 수신자 조회)
  * 
  * ============================================
  * API Gateway 설정:
@@ -42,8 +45,12 @@
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { DynamoDBDocumentClient, PutCommand, ScanCommand, GetCommand, DeleteCommand, UpdateCommand } from "@aws-sdk/lib-dynamodb";
 
-const WEBHOOK_SECRET = process.env.WEBHOOK_SECRET || "";
-const TABLE_NAME = process.env.SIGNAL_TABLE_NAME || "";
+const WEBHOOK_SECRET    = process.env.WEBHOOK_SECRET || "";
+const TABLE_NAME        = process.env.SIGNAL_TABLE_NAME || "";
+const FREE_TRIAL_TABLE  = process.env.FREE_TRIAL_TABLE || "FreeTrial";
+const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || "";
+const TELEGRAM_API      = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}`;
+const SITE_URL          = process.env.SITE_URL || "https://sigma.kr";
 
 const ddbClient = new DynamoDBClient({});
 const docClient = DynamoDBDocumentClient.from(ddbClient);
@@ -53,6 +60,71 @@ const SYMBOL_ICONS = {
   BNB: "◆", ADA: "◇", DOGE: "Ð", DOT: "●",
   AVAX: "▲", MATIC: "◈", LINK: "⬡", UNI: "🦄",
 };
+
+/**
+ * 텔레그램 — 활성 무료 체험 사용자 전체에게 시그널 DM 발송
+ * 오류가 나도 메인 시그널 저장 흐름에 영향 없도록 내부에서 catch
+ */
+async function sendTelegramSignals({ symbol, position, price, indicator, date, time }) {
+  if (!TELEGRAM_BOT_TOKEN) return; // 토큰 미설정 시 스킵
+
+  const now = new Date().toISOString();
+
+  // 활성 사용자 중 chatId가 등록된 사람만 조회
+  let users = [];
+  try {
+    const result = await docClient.send(
+      new ScanCommand({
+        TableName: FREE_TRIAL_TABLE,
+        FilterExpression: "#st = :active AND attribute_exists(chatId)",
+        ExpressionAttributeNames: { "#st": "status" },
+        ExpressionAttributeValues: { ":active": "active" },
+      })
+    );
+    // 체험 기간 내 사용자만 필터
+    users = (result.Items || []).filter(
+      (u) => u.trialEnd && u.trialEnd > now
+    );
+  } catch (err) {
+    console.error("FreeTrial scan error:", err);
+    return;
+  }
+
+  if (users.length === 0) return;
+
+  const emoji    = position === "LONG" ? "🟢" : "🔴";
+  const posLabel = position === "LONG" ? "LONG  ↑" : "SHORT ↓";
+  const indLine  = indicator ? `\n📊 지표:  <b>${indicator}</b>` : "";
+
+  const text =
+    `${emoji} <b>${posLabel}  ${symbol}/USDT</b>\n` +
+    `━━━━━━━━━━━━━━━━\n` +
+    `💰 진입가: <b>${price}</b>${indLine}\n` +
+    `🕐 시각:   ${date} ${time} KST\n` +
+    `━━━━━━━━━━━━━━━━\n` +
+    `<a href="${SITE_URL}/signals">시그널 전체 보기 →</a>`;
+
+  // 각 사용자에게 병렬 발송 (실패해도 다른 사람에게 영향 없음)
+  await Promise.allSettled(
+    users.map((u) =>
+      fetch(`${TELEGRAM_API}/sendMessage`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          chat_id:    u.chatId,
+          text,
+          parse_mode: "HTML",
+          disable_web_page_preview: true,
+        }),
+      })
+        .then((r) => r.json())
+        .then((r) => { if (!r.ok) console.error(`sendMessage failed (${u.chatId}):`, r); })
+        .catch((err) => console.error(`sendMessage error (${u.chatId}):`, err))
+    )
+  );
+
+  console.log(`Telegram: ${users.length}명에게 시그널 발송 완료`);
+}
 
 /**
  * 수익률 계산
@@ -280,6 +352,10 @@ export const handler = async (event) => {
     }
 
     console.log(`Signal saved: ${symbol} ${position} @ ${body.price}`);
+
+    // ── 텔레그램 시그널 발송 (비동기, 실패해도 응답에 영향 없음) ──
+    sendTelegramSignals({ symbol, position, price: body.price, indicator: body.indicator, date, time })
+      .catch((err) => console.error("sendTelegramSignals unhandled:", err));
 
     return {
       statusCode: 200,

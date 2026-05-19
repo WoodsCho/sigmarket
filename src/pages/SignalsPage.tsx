@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useMemo } from "react"
 import { ArrowLeft, Info, AlertTriangle, TrendingUp, ChevronLeft, ChevronRight } from "lucide-react"
 import { useNavigate } from "react-router-dom"
 import { Header, Footer } from "../components/sections"
@@ -24,7 +24,40 @@ type Period = "daily" | "weekly" | "monthly"
 /* ─── 수익률 랭킹 섹션 ─── */
 function RankingSection() {
   const [period, setPeriod] = useState<Period>("daily")
-  const rankings = dummyRankings
+  const { signals } = useSignals()
+
+  const rankings = useMemo(() => {
+    const now = Date.now()
+    const cutoffMs: Record<Period, number> = {
+      daily:   1 * 86400 * 1000,
+      weekly:  7 * 86400 * 1000,
+      monthly: 30 * 86400 * 1000,
+    }
+    const ms = cutoffMs[period]
+
+    const closed = signals.filter((s) => {
+      if (s.status !== "closed" || s.profitRate == null) return false
+      if (s.createdAt && now - new Date(s.createdAt).getTime() > ms) return false
+      return true
+    })
+
+    if (closed.length === 0) return dummyRankings   // 데이터 없으면 더미
+
+    return closed
+      .sort((a, b) => parseFloat(b.profitRate ?? "0") - parseFloat(a.profitRate ?? "0"))
+      .slice(0, 10)
+      .map((s, i): RankingEntry => ({
+        rank: i + 1,
+        symbol: s.symbol,
+        signal: s.indicator || "—",
+        entryPrice: s.price,
+        entryDate: `${s.date ?? ""} ${s.time ?? ""}`.trim(),
+        resultPrice: s.exitPrice || "—",
+        position: s.position,
+        returnPct: parseFloat(s.profitRate ?? "0"),
+        color: s.position === "SHORT" ? "pink" : "cyan",
+      }))
+  }, [signals, period])
 
   return (
     <div className="bg-[#0d1117] border border-gray-700/50 rounded-md shadow-2xl flex flex-col overflow-hidden font-mono">
@@ -88,7 +121,15 @@ function RankingSection() {
                         src={`https://assets.coincap.io/assets/icons/${baseSymbol}@2x.png`}
                         alt={baseSymbol}
                         className="w-4 h-4 rounded-full"
-                        onError={(e) => { (e.target as HTMLImageElement).style.display = "none" }}
+                        onError={(e) => {
+                          const el = e.target as HTMLImageElement
+                          if (!el.dataset.fallback) {
+                            el.dataset.fallback = "1"
+                            el.src = `https://cdn.jsdelivr.net/gh/spothq/cryptocurrency-icons/32/color/${baseSymbol}.png`
+                          } else {
+                            el.style.display = "none"
+                          }
+                        }}
                       />
                       {entry.symbol}
                     </div>
@@ -107,7 +148,7 @@ function RankingSection() {
                     </span>
                   </td>
                   <td className={`px-4 py-3 text-right font-bold text-sm ${retCol}`}>
-                    +{entry.returnPct.toFixed(1)}%
+                    {entry.returnPct >= 0 ? "+" : ""}{entry.returnPct.toFixed(2)}%
                   </td>
                 </tr>
               )

@@ -22,6 +22,12 @@ export default function FreeTrialModal({ open, onClose }: Props) {
     e.preventDefault()
     if (!email.trim() || !telegram.trim()) return
 
+    if (!API_URL) {
+      setStatus("error")
+      setErrorMsg("API 엔드포인트가 설정되지 않았습니다.")
+      return
+    }
+
     setStatus("loading")
     setErrorMsg("")
 
@@ -35,14 +41,22 @@ export default function FreeTrialModal({ open, onClose }: Props) {
         }),
       })
 
-      const data = await res.json()
+      // 빈 body 방어 처리
+      const text = await res.text()
+      let data: any = {}
+      try {
+        if (text) data = JSON.parse(text)
+      } catch {
+        // JSON 파싱 실패 = Lambda/API Gateway 오류
+        throw new Error(`서버 오류 (${res.status})`)
+      }
 
       if (res.status === 409 || data.alreadyRegistered) {
         setStatus("already")
         return
       }
       if (!res.ok) {
-        throw new Error(data.message || "서버 오류")
+        throw new Error(data.message || `서버 오류 (${res.status})`)
       }
 
       setStatus("success")
@@ -86,15 +100,30 @@ export default function FreeTrialModal({ open, onClose }: Props) {
               <CheckCircle2 className="w-14 h-14 text-cyan-400" />
             </div>
             <h3 className="text-xl font-bold text-white mb-2">신청 완료!</h3>
-            <p className="text-gray-400 text-sm leading-relaxed">
-              3일 무료 체험 신청이 완료되었습니다.<br />
-              텔레그램으로 안내 메시지를 보내드릴게요.
+            <p className="text-gray-400 text-sm leading-relaxed mb-4">
+              3일 무료 체험 신청이 완료되었습니다.
             </p>
+            {/* 텔레그램 봇 안내 */}
+            <div className="w-full bg-[#161b22] border border-cyan-500/20 rounded-xl px-4 py-4 text-left">
+              <p className="text-xs text-cyan-400 font-semibold mb-2">📡 시그널 수신 설정</p>
+              <p className="text-xs text-gray-400 leading-relaxed mb-3">
+                텔레그램에서 아래 봇을 검색하고<br />
+                <span className="text-white font-bold">/start</span> 를 보내주시면 시그널 알림이 시작됩니다.
+              </p>
+              <a
+                href="https://t.me/sigmarket_bot"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-cyan-500/15 border border-cyan-500/30 text-cyan-400 text-sm font-bold hover:bg-cyan-500/25 transition-colors"
+              >
+                @sigmarket_bot 열기 →
+              </a>
+            </div>
             <button
               onClick={handleClose}
-              className="mt-6 px-6 py-2.5 rounded-xl bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 text-sm font-medium hover:bg-cyan-500/20 transition-colors"
+              className="mt-4 px-6 py-2.5 rounded-xl bg-white/5 border border-gray-700/50 text-gray-400 text-sm font-medium hover:bg-white/10 transition-colors"
             >
-              확인
+              닫기
             </button>
           </div>
         ) : status === "already" ? (
