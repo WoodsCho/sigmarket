@@ -138,7 +138,7 @@ export default function Hero() {
     }
     const ms = cutoffMs[period]
     const closed = signals.filter((s) => {
-      if (s.status !== "closed" || s.profitRate == null) return false
+      if (s.profitRate == null) return false
       if (s.createdAt && now - new Date(s.createdAt).getTime() > ms) return false
       return true
     })

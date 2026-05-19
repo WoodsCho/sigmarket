@@ -43,7 +43,7 @@
  */
 
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
-import { DynamoDBDocumentClient, PutCommand, ScanCommand, GetCommand, DeleteCommand, UpdateCommand } from "@aws-sdk/lib-dynamodb";
+import { DynamoDBDocumentClient, PutCommand, ScanCommand, UpdateCommand } from "@aws-sdk/lib-dynamodb";
 
 const WEBHOOK_SECRET    = process.env.WEBHOOK_SECRET || "";
 const TABLE_NAME        = process.env.SIGNAL_TABLE_NAME || "";
@@ -124,20 +124,6 @@ async function sendTelegramSignals({ symbol, position, price, indicator, date, t
   );
 
   console.log(`Telegram: ${users.length}명에게 시그널 발송 완료`);
-}
-
-/**
- * 수익률 계산
- * LONG: (exitPrice - entryPrice) / entryPrice * 100
- * SHORT: (entryPrice - exitPrice) / entryPrice * 100
- */
-function calcProfitRate(position, entryPrice, exitPrice) {
-  const entry = parseFloat(entryPrice);
-  const exit = parseFloat(exitPrice);
-  if (isNaN(entry) || isNaN(exit) || entry === 0) return 0;
-  return position === "LONG"
-    ? parseFloat(((exit - entry) / entry * 100).toFixed(4))
-    : parseFloat(((entry - exit) / entry * 100).toFixed(4));
 }
 
 const headers = {
@@ -271,90 +257,84 @@ export const handler = async (event) => {
 
     const icon = SYMBOL_ICONS[symbol] || "●";
     const signalId = `${symbol}-${Date.now()}`;
-    const positionKey = `position-${symbol}`;
 
-    // ── 오픈 포지션 포인터 조회 ───────────────────────────
-    const posResult = await docClient.send(
-      new GetCommand({ TableName: TABLE_NAME, Key: { id: positionKey } })
-    );
-    const openPos = posResult.Item;
+    // Pine Script에서 계산된 수익 데이터
+    const profitPct   = body.profit_pct  != null ? parseFloat(body.profit_pct)  : null;
+    const hasProfitData = profitPct != null && !isNaN(profitPct);
+    const entryPrice  = body.entry_price != null ? String(body.entry_price) : body.price;
+    const peakPrice   = body.peak_price  != null ? String(body.peak_price)  : null;
 
-    if (openPos && openPos.position !== position) {
-      // 반대 시그널 → 기존 시그널 레코드에 성과 칼럼 추가
-      const profitRate = calcProfitRate(openPos.position, openPos.price, body.price);
+    // ── 완료 보고: 기존 open 시그널 업데이트 ──────────────
+    if (hasProfitData) {
+      // 같은 symbol + position의 가장 최근 open 시그널 조회
+      const scanResult = await docClient.send(new ScanCommand({
+        TableName: TABLE_NAME,
+        FilterExpression: "#sym = :sym AND #pos = :pos AND #st = :open AND #typename = :typename",
+        ExpressionAttributeNames: {
+          "#sym": "symbol", "#pos": "position",
+          "#st": "status",  "#typename": "__typename",
+        },
+        ExpressionAttributeValues: {
+          ":sym": symbol, ":pos": position,
+          ":open": "open", ":typename": "Signal",
+        },
+      }));
 
-      await docClient.send(
-        new UpdateCommand({
+      const openSignals = (scanResult.Items || []).sort(
+        (a, b) => (b.createdAt || "").localeCompare(a.createdAt || "")
+      );
+      const target = openSignals[0];
+
+      if (target) {
+        await docClient.send(new UpdateCommand({
           TableName: TABLE_NAME,
-          Key: { id: openPos.openSignalId },
+          Key: { id: target.id },
           UpdateExpression:
-            "SET profitRate = :pr, exitPrice = :ep, exitDate = :ed, exitTime = :et, #st = :s, updatedAt = :ua",
+            "SET profitRate = :pr, exitPrice = :ep, exitDate = :ed, exitTime = :et, #st = :closed, updatedAt = :ua",
           ExpressionAttributeNames: { "#st": "status" },
           ExpressionAttributeValues: {
-            ":pr": profitRate,
-            ":ep": body.price,
-            ":ed": date,
-            ":et": time,
-            ":s": "closed",
-            ":ua": now.toISOString(),
+            ":pr": profitPct, ":ep": peakPrice,
+            ":ed": date,      ":et": time,
+            ":closed": "closed", ":ua": now.toISOString(),
           },
-        })
-      );
+        }));
+        console.log(`Signal closed: ${symbol} ${position} profit: ${profitPct}%`);
 
-      // 포지션 포인터 삭제
-      await docClient.send(
-        new DeleteCommand({ TableName: TABLE_NAME, Key: { id: positionKey } })
-      );
-
-      console.log(`Signal closed: ${symbol} ${openPos.position} profitRate: ${profitRate}%`);
+        return {
+          statusCode: 200,
+          headers,
+          body: JSON.stringify({ message: "Signal closed", id: target.id, profitRate: profitPct }),
+        };
+      }
+      // open 시그널이 없으면 closed 레코드로 신규 저장 (fallback)
     }
 
-    // ── 새 시그널 저장 ────────────────────────────────────
-    await docClient.send(
-      new PutCommand({
-        TableName: TABLE_NAME,
-        Item: {
-          id: signalId,
-          symbol,
-          date,
-          time,
-          price: body.price,
-          position,
-          icon,
-          indicator: body.indicator || null,
-          status: "open",
-          isNew: true,
-          source: "tradingview",
-          createdAt: now.toISOString(),
-          updatedAt: now.toISOString(),
-          __typename: "Signal",
-        },
-      })
-    );
+    // ── 진입 시그널: 신규 open 레코드 저장 ───────────────
+    const signalId = `${symbol}-${Date.now()}`;
+    await docClient.send(new PutCommand({
+      TableName: TABLE_NAME,
+      Item: {
+        id: signalId,
+        symbol,
+        date,
+        time,
+        price: entryPrice,
+        position,
+        icon,
+        indicator: body.indicator || null,
+        status: "open",
+        isNew: true,
+        source: "tradingview",
+        createdAt: now.toISOString(),
+        updatedAt: now.toISOString(),
+        __typename: "Signal",
+      },
+    }));
 
-    // ── 포지션 포인터 갱신 ────────────────────────────────
-    // 같은 방향 연속 시그널이면 포인터를 덮지 않음 (기존 오픈 시그널 id 보존)
-    if (!openPos || openPos.position !== position) {
-      await docClient.send(
-        new PutCommand({
-          TableName: TABLE_NAME,
-          Item: {
-            id: positionKey,
-            openSignalId: signalId,
-            position,
-            price: body.price,
-            indicator: body.indicator || null,
-            symbol,
-            createdAt: now.toISOString(),
-          },
-        })
-      );
-    }
-
-    console.log(`Signal saved: ${symbol} ${position} @ ${body.price}`);
+    console.log(`Signal saved: ${symbol} ${position} @ ${entryPrice}`);
 
     // ── 텔레그램 시그널 발송 (비동기, 실패해도 응답에 영향 없음) ──
-    sendTelegramSignals({ symbol, position, price: body.price, indicator: body.indicator, date, time })
+    sendTelegramSignals({ symbol, position, price: entryPrice, indicator: body.indicator, date, time })
       .catch((err) => console.error("sendTelegramSignals unhandled:", err));
 
     return {
@@ -362,7 +342,7 @@ export const handler = async (event) => {
       headers,
       body: JSON.stringify({
         message: "Signal received",
-        signal: { id: signalId, symbol, position, price: body.price, date, time },
+        signal: { id: signalId, symbol, position, price: entryPrice, date, time },
       }),
     };
   } catch (error) {
