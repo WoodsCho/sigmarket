@@ -111,13 +111,13 @@ function StatCard({ icon: Icon, label, value, suffix, color, delay }: {
   icon: typeof TrendingUp; label: string; value: string; suffix?: string; color: string; delay: string
 }) {
   return (
-    <div className={`hero-stat-card flex items-center gap-2 px-3 py-2.5 rounded-xl bg-white/[0.03] border border-white/[0.06] backdrop-blur-sm`} style={{ animationDelay: delay }}>
-      <div className={`p-1.5 rounded-lg ${color} shrink-0`}>
-        <Icon className="w-3.5 h-3.5" />
+    <div className={`hero-stat-card flex items-center gap-1.5 md:gap-2 px-2.5 md:px-3 py-2 md:py-2.5 rounded-xl bg-white/[0.03] border border-white/[0.06] backdrop-blur-sm shrink-0`} style={{ animationDelay: delay }}>
+      <div className={`p-1 md:p-1.5 rounded-lg ${color} shrink-0`}>
+        <Icon className="w-3 h-3 md:w-3.5 md:h-3.5" />
       </div>
       <div className="min-w-0">
-        <p className="text-[10px] text-gray-500 whitespace-nowrap">{label}</p>
-        <p className="text-xs font-bold text-white whitespace-nowrap">{value}{suffix && <span className="text-[10px] text-gray-400 ml-0.5">{suffix}</span>}</p>
+        <p className="text-[9px] md:text-[10px] text-gray-500 whitespace-nowrap">{label}</p>
+        <p className="text-[11px] md:text-xs font-bold text-white whitespace-nowrap">{value}{suffix && <span className="text-[9px] md:text-[10px] text-gray-400 ml-0.5">{suffix}</span>}</p>
       </div>
     </div>
   )
@@ -230,7 +230,7 @@ export default function Hero() {
           </div>
 
           {/* 미니 스탯 */}
-          <div className="hero-fade-in hero-delay-5 flex flex-nowrap justify-start gap-2">
+          <div className="hero-fade-in hero-delay-5 flex flex-nowrap justify-start gap-1.5 md:gap-2 w-full overflow-x-auto pb-1 scrollbar-hide">
             <StatCard icon={TrendingUp} label="최고 수익률" value={`+${topReturn}%`} color="bg-cyan-500/10 text-cyan-400" delay="0.6s" />
             <StatCard icon={BarChart3} label="평균 수익률" value={`+${avgReturn}%`} color="bg-purple-500/10 text-purple-400" delay="0.75s" />
             <StatCard icon={Zap} label="인디케이터" value="10+" suffix="개" color="bg-pink-500/10 text-pink-400" delay="0.9s" />
@@ -280,14 +280,14 @@ export default function Hero() {
               <table className="w-full text-left border-collapse">
                 <thead className="sticky top-0 z-20 bg-[#161b22]/95 backdrop-blur-sm">
                   <tr className="text-gray-500 text-[10px] uppercase tracking-widest border-b border-gray-700/40">
-                    <th className="px-3 py-2.5 font-semibold w-8 text-center">#</th>
-                    <th className="px-3 py-2.5 font-semibold">종목</th>
-                    <th className="px-3 py-2.5 font-semibold table-cell sm:hidden text-center">진입 → 성과</th>
-                    <th className="px-3 py-2.5 font-semibold hidden sm:table-cell">시그널</th>
-                    <th className="px-3 py-2.5 font-semibold hidden sm:table-cell">진입</th>
-                    <th className="px-3 py-2.5 font-semibold hidden md:table-cell">성과</th>
-                    <th className="px-3 py-2.5 font-semibold hidden sm:table-cell">포지션</th>
-                    <th className="px-3 py-2.5 font-semibold text-right">수익률</th>
+                    <th className="px-2 py-2.5 font-semibold w-7 text-center">#</th>
+                    <th className="px-2 py-2.5 font-semibold">종목 <span className="normal-case text-gray-600 text-[9px]">/USDT</span></th>
+                    <th className="px-2 py-2.5 font-semibold table-cell sm:hidden text-center">진입→최고가</th>
+                    <th className="px-2 py-2.5 font-semibold hidden sm:table-cell">시그널</th>
+                    <th className="px-2 py-2.5 font-semibold hidden sm:table-cell">진입</th>
+                    <th className="px-2 py-2.5 font-semibold hidden md:table-cell">최고가</th>
+                    <th className="px-2 py-2.5 font-semibold hidden sm:table-cell">포지션</th>
+                    <th className="px-2 py-2.5 font-semibold text-right">수익률</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-800/20 text-xs">
@@ -296,14 +296,13 @@ export default function Hero() {
                     const retCol = returnColor(entry)
                     const parts = entry.symbol.split("/")
                     const baseSymbol = parts[0].toLowerCase()
-                    const quoteSymbol = parts[1] || ""
                     return (
                       <tr
                         key={entry.rank}
                         className="hero-table-row bg-[#0d1117] hover:bg-white/[0.03] transition-colors group"
                         style={{ animationDelay: `${0.4 + i * 0.04}s` }}
                       >
-                        <td className="px-3 py-2.5 text-center">
+                        <td className="px-2 py-2 text-center">
                           {entry.rank <= 3 ? (
                             <span className={`inline-flex items-center justify-center w-5 h-5 rounded-md text-[10px] font-bold ${
                               entry.rank === 1
@@ -315,13 +314,13 @@ export default function Hero() {
                               {entry.rank}
                             </span>
                           ) : (
-                            <span className="text-gray-600 font-medium">{entry.rank}</span>
+                            <span className="text-gray-600 font-medium text-[11px]">{entry.rank}</span>
                           )}
                         </td>
 
-                        {/* 종목 셀 — 모바일: quote(USDT) 위 + 심볼 + 시그널·포지션 아래 */}
-                        <td className="px-3 py-2 font-bold text-gray-300">
-                          <div className="flex items-center gap-2">
+                        {/* 종목 셀 */}
+                        <td className="px-2 py-2 font-bold text-gray-300">
+                          <div className="flex items-center gap-1.5">
                             <div className="w-5 h-5 rounded-full bg-gray-800/80 border border-gray-700/50 overflow-hidden flex items-center justify-center flex-shrink-0">
                               <img
                                 src={`https://assets.coincap.io/assets/icons/${baseSymbol}@2x.png`}
@@ -340,58 +339,53 @@ export default function Hero() {
                               />
                             </div>
                             <div className="flex flex-col min-w-0">
-                              {/* 모바일: quote 통화 뱃지 위에 표시 */}
-                              {quoteSymbol && (
-                                <span className="text-[8px] text-gray-600 font-medium leading-none mb-0.5 sm:hidden">
-                                  {quoteSymbol}
-                                </span>
-                              )}
-                              <span className="text-[11px] font-bold leading-tight">{parts[0]}</span>
-                              {/* 모바일: 시그널 + 포지션 */}
+                              <span className="text-[11px] font-bold leading-tight truncate max-w-[52px]">{parts[0]}</span>
+                              {/* 모바일: 시그널 + 포지션 라운드박스 */}
                               <div className="flex items-center gap-1 mt-0.5 sm:hidden">
-                                <span className="text-[9px] text-gray-500 truncate max-w-[60px]">{entry.signal}</span>
-                                <span className={`text-[9px] font-bold ${pos.text}`}>· {entry.position}</span>
+                                <span className="text-[8px] text-gray-500 truncate max-w-[40px]">{entry.signal}</span>
+                                <span className={`text-[8px] font-bold px-1 py-0 rounded-full border ${pos.text} ${pos.bg} ${
+                                  entry.position === "LONG" ? "border-cyan-400/25" : "border-pink-500/25"
+                                }`}>{entry.position}</span>
                               </div>
                             </div>
                           </div>
                         </td>
 
-                        {/* 모바일 전용: 진입 → 성과 셀 */}
-                        <td className="px-2 py-2 table-cell sm:hidden">
-                          <div className="flex flex-col items-start gap-0.5">
+                        {/* 모바일 전용: 진입 → 최고가 셀 */}
+                        <td className="px-1.5 py-2 table-cell sm:hidden">
+                          <div className="flex flex-col gap-0.5">
                             <div className="flex items-center gap-1">
-                              <span className="text-[8px] text-gray-600">진입</span>
-                              <span className="text-[10px] text-gray-400 font-mono">{entry.entryPrice}</span>
+                              <span className="text-[8px] text-gray-600 w-6">진입</span>
+                              <span className="text-[10px] text-gray-400 font-mono tabular-nums">{entry.entryPrice}</span>
                             </div>
                             <div className="flex items-center gap-1">
-                              <span className="text-[8px] text-gray-600">성과</span>
-                              <span className="text-[10px] text-gray-300 font-mono font-medium">{entry.resultPrice}</span>
+                              <span className="text-[8px] text-gray-600 w-6">최고</span>
+                              <span className="text-[10px] text-gray-300 font-mono font-medium tabular-nums">{entry.resultPrice}</span>
                             </div>
-                            <span className="text-[8px] text-gray-600">{entry.entryDate}</span>
                           </div>
                         </td>
 
                         {/* 데스크탑 전용 셀들 */}
-                        <td className="px-3 py-2.5 hidden sm:table-cell">
-                          <span className="px-2 py-0.5 rounded-md bg-gray-800/40 border border-gray-700/30 text-[10px] text-gray-400">
+                        <td className="px-2 py-2 hidden sm:table-cell">
+                          <span className="px-1.5 py-0.5 rounded-md bg-gray-800/40 border border-gray-700/30 text-[10px] text-gray-400 truncate max-w-[80px] block">
                             {entry.signal}
                           </span>
                         </td>
-                        <td className="px-3 py-2.5 hidden sm:table-cell">
-                          <div className="text-gray-400 text-[11px]">{entry.entryPrice}</div>
+                        <td className="px-2 py-2 hidden sm:table-cell">
+                          <div className="text-gray-400 text-[11px] tabular-nums">{entry.entryPrice}</div>
                           <div className="text-[9px] text-gray-600 mt-0.5">{entry.entryDate}</div>
                         </td>
-                        <td className="px-3 py-2.5 font-medium text-gray-300 text-[11px] hidden md:table-cell">
+                        <td className="px-2 py-2 font-medium text-gray-300 text-[11px] hidden md:table-cell tabular-nums">
                           {entry.resultPrice}
                         </td>
-                        <td className="px-3 py-2.5 hidden sm:table-cell">
-                          <span className={`${pos.text} font-bold ${pos.bg} px-2 py-0.5 rounded-md text-[10px] border ${
+                        <td className="px-2 py-2 hidden sm:table-cell">
+                          <span className={`${pos.text} font-bold ${pos.bg} px-1.5 py-0.5 rounded-full text-[9px] border ${
                             entry.position === "LONG" ? "border-cyan-400/20" : "border-pink-500/20"
                           }`}>
                             {entry.position}
                           </span>
                         </td>
-                        <td className={`px-3 py-2.5 text-right font-bold text-sm ${retCol}`}>
+                        <td className={`px-2 py-2 text-right font-bold text-[12px] ${retCol} tabular-nums`}>
                           {entry.returnPct >= 0 ? "+" : ""}{entry.returnPct.toFixed(2)}%
                         </td>
                       </tr>

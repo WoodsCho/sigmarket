@@ -40,14 +40,14 @@ export default function Signals() {
           <div className="flex flex-col md:flex-row md:items-end justify-between mb-5 md:mb-10 gap-3 md:gap-6">
             <div>
               <p className="text-sm text-cyan-400 font-medium mb-3 uppercase tracking-wider">Live Signals</p>
-              <div className="flex items-center gap-3 mb-3">
+              <div className="flex items-center gap-2 mb-3 flex-wrap">
                 <button
                   onClick={() => navigate("/signals")}
-                  className="text-3xl lg:text-4xl font-bold text-white hover:text-gradient transition-all duration-300 cursor-pointer text-left"
+                  className="text-2xl lg:text-4xl font-bold text-white hover:text-gradient transition-all duration-300 cursor-pointer text-left"
                 >
                   실시간 시그널 현황
                 </button>
-                <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold tracking-wider uppercase ${
+                <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold tracking-wider uppercase shrink-0 ${
                   isLive
                     ? "bg-emerald-500/10 border border-emerald-500/25 text-emerald-400"
                     : "bg-gray-500/10 border border-gray-500/25 text-gray-400"
@@ -57,13 +57,12 @@ export default function Signals() {
                 </span>
                 <button
                   onClick={() => setTrialOpen(true)}
-                  className="sm:hidden group relative flex items-center justify-center w-9 h-9 rounded-xl bg-[#229ED9] text-white transition-all duration-300 hover:shadow-lg hover:shadow-[#229ED9]/30 hover:scale-[1.06] active:scale-[0.97] shrink-0"
+                  className="sm:hidden group relative flex items-center justify-center w-8 h-8 rounded-xl bg-[#229ED9] text-white transition-all duration-300 hover:shadow-lg hover:shadow-[#229ED9]/30 active:scale-[0.97] shrink-0"
                   title="텔레그램 알림 받기"
                 >
                   <svg viewBox="0 0 24 24" className="w-4 h-4 fill-white" xmlns="http://www.w3.org/2000/svg">
                     <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.96 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/>
                   </svg>
-                  <div className="absolute inset-0 rounded-xl bg-[#229ED9] blur-xl opacity-0 group-hover:opacity-30 transition-opacity duration-300 -z-10" />
                 </button>
               </div>
               <p className="text-sm text-gray-500 leading-relaxed">
@@ -109,14 +108,14 @@ export default function Signals() {
               <div className="relative bg-[#0d1117] border border-gray-700/40 rounded-2xl shadow-2xl shadow-black/30 overflow-hidden">
 
                 <div className="overflow-x-auto w-full max-w-full bg-[#0d1117]">
-                  <table className="w-full text-left border-collapse whitespace-nowrap">
+                  <table className="w-full text-left border-collapse">
                     <thead>
                       <tr className="bg-[#0f1420] text-gray-500 text-[10px] uppercase tracking-widest border-b border-gray-700/40">
-                        <th className="px-3 md:px-5 py-2.5 md:py-3.5 font-semibold w-28 md:w-36">시각</th>
-                        <th className="px-3 md:px-5 py-2.5 md:py-3.5 font-semibold">종목 <span className="normal-case text-gray-600">/USDT</span></th>
+                        <th className="px-2 md:px-5 py-2.5 md:py-3.5 font-semibold w-14 md:w-36">시각</th>
+                        <th className="px-2 md:px-5 py-2.5 md:py-3.5 font-semibold">종목</th>
                         <th className="hidden md:table-cell px-5 py-3.5 font-semibold">시그널 (지표)</th>
-                        <th className="px-3 md:px-5 py-2.5 md:py-3.5 font-semibold">진입가</th>
-                        <th className="px-3 md:px-5 py-2.5 md:py-3.5 font-semibold">포지션</th>
+                        <th className="px-2 md:px-5 py-2.5 md:py-3.5 font-semibold">진입가</th>
+                        <th className="px-2 md:px-5 py-2.5 md:py-3.5 font-semibold text-right">포지션</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-800/30 text-xs">
@@ -235,20 +234,19 @@ function SignalRow({ signal, idx }: { signal: Signal; idx: number }) {
     >
 
       {/* ── 시각 ── */}
-      <td className="relative px-3 md:px-5 py-2.5 md:py-3.5">
+      <td className="relative px-2 md:px-5 py-2 md:py-3.5 w-14 md:w-auto">
         {/* 포지션 컬러 바 */}
         <div className={`absolute inset-y-0 left-0 w-[2px] ${pos.bar} opacity-0 group-hover:opacity-100 transition-opacity duration-200`} />
         {signal.isNew && (!signal.timeAgo || signal.timeAgo === "방금 전") ? (
-          <span className="inline-flex items-center gap-1.5 text-yellow-400 font-semibold text-[11px] bg-yellow-500/10 border border-yellow-500/20 px-2.5 py-1 rounded-full">
-            <span className="w-1.5 h-1.5 rounded-full bg-yellow-400 animate-pulse" />
+          <span className="inline-flex items-center gap-1 text-yellow-400 font-semibold text-[10px] bg-yellow-500/10 border border-yellow-500/20 px-1.5 py-0.5 rounded-full whitespace-nowrap">
+            <span className="w-1.5 h-1.5 rounded-full bg-yellow-400 animate-pulse shrink-0" />
             <span className="hidden sm:inline">방금 전</span>
             <span className="sm:hidden">NOW</span>
           </span>
         ) : (
-          <div className="flex items-center gap-1.5 text-gray-500">
+          <div className="flex items-center gap-1 text-gray-500">
             <Clock className="w-3 h-3 shrink-0 text-gray-600" />
-            {/* 모바일: "15시간 전" → "15h" 등 축약 */}
-            <span className="text-[11px] sm:hidden">
+            <span className="text-[10px] sm:hidden leading-tight">
               {signal.timeAgo
                 ? signal.timeAgo
                     .replace(/(\d+)일 전/, "$1d")
@@ -265,10 +263,10 @@ function SignalRow({ signal, idx }: { signal: Signal; idx: number }) {
       </td>
 
       {/* ── 종목 ── */}
-      <td className="px-3 md:px-5 py-2.5 md:py-3.5">
-        <div className="flex items-center gap-2.5">
+      <td className="px-2 md:px-5 py-2 md:py-3.5">
+        <div className="flex items-center gap-1.5 md:gap-2.5">
           {/* 코인 아이콘 or 폴백 */}
-          <div className="w-7 h-7 rounded-full bg-gray-800/80 border border-gray-700/50 flex-shrink-0 overflow-hidden flex items-center justify-center">
+          <div className="w-6 h-6 md:w-7 md:h-7 rounded-full bg-gray-800/80 border border-gray-700/50 flex-shrink-0 overflow-hidden flex items-center justify-center">
             <img
               src={`https://assets.coincap.io/assets/icons/${baseSymbol.toLowerCase()}@2x.png`}
               alt={baseSymbol}
@@ -280,15 +278,15 @@ function SignalRow({ signal, idx }: { signal: Signal; idx: number }) {
                   el.src = `https://cdn.jsdelivr.net/gh/spothq/cryptocurrency-icons/32/color/${baseSymbol.toLowerCase()}.png`
                 } else {
                   el.style.display = "none"
-                  el.parentElement!.innerHTML = `<span class="text-[10px] font-bold text-gray-300">${baseSymbol.slice(0, 3)}</span>`
+                  el.parentElement!.innerHTML = `<span class="text-[8px] font-bold text-gray-300">${baseSymbol.slice(0, 3)}</span>`
                 }
               }}
             />
           </div>
-          <div>
-            <div className="font-semibold text-gray-200 text-[13px] tracking-wide group-hover:text-white transition-colors">{signal.symbol.split("/")[0]}</div>
+          <div className="min-w-0">
+            <div className="font-semibold text-gray-200 text-[11px] md:text-[13px] tracking-wide group-hover:text-white transition-colors truncate max-w-[70px] md:max-w-none">{signal.symbol.split("/")[0]}</div>
             {signal.exchange && (
-              <div className="text-[10px] text-gray-600 mt-0.5">{signal.exchange}</div>
+              <div className="text-[9px] text-gray-600 mt-0.5 hidden sm:block">{signal.exchange}</div>
             )}
           </div>
         </div>
@@ -306,13 +304,13 @@ function SignalRow({ signal, idx }: { signal: Signal; idx: number }) {
       </td>
 
       {/* ── 진입가 ── */}
-      <td className="px-3 md:px-5 py-2.5 md:py-3.5">
-        <span className="font-mono text-[13px] text-gray-300 font-medium tabular-nums">{signal.price}</span>
+      <td className="px-2 md:px-5 py-2 md:py-3.5">
+        <span className="font-mono text-[11px] md:text-[13px] text-gray-300 font-medium tabular-nums">{signal.price}</span>
       </td>
 
       {/* ── 포지션 ── */}
-      <td className="px-3 md:px-5 py-2.5 md:py-3.5">
-        <span className={`inline-flex items-center px-3 py-1 rounded-lg text-[11px] font-bold tracking-wider border ${pos.text} ${pos.bg} ${pos.border} group-hover:shadow-sm group-hover:${pos.glow} transition-shadow`}>
+      <td className="px-2 md:px-5 py-2 md:py-3.5 text-right">
+        <span className={`inline-flex items-center px-1.5 md:px-3 py-0.5 md:py-1 rounded-lg text-[10px] md:text-[11px] font-bold tracking-wide md:tracking-wider border ${pos.text} ${pos.bg} ${pos.border} transition-shadow`}>
           {signal.position}
         </span>
       </td>
