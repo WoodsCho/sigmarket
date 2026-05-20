@@ -1,4 +1,4 @@
-import { principles, navItems } from "../../data"
+import { principles } from "../../data"
 
 export default function Philosophy() {
   return (
