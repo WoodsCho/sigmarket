@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom"
 import { useSignals } from "../../hooks/useSignals"
 import { SignalTableSkeleton } from "../ui/skeleton"
 import type { Signal } from "../../types"
+import FreeTrialModal from "../FreeTrialModal"
 
 /* ─── 포지션 스타일 ─── */
 const POS_STYLES: Record<string, { text: string; bg: string; border: string; bar: string; glow: string }> = {
@@ -17,6 +18,7 @@ export default function Signals() {
   const { signals, isLoading, isLive } = useSignals()
   const navigate = useNavigate()
   const [page, setPage] = useState(0)
+  const [trialOpen, setTrialOpen] = useState(false)
 
   /* 간단한 통계 */
   const longCount = signals.filter(s => s.position === "LONG").length
@@ -26,6 +28,7 @@ export default function Signals() {
   const pagedSignals = signals.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE)
 
   return (
+    <>
     <section id="signals" className="relative min-h-[100dvh] md:h-full flex flex-col justify-center overflow-x-hidden overflow-y-auto pt-20 md:pt-24 pb-10 md:pb-16">
       {/* bg glow */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[500px] bg-purple-900/8 blur-[80px] rounded-full pointer-events-none z-0" />
@@ -71,10 +74,8 @@ export default function Signals() {
                 </span>
               </div>
 
-              <a
-                href="https://t.me/your_telegram_channel"
-                target="_blank"
-                rel="noopener noreferrer"
+              <button
+                onClick={() => setTrialOpen(true)}
                 className="group relative flex items-center justify-center w-10 h-10 rounded-xl bg-[#229ED9] text-white transition-all duration-300 hover:shadow-lg hover:shadow-[#229ED9]/30 hover:scale-[1.06] active:scale-[0.97]"
                 title="텔레그램 알림 받기"
               >
@@ -82,7 +83,7 @@ export default function Signals() {
                   <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.96 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/>
                 </svg>
                 <div className="absolute inset-0 rounded-xl bg-[#229ED9] blur-xl opacity-0 group-hover:opacity-30 transition-opacity duration-300 -z-10" />
-              </a>
+              </button>
             </div>
           </div>
 
@@ -179,6 +180,9 @@ export default function Signals() {
         </div>
       </div>
     </section>
+
+    <FreeTrialModal open={trialOpen} onClose={() => setTrialOpen(false)} />
+    </>
   )
 }
 
