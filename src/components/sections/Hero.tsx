@@ -213,7 +213,7 @@ export default function Hero() {
           </p>
 
           {/* CTA 버튼 그룹 */}
-          <div className="hero-fade-in hero-delay-4 flex flex-wrap items-center justify-center lg:justify-start gap-3 mb-8">
+          <div className="hero-fade-in hero-delay-4 flex flex-wrap items-center justify-start gap-3 mb-8">
             <button
               onClick={() => setTrialOpen(true)}
               className="group relative px-6 py-3 rounded-xl bg-gradient-to-r from-cyan-500 via-purple-500 to-pink-500 text-white font-bold text-sm transition-all duration-300 hover:shadow-[0_0_40px_rgba(168,85,247,0.35)] hover:scale-[1.03] active:scale-[0.98]">
@@ -230,7 +230,7 @@ export default function Hero() {
           </div>
 
           {/* 미니 스탯 */}
-          <div className="hero-fade-in hero-delay-5 flex flex-nowrap justify-center lg:justify-start gap-2">
+          <div className="hero-fade-in hero-delay-5 flex flex-nowrap justify-start gap-2">
             <StatCard icon={TrendingUp} label="최고 수익률" value={`+${topReturn}%`} color="bg-cyan-500/10 text-cyan-400" delay="0.6s" />
             <StatCard icon={BarChart3} label="평균 수익률" value={`+${avgReturn}%`} color="bg-purple-500/10 text-purple-400" delay="0.75s" />
             <StatCard icon={Zap} label="인디케이터" value="10+" suffix="개" color="bg-pink-500/10 text-pink-400" delay="0.9s" />

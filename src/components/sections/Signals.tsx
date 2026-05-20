@@ -118,38 +118,61 @@ export default function Signals() {
 
                 {/* ── 페이지네이션 ── */}
                 {totalPages > 1 && (
-                  <div className="bg-[#0a0e16] border-t border-gray-700/40 px-6 py-3 flex items-center justify-center gap-4">
-                    <div className="flex items-center gap-1">
-                      <button
-                        onClick={() => setPage(p => Math.max(0, p - 1))}
-                        disabled={page === 0}
-                        className="p-1.5 rounded-lg text-gray-500 hover:text-white hover:bg-gray-700/50 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                      >
-                        <ChevronLeft className="w-4 h-4" />
-                      </button>
-                      {Array.from({ length: totalPages }, (_, i) => (
-                        <button
-                          key={i}
-                          onClick={() => setPage(i)}
-                          className={`w-7 h-7 rounded-lg text-[11px] font-mono transition-colors ${
-                            i === page
-                              ? "bg-cyan-500/20 border border-cyan-500/40 text-cyan-400 font-bold"
-                              : "text-gray-500 hover:text-white hover:bg-gray-700/50"
-                          }`}
-                        >
-                          {i + 1}
-                        </button>
-                      ))}
-                      <button
-                        onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
-                        disabled={page === totalPages - 1}
-                        className="p-1.5 rounded-lg text-gray-500 hover:text-white hover:bg-gray-700/50 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                      >
-                        <ChevronRight className="w-4 h-4" />
-                      </button>
-                    </div>
-                    <span className="text-[11px] text-gray-500 font-mono">
-                      {page * PAGE_SIZE + 1}–{Math.min((page + 1) * PAGE_SIZE, signals.length)} / {signals.length}
+                  <div className="bg-[#0a0e16] border-t border-gray-700/40 px-4 py-3 flex items-center justify-center gap-2">
+                    <button
+                      onClick={() => setPage(0)}
+                      disabled={page === 0}
+                      className="px-2 py-1 rounded-lg text-[11px] text-gray-500 hover:text-white hover:bg-gray-700/50 disabled:opacity-30 disabled:cursor-not-allowed transition-colors font-mono"
+                    >
+                      «
+                    </button>
+                    <button
+                      onClick={() => setPage(p => Math.max(0, p - 1))}
+                      disabled={page === 0}
+                      className="p-1.5 rounded-lg text-gray-500 hover:text-white hover:bg-gray-700/50 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                    >
+                      <ChevronLeft className="w-4 h-4" />
+                    </button>
+
+                    {/* 현재 페이지 주변만 표시 */}
+                    {Array.from({ length: totalPages }, (_, i) => i)
+                      .filter(i => Math.abs(i - page) <= 2)
+                      .map((i, arrIdx, arr) => (
+                        <>
+                          {arrIdx > 0 && arr[arrIdx - 1] !== i - 1 && (
+                            <span key={`ellipsis-${i}`} className="text-gray-600 text-[11px] px-0.5">…</span>
+                          )}
+                          <button
+                            key={i}
+                            onClick={() => setPage(i)}
+                            className={`w-7 h-7 rounded-lg text-[11px] font-mono transition-colors ${
+                              i === page
+                                ? "bg-cyan-500/20 border border-cyan-500/40 text-cyan-400 font-bold"
+                                : "text-gray-500 hover:text-white hover:bg-gray-700/50"
+                            }`}
+                          >
+                            {i + 1}
+                          </button>
+                        </>
+                      ))
+                    }
+
+                    <button
+                      onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
+                      disabled={page === totalPages - 1}
+                      className="p-1.5 rounded-lg text-gray-500 hover:text-white hover:bg-gray-700/50 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                    >
+                      <ChevronRight className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => setPage(totalPages - 1)}
+                      disabled={page === totalPages - 1}
+                      className="px-2 py-1 rounded-lg text-[11px] text-gray-500 hover:text-white hover:bg-gray-700/50 disabled:opacity-30 disabled:cursor-not-allowed transition-colors font-mono"
+                    >
+                      »
+                    </button>
+                    <span className="text-[11px] text-gray-500 font-mono ml-1">
+                      {page + 1}/{totalPages}
                     </span>
                   </div>
                 )}
@@ -207,12 +230,25 @@ function SignalRow({ signal, idx }: { signal: Signal; idx: number }) {
         {signal.isNew && (!signal.timeAgo || signal.timeAgo === "방금 전") ? (
           <span className="inline-flex items-center gap-1.5 text-yellow-400 font-semibold text-[11px] bg-yellow-500/10 border border-yellow-500/20 px-2.5 py-1 rounded-full">
             <span className="w-1.5 h-1.5 rounded-full bg-yellow-400 animate-pulse" />
-            방금 전
+            <span className="hidden sm:inline">방금 전</span>
+            <span className="sm:hidden">NOW</span>
           </span>
         ) : (
           <div className="flex items-center gap-1.5 text-gray-500">
             <Clock className="w-3 h-3 shrink-0 text-gray-600" />
-            <span className="text-[11px]">{signal.timeAgo || `${signal.date} ${signal.time}`}</span>
+            {/* 모바일: "15시간 전" → "15h" 등 축약 */}
+            <span className="text-[11px] sm:hidden">
+              {signal.timeAgo
+                ? signal.timeAgo
+                    .replace(/(\d+)일 전/, "$1d")
+                    .replace(/(\d+)시간 전/, "$1h")
+                    .replace(/(\d+)분 전/, "$1m")
+                    .replace(/(\d+)초 전/, "$1s")
+                : `${signal.date}`}
+            </span>
+            <span className="text-[11px] hidden sm:inline">
+              {signal.timeAgo || `${signal.date} ${signal.time}`}
+            </span>
           </div>
         )}
       </td>
