@@ -55,19 +55,20 @@ export default function Signals() {
                   <span className={`w-1.5 h-1.5 rounded-full ${isLive ? "bg-emerald-400 animate-pulse" : "bg-gray-500"}`} />
                   {isLive ? "Live" : "Demo"}
                 </span>
-                <button
-                  onClick={() => setTrialOpen(true)}
-                  className="sm:hidden group relative flex items-center justify-center w-8 h-8 rounded-xl bg-[#229ED9] text-white transition-all duration-300 hover:shadow-lg hover:shadow-[#229ED9]/30 active:scale-[0.97] shrink-0"
-                  title="텔레그램 알림 받기"
-                >
-                  <svg viewBox="0 0 24 24" className="w-4 h-4 fill-white" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.96 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/>
-                  </svg>
-                </button>
               </div>
               <p className="text-sm text-gray-500 leading-relaxed">
                 시그마켓 인디케이터가 감지한 실시간 매매 시그널
               </p>
+              {/* 모바일 전용 텔레그램 버튼 */}
+              <button
+                onClick={() => setTrialOpen(true)}
+                className="sm:hidden group relative flex items-center justify-center gap-2 w-full mt-3 h-10 rounded-xl bg-[#229ED9] text-white transition-all duration-300 active:scale-[0.97]"
+              >
+                <svg viewBox="0 0 24 24" className="w-4 h-4 fill-white shrink-0" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.96 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/>
+                </svg>
+                <span className="text-sm font-semibold">실시간으로 알림받기</span>
+              </button>
             </div>
 
             <div className="flex items-center gap-3">
@@ -86,12 +87,13 @@ export default function Signals() {
               {/* 데스크탑 전용 텔레그램 버튼 */}
               <button
                 onClick={() => setTrialOpen(true)}
-                className="hidden sm:flex group relative items-center justify-center w-10 h-10 rounded-xl bg-[#229ED9] text-white transition-all duration-300 hover:shadow-lg hover:shadow-[#229ED9]/30 hover:scale-[1.06] active:scale-[0.97]"
+                className="hidden sm:flex group relative items-center gap-2 px-4 h-10 rounded-xl bg-[#229ED9] text-white transition-all duration-300 hover:shadow-lg hover:shadow-[#229ED9]/30 hover:scale-[1.03] active:scale-[0.97]"
                 title="텔레그램 알림 받기"
               >
-                <svg viewBox="0 0 24 24" className="w-5 h-5 fill-white" xmlns="http://www.w3.org/2000/svg">
+                <svg viewBox="0 0 24 24" className="w-5 h-5 fill-white shrink-0" xmlns="http://www.w3.org/2000/svg">
                   <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.96 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/>
                 </svg>
+                <span className="text-sm font-semibold whitespace-nowrap">실시간으로 알림받기</span>
                 <div className="absolute inset-0 rounded-xl bg-[#229ED9] blur-xl opacity-0 group-hover:opacity-30 transition-opacity duration-300 -z-10" />
               </button>
             </div>
@@ -285,6 +287,14 @@ function SignalRow({ signal, idx }: { signal: Signal; idx: number }) {
           </div>
           <div className="min-w-0">
             <div className="font-semibold text-gray-200 text-[11px] md:text-[13px] tracking-wide group-hover:text-white transition-colors truncate max-w-[70px] md:max-w-none">{signal.symbol.split("/")[0]}</div>
+            {/* 모바일에서 지표 표시 */}
+            {signal.indicator && signal.indicator !== "—" ? (
+              <div className="md:hidden mt-0.5">
+                <span className="inline-flex items-center px-1.5 py-0.5 rounded bg-purple-500/10 border border-purple-500/20 text-[9px] text-purple-300 font-medium leading-tight">
+                  {signal.indicator}
+                </span>
+              </div>
+            ) : null}
             {signal.exchange && (
               <div className="text-[9px] text-gray-600 mt-0.5 hidden sm:block">{signal.exchange}</div>
             )}
