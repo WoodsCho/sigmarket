@@ -1,7 +1,7 @@
 import { lazy, Suspense, useEffect, useRef, useState } from "react"
 import { useLocation } from "react-router-dom"
 import { ChevronUp } from "lucide-react"
-import { Header, Hero } from "./components/sections"
+import { Header, Hero, Footer } from "./components/sections"
 import "./App.css"
 
 // Hero/Header는 첫 화면에 바로 필요 — eager load
@@ -23,6 +23,7 @@ const SECTIONS = [
   { id: "testimonials", Component: Testimonials, lazy: true  },
   { id: "pricing",      Component: Pricing,      lazy: true  },
   { id: "philosophy",   Component: Philosophy,   lazy: true  },
+  { id: "footer",       Component: Footer,       lazy: true  },
 ]
 
 function App() {
