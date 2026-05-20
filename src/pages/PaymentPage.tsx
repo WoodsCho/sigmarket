@@ -87,6 +87,8 @@ export default function PaymentPage() {
         },
       })
 
+      if (!result) throw new Error("카드 등록에 실패했습니다")
+
       if (result.code) {
         if (result.code === "PORTONE_USER_CANCEL") {
           setIsPaying(false)
