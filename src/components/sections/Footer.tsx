@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom"
 import { navItems } from "../../data"
 
 export default function Footer() {
@@ -56,14 +57,25 @@ export default function Footer() {
             </div>
           </div>
 
+          {/* Business Info */}
+          <div className="pt-8 border-t border-white/5">
+            <p className="text-gray-600 text-xs leading-relaxed">
+              상호명: 시그마켓 &nbsp;|&nbsp; 대표자: 최선희 &nbsp;|&nbsp; 사업자등록번호: 107-42-15463
+              <br className="md:hidden" />
+              <span className="hidden md:inline"> &nbsp;|&nbsp; </span>
+              유선번호: 010-8823-9831 &nbsp;|&nbsp; 주소: 서울특별시 영등포구 도림로91길 17-1 2-1호
+            </p>
+          </div>
+
           {/* Bottom */}
-          <div className="pt-8 border-t border-white/5 flex flex-col md:flex-row items-center justify-between gap-4">
+          <div className="pt-6 flex flex-col md:flex-row items-center justify-between gap-4">
             <p className="text-gray-600 text-xs">
               &copy; {new Date().getFullYear()} 시그마켓. All rights reserved.
             </p>
             <div className="flex items-center gap-6 text-xs text-gray-600">
-              <a href="#" className="hover:text-gray-400 transition-colors">Privacy Policy</a>
-              <a href="#" className="hover:text-gray-400 transition-colors">Terms of Service</a>
+              <Link to="/privacy" className="hover:text-gray-400 transition-colors">개인정보처리방침</Link>
+              <Link to="/terms" className="hover:text-gray-400 transition-colors">이용약관</Link>
+              <Link to="/refund" className="hover:text-gray-400 transition-colors">환불정책</Link>
             </div>
           </div>
         </div>

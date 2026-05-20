@@ -1,11 +1,14 @@
 import { useState } from "react"
 import { useNavigate, useSearchParams } from "react-router-dom"
 import { useAuth } from "../contexts/AuthContext"
-import { loadTossPayments } from "@tosspayments/tosspayments-sdk"
+import * as PortOne from "@portone/browser-sdk/v2"
+import { fetchAuthSession } from "aws-amplify/auth"
 import { Header, Footer } from "../components/sections"
-import { Star, Crown, CreditCard, ShieldCheck, RefreshCw, ArrowLeft, Smartphone } from "lucide-react"
+import { Star, Crown, CreditCard, ShieldCheck, RefreshCw, ArrowLeft } from "lucide-react"
 
-const TOSS_CLIENT_KEY = import.meta.env.VITE_TOSS_CLIENT_KEY as string
+const PORTONE_STORE_ID = import.meta.env.VITE_PORTONE_STORE_ID as string
+const PORTONE_CHANNEL_KEY = import.meta.env.VITE_PORTONE_CHANNEL_KEY as string
+const BILLING_API_URL = (import.meta.env.VITE_BILLING_API_URL as string) || ""
 
 const PLAN_INFO = {
   standard: {
@@ -29,13 +32,11 @@ const PLAN_INFO = {
 } as const
 
 type PlanKey = keyof typeof PLAN_INFO
-type PayMethod = "CARD" | "TOSSPAY"
 
 export default function PaymentPage() {
   const navigate = useNavigate()
   const [params] = useSearchParams()
-  const { user, isLoading } = useAuth()
-  const [selectedMethod, setSelectedMethod] = useState<PayMethod>("CARD")
+  const { user, isLoading, refreshUser } = useAuth()
   const [isPaying, setIsPaying] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -66,38 +67,59 @@ export default function PaymentPage() {
   const email = user.signInDetails?.loginId || user.username || ""
 
   const handlePay = async () => {
-    if (!TOSS_CLIENT_KEY) {
+    if (!PORTONE_STORE_ID || !PORTONE_CHANNEL_KEY) {
       setError("결제 설정이 올바르지 않습니다. 관리자에게 문의해주세요.")
       return
     }
     setIsPaying(true)
     setError(null)
     try {
-      const tossPayments = await loadTossPayments(TOSS_CLIENT_KEY)
-      const payment = tossPayments.payment({ customerKey: user.userId })
+      const result = await PortOne.requestIssueBillingKey({
+        storeId: PORTONE_STORE_ID,
+        channelKey: PORTONE_CHANNEL_KEY,
+        billingKeyMethod: "CARD",
+        issueId: `issue-${user.userId}-${Date.now()}`,
+        issueName: `${plan.name} 구독 카드 등록`,
+        customer: {
+          customerId: user.userId,
+          email: email,
+          fullName: email.split("@")[0] || "고객",
+        },
+      })
 
-      const baseRequest = {
-        successUrl: `${window.location.origin}/payment/success?plan=${planKey}&billing=${billingCycle}`,
-        failUrl: `${window.location.origin}/payment/fail`,
-        customerEmail: email,
-        customerName: email.split("@")[0] || "고객",
+      if (result.code) {
+        if (result.code === "PORTONE_USER_CANCEL") {
+          setIsPaying(false)
+          return
+        }
+        throw new Error(result.message || "카드 등록에 실패했습니다")
       }
 
-      if (selectedMethod === "TOSSPAY") {
-        await payment.requestBillingAuth({
-          method: "CARD",
-          easyPay: "토스페이",
-          flowMode: "DIRECT",
-          ...baseRequest,
-        })
-      } else {
-        await payment.requestBillingAuth({
-          method: "CARD",
-          ...baseRequest,
-        })
-      }
+      const session = await fetchAuthSession()
+      const idToken = session.tokens?.idToken?.toString()
+      if (!idToken) throw new Error("로그인 세션이 만료되었습니다")
+
+      const res = await fetch(`${BILLING_API_URL}/billing/authorize`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${idToken}`,
+        },
+        body: JSON.stringify({
+          billingKey: result.billingKey,
+          userId: user.userId,
+          plan: planKey,
+          billing: billingCycle,
+        }),
+      })
+
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || "결제 실패")
+
+      await refreshUser()
+      navigate("/payment/success")
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "결제 창을 열지 못했습니다. 다시 시도해주세요."
+      const message = err instanceof Error ? err.message : "결제 처리 중 오류가 발생했습니다"
       setError(message)
       setIsPaying(false)
     }
@@ -156,46 +178,13 @@ export default function PaymentPage() {
           <p className="text-sm text-white">{email}</p>
         </div>
 
-        {/* 결제 수단 선택 */}
+        {/* 결제 수단 */}
         <div className="bg-[#0d1117] border border-gray-700/40 rounded-2xl p-5 mb-5">
           <p className="text-xs text-gray-500 uppercase tracking-widest mb-3">결제 수단</p>
-          <div className="grid grid-cols-2 gap-3">
-            <button
-              onClick={() => setSelectedMethod("CARD")}
-              className={`flex flex-col items-center gap-2.5 p-4 rounded-xl border transition-all duration-200 ${
-                selectedMethod === "CARD"
-                  ? "border-cyan-500/60 bg-cyan-500/10 text-white"
-                  : "border-gray-700/50 bg-white/[0.02] text-gray-500 hover:border-gray-600 hover:text-gray-300"
-              }`}
-            >
-              <CreditCard className={`w-6 h-6 ${selectedMethod === "CARD" ? "text-cyan-400" : ""}`} />
-              <span className="text-sm font-medium">신용 · 체크카드</span>
-              {selectedMethod === "CARD" && (
-                <span className="text-[10px] text-cyan-400 font-semibold">선택됨</span>
-              )}
-            </button>
-
-            <button
-              onClick={() => setSelectedMethod("TOSSPAY")}
-              className={`flex flex-col items-center gap-2.5 p-4 rounded-xl border transition-all duration-200 ${
-                selectedMethod === "TOSSPAY"
-                  ? "border-blue-500/60 bg-blue-500/10 text-white"
-                  : "border-gray-700/50 bg-white/[0.02] text-gray-500 hover:border-gray-600 hover:text-gray-300"
-              }`}
-            >
-              <Smartphone className={`w-6 h-6 ${selectedMethod === "TOSSPAY" ? "text-blue-400" : ""}`} />
-              <span className="text-sm font-medium">토스페이</span>
-              {selectedMethod === "TOSSPAY" && (
-                <span className="text-[10px] text-blue-400 font-semibold">선택됨</span>
-              )}
-            </button>
+          <div className="flex items-center gap-3 p-4 rounded-xl border border-cyan-500/60 bg-cyan-500/10">
+            <CreditCard className="w-6 h-6 text-cyan-400" />
+            <span className="text-sm font-medium text-white">신용 · 체크카드</span>
           </div>
-
-          {selectedMethod === "TOSSPAY" && (
-            <p className="text-xs text-gray-600 mt-3 text-center">
-              QR 코드 또는 토스앱으로 카드를 등록합니다
-            </p>
-          )}
         </div>
 
         {/* 오류 메시지 */}
@@ -212,20 +201,13 @@ export default function PaymentPage() {
           className={`w-full flex items-center justify-center gap-2 py-4 rounded-xl font-bold text-base transition-all duration-300 ${
             isPaying
               ? "bg-gray-700 text-gray-500 cursor-not-allowed"
-              : selectedMethod === "TOSSPAY"
-                ? "bg-gradient-to-r from-blue-500 to-blue-600 text-white hover:shadow-lg hover:shadow-blue-500/30 hover:-translate-y-0.5"
-                : "bg-gradient-to-r from-cyan-500 to-blue-500 text-white hover:shadow-lg hover:shadow-cyan-500/30 hover:-translate-y-0.5"
+              : "bg-gradient-to-r from-cyan-500 to-blue-500 text-white hover:shadow-lg hover:shadow-cyan-500/30 hover:-translate-y-0.5"
           }`}
         >
           {isPaying ? (
             <>
               <RefreshCw className="w-4 h-4 animate-spin" />
               처리 중...
-            </>
-          ) : selectedMethod === "TOSSPAY" ? (
-            <>
-              <Smartphone className="w-5 h-5" />
-              토스페이로 구독 시작
             </>
           ) : (
             <>
@@ -239,7 +221,7 @@ export default function PaymentPage() {
         <div className="flex items-center justify-center gap-6 mt-6">
           <div className="flex items-center gap-1.5 text-xs text-gray-600">
             <ShieldCheck className="w-3.5 h-3.5" />
-            토스페이먼츠 보안 결제
+            포트원 보안 결제
           </div>
           <div className="flex items-center gap-1.5 text-xs text-gray-600">
             <RefreshCw className="w-3.5 h-3.5" />
@@ -250,7 +232,7 @@ export default function PaymentPage() {
         <p className="text-center text-xs text-gray-600 mt-4 leading-relaxed">
           구독을 시작하면 이용약관 및 개인정보처리방침에 동의하는 것으로 간주합니다.
           <br />
-          결제는 토스페이먼츠를 통해 안전하게 처리됩니다.
+          결제는 포트원(PortOne)을 통해 안전하게 처리됩니다.
         </p>
       </div>
 

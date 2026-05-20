@@ -1,10 +1,11 @@
 /**
- * Toss Payments 정기구독 Lambda Handler
+ * PortOne v2 정기구독 Lambda Handler
  *
  * ============================================
  * 환경 변수 (Lambda 콘솔에서 설정):
  * ============================================
- * TOSS_SECRET_KEY          : 토스페이먼츠 시크릿 키 (test_sk_... 또는 live_sk_...)
+ * PORTONE_SECRET_KEY       : 포트원 시크릿 키 (포트원 콘솔 > 결제연동 > API Keys)
+ * PORTONE_STORE_ID         : 포트원 스토어 ID (포트원 콘솔 > 내 식별코드)
  * SUBSCRIPTIONS_TABLE_NAME : DynamoDB 구독 테이블 이름 (예: Subscriptions)
  * COGNITO_USER_POOL_ID     : Cognito 유저풀 ID (예: ap-northeast-2_4UqFR7cjW)
  *
@@ -18,13 +19,13 @@
  * DynamoDB Subscriptions 테이블:
  * ============================================
  * - 파티션 키: userId (String)
- * - 속성: billingKey, customerKey, plan, billing, amount,
- *         status, paymentKey, orderId, nextPaymentAt, createdAt, updatedAt
+ * - 속성: billingKey, plan, billing, amount,
+ *         status, paymentId, orderId, nextPaymentAt, createdAt, updatedAt
  *
  * ============================================
  * API Gateway 엔드포인트:
  * ============================================
- * POST /billing/authorize  - 빌링키 발급 + 첫 결제 + Cognito 그룹 추가
+ * POST /billing/authorize  - 빌링키로 첫 결제 + Cognito 그룹 추가
  * POST /billing/cancel     - 구독 취소 + Cognito 그룹 제거
  * GET  /billing/status     - 구독 상태 조회 (?userId=...)
  */
@@ -38,10 +39,11 @@ import {
   ListUsersCommand,
 } from "@aws-sdk/client-cognito-identity-provider";
 
-const TOSS_SECRET_KEY = process.env.TOSS_SECRET_KEY || "";
+const PORTONE_SECRET_KEY = process.env.PORTONE_SECRET_KEY || "";
+const PORTONE_STORE_ID = process.env.PORTONE_STORE_ID || "";
 const TABLE_NAME = process.env.SUBSCRIPTIONS_TABLE_NAME || "";
 const USER_POOL_ID = process.env.COGNITO_USER_POOL_ID || "";
-const TOSS_API_BASE = "https://api.tosspayments.com/v1";
+const PORTONE_API_BASE = "https://api.portone.io";
 
 const ddbClient = new DynamoDBClient({});
 const docClient = DynamoDBDocumentClient.from(ddbClient);
@@ -68,8 +70,8 @@ const ORDER_NAMES = {
   "professional-yearly":  "Sigmarket Professional 연간 구독",
 };
 
-function tossAuth() {
-  return "Basic " + Buffer.from(TOSS_SECRET_KEY + ":").toString("base64");
+function portoneAuth() {
+  return `PortOne ${PORTONE_SECRET_KEY}`;
 }
 
 // JWT payload를 서명 검증 없이 디코드 (API Gateway Cognito Authorizer가 서명 검증)
@@ -152,74 +154,65 @@ export const handler = async (event) => {
       const body = event.isBase64Encoded
         ? Buffer.from(event.body || "", "base64").toString("utf8")
         : (event.body || "{}")
-      const { authKey, customerKey, userId, plan, billing } = JSON.parse(body);
+      const { billingKey, userId, plan, billing } = JSON.parse(body);
       const claims = verifyTokenAndGetSub(event);
       console.log("authorize claims.sub:", claims?.sub, "userId:", userId);
       if (!claims || claims.sub !== userId) return err(401, "Unauthorized");
       const cognitoUsername = await getCognitoUsernameBySubOrEmail(claims.sub, claims.email);
       console.log("authorize cognitoUsername resolved:", cognitoUsername);
 
-      console.log("authorize: env check TABLE_NAME=", TABLE_NAME, "POOL=", USER_POOL_ID, "HAS_KEY=", !!TOSS_SECRET_KEY);
+      console.log("authorize: env check TABLE_NAME=", TABLE_NAME, "POOL=", USER_POOL_ID, "HAS_KEY=", !!PORTONE_SECRET_KEY);
       const planBillingKey = `${plan}-${billing}`;
       const amount = PLAN_AMOUNTS[planBillingKey];
       if (!amount) return err(400, "유효하지 않은 플랜입니다");
 
-      // 1. 빌링키 발급
-      console.log("authorize: step1 issue billingKey for authKey=", authKey?.slice(0,10));
-      const issueRes = await fetch(`${TOSS_API_BASE}/billing/authorizations/issue`, {
+      // 1. 빌링키로 첫 결제 실행
+      const paymentId = `${plan}-${billing}-${userId.slice(0, 8)}-${Date.now()}`;
+      console.log("authorize: step1 charge billingKey=", billingKey?.slice(0, 10));
+      const payRes = await fetch(`${PORTONE_API_BASE}/payments/${paymentId}/billing-key`, {
         method: "POST",
-        headers: { Authorization: tossAuth(), "Content-Type": "application/json" },
-        body: JSON.stringify({ authKey, customerKey }),
-      });
-      const issueData = await issueRes.json();
-      console.log("authorize: step1 result ok=", issueRes.ok, "status=", issueRes.status);
-      if (!issueRes.ok) return err(400, issueData.message || "빌링키 발급 실패");
-      const { billingKey } = issueData;
-
-      // 2. 첫 결제 실행
-      console.log("authorize: step2 charge billingKey=", billingKey?.slice(0,10));
-      const orderId = `${plan}-${billing}-${userId.slice(0, 8)}-${Date.now()}`;
-      const payRes = await fetch(`${TOSS_API_BASE}/billing/${billingKey}`, {
-        method: "POST",
-        headers: { Authorization: tossAuth(), "Content-Type": "application/json" },
+        headers: { Authorization: portoneAuth(), "Content-Type": "application/json" },
         body: JSON.stringify({
-          customerKey,
-          amount,
-          orderId,
+          storeId: PORTONE_STORE_ID,
+          billingKey,
           orderName: ORDER_NAMES[planBillingKey],
-          customerEmail: claims.email || "",
-          customerName: (claims.email || "고객").split("@")[0],
+          amount: { total: amount },
+          currency: "KRW",
+          customer: {
+            id: userId,
+            email: claims.email || "",
+            fullName: (claims.email || "고객").split("@")[0],
+          },
         }),
       });
       const payData = await payRes.json();
-      console.log("authorize: step2 result ok=", payRes.ok, "status=", payRes.status);
+      console.log("authorize: step1 result ok=", payRes.ok, "status=", payRes.status);
       if (!payRes.ok) return err(400, payData.message || "결제 실패");
 
-      // 3. DynamoDB 저장
-      console.log("authorize: step3 DynamoDB PutItem userId=", userId);
+      // 2. DynamoDB 저장
+      console.log("authorize: step2 DynamoDB PutItem userId=", userId);
       const now = new Date().toISOString();
       const nextPaymentAt = getNextPaymentAt(billing);
       await docClient.send(new PutCommand({
         TableName: TABLE_NAME,
         Item: {
-          userId, billingKey, customerKey, plan, billing, amount,
+          userId, billingKey, plan, billing, amount,
           status: "active",
-          paymentKey: payData.paymentKey,
-          orderId,
+          paymentId,
           nextPaymentAt,
           createdAt: now,
           updatedAt: now,
         },
       }));
-      console.log("authorize: step3 DynamoDB OK");
+      console.log("authorize: step2 DynamoDB OK");
 
-      // 4. Cognito 그룹 업데이트
-      console.log("authorize: step4 Cognito group update cognitoUsername=", cognitoUsername, "plan=", plan);
+      // 3. Cognito 그룹 업데이트
+      console.log("authorize: step3 Cognito group update cognitoUsername=", cognitoUsername, "plan=", plan);
       await removeFromPlanGroups(cognitoUsername);
       await cognitoClient.send(
         new AdminAddUserToGroupCommand({ UserPoolId: USER_POOL_ID, Username: cognitoUsername, GroupName: plan })
       );
-      console.log("authorize: step4 Cognito OK");
+      console.log("authorize: step3 Cognito OK");
 
       return ok({ success: true, plan, billing, amount, nextPaymentAt });
     }
@@ -235,6 +228,16 @@ export const handler = async (event) => {
       const result = await docClient.send(new GetCommand({ TableName: TABLE_NAME, Key: { userId } }));
       if (!result.Item) return err(404, "구독 정보를 찾을 수 없습니다");
       if (result.Item.status === "cancelled") return err(400, "이미 취소된 구독입니다");
+
+      // 포트원 빌링키 삭제 (선택적, 실패해도 DB 취소는 진행)
+      try {
+        await fetch(`${PORTONE_API_BASE}/billing-keys/${result.Item.billingKey}`, {
+          method: "DELETE",
+          headers: { Authorization: portoneAuth() },
+        });
+      } catch (e) {
+        console.warn("billing-key delete failed:", e?.message);
+      }
 
       await docClient.send(new UpdateCommand({
         TableName: TABLE_NAME,

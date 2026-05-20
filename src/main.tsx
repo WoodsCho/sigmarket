@@ -15,6 +15,7 @@ const LoginPage           = lazy(() => import("./pages/LoginPage.tsx"));
 const SignUpPage          = lazy(() => import("./pages/SignUpPage.tsx"));
 const TermsPage           = lazy(() => import("./pages/TermsPage.tsx"));
 const PrivacyPage         = lazy(() => import("./pages/PrivacyPage.tsx"));
+const RefundPage          = lazy(() => import("./pages/RefundPage.tsx"));
 const ProfilePage         = lazy(() => import("./pages/ProfilePage.tsx"));
 const PaymentPage         = lazy(() => import("./pages/PaymentPage.tsx"));
 const PaymentSuccessPage  = lazy(() => import("./pages/PaymentSuccessPage.tsx"));
@@ -56,6 +57,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
             <Route path="/signup" element={<SignUpPage />} />
             <Route path="/terms" element={<TermsPage />} />
             <Route path="/privacy" element={<PrivacyPage />} />
+            <Route path="/refund" element={<RefundPage />} />
             <Route path="/profile" element={<ProfilePage />} />
             <Route path="/payment" element={<PaymentPage />} />
             <Route path="/payment/success" element={<PaymentSuccessPage />} />
