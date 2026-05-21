@@ -440,7 +440,7 @@ export default function SignalsPage() {
 
           {/* ── 섹션 구분선 ── */}
           <div className="relative flex items-center mb-12">
-            <div className="flex-1 h-px bg-gradient-to-r from-transparent via-gray-700/60 to-transparent" />
+            <div className="flex-1 h-[2px] bg-gradient-to-r from-transparent via-gray-400/90 to-transparent" />
           </div>
 
           {/* ── 실시간 시그널 현황 ── */}

@@ -77,8 +77,8 @@ function App() {
           if (index < SECTIONS.length - 1) {
             return [
               sectionEl,
-              <div key={`divider-${id}`} className="md:hidden px-6">
-                <div className="h-px bg-gradient-to-r from-transparent via-gray-700/50 to-transparent" />
+              <div key={`divider-${id}`} className="md:hidden px-4 py-50">
+                <div className="h-[2px] bg-gradient-to-r from-transparent via-gray-400/90 to-transparent" />
               </div>,
             ]
           }

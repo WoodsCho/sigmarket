@@ -238,13 +238,13 @@ export default function Hero() {
         </div>
 
         {/* ═══ 오른쪽: 수익률 랭킹 터미널 ═══ */}
-        <div className="lg:col-span-7 hero-fade-in hero-delay-3 relative">
+        <div className="lg:col-span-7 hero-fade-in hero-delay-3 relative mt-50 lg:mt-0">
           {/* 모바일 전용: 구분선 + 섹션 타이틀 */}
-          <div className="lg:hidden mb-8">
-            <div className="flex items-center gap-3 mb-5">
-              <div className="flex-1 h-px bg-gradient-to-r from-transparent via-gray-700/60 to-transparent" />
+          <div className="lg:hidden mb-5">
+            <div className="flex items-center gap-3">
+              <div className="flex-1 h-[2px] bg-gradient-to-r from-transparent via-gray-400/90 to-transparent" />
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 mt-50">
               <TrendingUp className="w-5 h-5 text-cyan-400 shrink-0" />
               <h2 className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-white to-gray-400">
                 수익률 랭킹
@@ -408,7 +408,7 @@ export default function Hero() {
             </div>
 
             {/* 하단 안내 */}
-            <div className="bg-[#161b22] border-t border-gray-700/40 px-5 py-3 shrink-0 flex items-start gap-2">
+            <div className="bg-[#161b22] border-t border-gray-700/40 px-5 py-4 mt-3 shrink-0 flex items-start gap-2">
               <span className="text-cyan-500/50 text-[10px] mt-0.5 font-mono">$</span>
               <p className="text-[10px] text-gray-500 leading-relaxed break-keep">
                 수익률은 진입 이후 성과 가격(LONG: 최고가, SHORT: 최저가) 기준으로 산정되며, 실제 수익은 트레이더의 성향과 경험에 따라 크게 달라질 수 있음을 알려드립니다.
