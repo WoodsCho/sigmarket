@@ -354,7 +354,7 @@ export default function Hero() {
                               <span className="text-[11px] font-bold leading-tight truncate max-w-[52px]">{parts[0]}</span>
                               {/* 모바일: 시그널 + 포지션 라운드박스 */}
                               <div className="flex items-center gap-1 mt-0.5 sm:hidden">
-                                <span className="text-[8px] text-gray-500 truncate max-w-[40px]">{entry.signal}</span>
+                                <span className="inline-flex items-center px-1 py-0.5 rounded bg-purple-500/10 border border-purple-500/20 text-[8px] text-purple-300 font-medium truncate max-w-[50px]">{entry.signal}</span>
                                 <span className={`text-[8px] font-bold px-1 py-0 rounded-full border ${pos.text} ${pos.bg} ${
                                   entry.position === "LONG" ? "border-cyan-400/25" : "border-pink-500/25"
                                 }`}>{entry.position}</span>
@@ -379,7 +379,7 @@ export default function Hero() {
 
                         {/* 데스크탑 전용 셀들 */}
                         <td className="px-2 py-2 hidden sm:table-cell">
-                          <span className="px-1.5 py-0.5 rounded-md bg-gray-800/40 border border-gray-700/30 text-[10px] text-gray-400 truncate max-w-[80px] block">
+                          <span className="inline-flex items-center px-1.5 py-0.5 rounded-md bg-purple-500/10 border border-purple-500/20 text-[10px] text-purple-300 font-medium truncate max-w-[80px]">
                             {entry.signal}
                           </span>
                         </td>
