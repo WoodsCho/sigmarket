@@ -29,7 +29,7 @@ export default function Signals() {
 
   return (
     <>
-    <section id="signals" className="relative md:min-h-[100dvh] md:h-full flex flex-col justify-center overflow-x-hidden overflow-y-auto pt-20 md:pt-24 pb-10 md:pb-16">
+    <section id="signals" className="relative md:min-h-[100dvh] md:h-full flex flex-col justify-center overflow-x-hidden overflow-y-auto pt-20 md:pt-24 pb-20 md:pb-16">
       {/* bg glow */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[500px] bg-purple-900/8 blur-[80px] rounded-full pointer-events-none z-0" />
 

@@ -164,7 +164,7 @@ export default function Hero() {
 
   return (
     <>
-    <section className="relative overflow-hidden min-h-[100dvh] md:h-full flex flex-col justify-center pt-32 md:pt-20 pb-10 md:pb-0">
+    <section className="relative overflow-hidden min-h-[100dvh] md:h-full flex flex-col justify-center pt-32 md:pt-20 pb-20 md:pb-0">
 
       {/* ─── 배경 레이어 ─── */}
       {/* 상단 은은한 원형 글로우 — opacity만 애니메이션 (Safari: transform+blur 동시 사용 금지) */}
