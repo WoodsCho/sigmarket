@@ -52,7 +52,7 @@ const COLOR_MAP: Record<string, { iconBg: string; text: string; border: string }
 
 export default function Stats() {
   return (
-    <section className="relative min-h-[100dvh] md:h-full flex flex-col justify-center overflow-x-hidden py-20">
+    <section className="relative md:min-h-[100dvh] md:h-full flex flex-col justify-center overflow-x-hidden py-12">
       {/* bg */}
       <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#0a081e]/50 to-transparent pointer-events-none" />
 
