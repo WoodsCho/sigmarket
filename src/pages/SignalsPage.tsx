@@ -429,11 +429,18 @@ export default function SignalsPage() {
 
           {/* ── 수익률 랭킹 ── */}
           <div className="mb-12">
-            <h2 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-              <TrendingUp className="w-5 h-5 text-cyan-400" />
-              수익률 랭킹
-            </h2>
+            <div className="flex items-center gap-3 mb-6">
+              <TrendingUp className="w-5 h-5 text-cyan-400 shrink-0" />
+              <h2 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-white to-gray-400">
+                수익률 랭킹
+              </h2>
+            </div>
             <RankingSection />
+          </div>
+
+          {/* ── 섹션 구분선 ── */}
+          <div className="relative flex items-center mb-12">
+            <div className="flex-1 h-px bg-gradient-to-r from-transparent via-gray-700/60 to-transparent" />
           </div>
 
           {/* ── 실시간 시그널 현황 ── */}

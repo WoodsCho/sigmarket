@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
 import { useAuth } from "../contexts/AuthContext"
 import { fetchAuthSession } from "aws-amplify/auth"
@@ -56,6 +56,9 @@ export default function ProfilePage() {
   const [cancelConfirm, setCancelConfirm] = useState(false)
   const [isCancelling, setIsCancelling] = useState(false)
   const [cancelError, setCancelError] = useState<string | null>(null)
+
+  // 페이지 진입 시 Cognito 그룹 즉시 동기화 (어드민 구독 활성화 반영)
+  useEffect(() => { refreshUser() }, [])
 
   const handleCancelSubscription = async () => {
     setIsCancelling(true)

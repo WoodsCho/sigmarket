@@ -239,6 +239,18 @@ export default function Hero() {
 
         {/* ═══ 오른쪽: 수익률 랭킹 터미널 ═══ */}
         <div className="lg:col-span-7 hero-fade-in hero-delay-3 relative">
+          {/* 모바일 전용: 구분선 + 섹션 타이틀 */}
+          <div className="lg:hidden mb-8">
+            <div className="flex items-center gap-3 mb-5">
+              <div className="flex-1 h-px bg-gradient-to-r from-transparent via-gray-700/60 to-transparent" />
+            </div>
+            <div className="flex items-center gap-2">
+              <TrendingUp className="w-5 h-5 text-cyan-400 shrink-0" />
+              <h2 className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-white to-gray-400">
+                수익률 랭킹
+              </h2>
+            </div>
+          </div>
           {/* 터미널 글로우 */}
           <div className="absolute -inset-4 bg-gradient-to-r from-cyan-500/10 via-purple-500/10 to-pink-500/10 rounded-3xl blur-2xl opacity-60 pointer-events-none" />
 

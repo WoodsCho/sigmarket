@@ -1,14 +1,18 @@
 import { useState } from "react"
 import { useNavigate, useSearchParams } from "react-router-dom"
 import { useAuth } from "../contexts/AuthContext"
-import * as PortOne from "@portone/browser-sdk/v2"
 import { fetchAuthSession } from "aws-amplify/auth"
 import { Header, Footer } from "../components/sections"
-import { Star, Crown, CreditCard, ShieldCheck, RefreshCw, ArrowLeft } from "lucide-react"
+import { Star, Crown, Building2, ShieldCheck, RefreshCw, ArrowLeft, Copy, CheckCheck } from "lucide-react"
 
-const PORTONE_STORE_ID = import.meta.env.VITE_PORTONE_STORE_ID as string
-const PORTONE_CHANNEL_KEY = import.meta.env.VITE_PORTONE_CHANNEL_KEY as string
 const BILLING_API_URL = (import.meta.env.VITE_BILLING_API_URL as string) || ""
+
+const BANK_ACCOUNT = {
+  bank: "하나은행",
+  number: "87391025926407",
+  rawNumber: "87391025926407",
+  holder: "최선희",
+}
 
 const PLAN_INFO = {
   standard: {
@@ -39,6 +43,13 @@ export default function PaymentPage() {
   const { user, isLoading, refreshUser } = useAuth()
   const [isPaying, setIsPaying] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [copied, setCopied] = useState(false)
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(BANK_ACCOUNT.rawNumber)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
 
   const planKey = params.get("plan") as PlanKey | null
   const billingCycle = (params.get("billing") || "monthly") as "monthly" | "yearly"
@@ -67,61 +78,35 @@ export default function PaymentPage() {
   const email = user.signInDetails?.loginId || user.username || ""
 
   const handlePay = async () => {
-    if (!PORTONE_STORE_ID || !PORTONE_CHANNEL_KEY) {
-      setError("결제 설정이 올바르지 않습니다. 관리자에게 문의해주세요.")
-      return
-    }
     setIsPaying(true)
     setError(null)
     try {
-      const result = await PortOne.requestIssueBillingKey({
-        storeId: PORTONE_STORE_ID,
-        channelKey: PORTONE_CHANNEL_KEY,
-        billingKeyMethod: "CARD",
-        issueId: `issue-${user.userId}-${Date.now()}`,
-        issueName: `${plan.name} 구독 카드 등록`,
-        customer: {
-          customerId: user.userId,
-          email: email,
-          fullName: email.split("@")[0] || "고객",
-        },
-      })
-
-      if (!result) throw new Error("카드 등록에 실패했습니다")
-
-      if (result.code) {
-        if (result.code === "PORTONE_USER_CANCEL") {
-          setIsPaying(false)
-          return
-        }
-        throw new Error(result.message || "카드 등록에 실패했습니다")
-      }
-
       const session = await fetchAuthSession()
       const idToken = session.tokens?.idToken?.toString()
       if (!idToken) throw new Error("로그인 세션이 만료되었습니다")
 
-      const res = await fetch(`${BILLING_API_URL}/billing/authorize`, {
+      const res = await fetch(`${BILLING_API_URL}/billing/bank-transfer`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${idToken}`,
         },
         body: JSON.stringify({
-          billingKey: result.billingKey,
           userId: user.userId,
           plan: planKey,
           billing: billingCycle,
+          amount: totalAmount,
+          payerEmail: email,
         }),
       })
 
       const data = await res.json()
-      if (!res.ok) throw new Error(data.error || "결제 실패")
+      if (!res.ok) throw new Error(data.error || "신청 실패")
 
       await refreshUser()
-      navigate("/payment/success")
+      navigate("/payment/success?method=bank_transfer")
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "결제 처리 중 오류가 발생했습니다"
+      const message = err instanceof Error ? err.message : "처리 중 오류가 발생했습니다"
       setError(message)
       setIsPaying(false)
     }
@@ -180,12 +165,39 @@ export default function PaymentPage() {
           <p className="text-sm text-white">{email}</p>
         </div>
 
-        {/* 결제 수단 */}
-        <div className="bg-[#0d1117] border border-gray-700/40 rounded-2xl p-5 mb-5">
-          <p className="text-xs text-gray-500 uppercase tracking-widest mb-3">결제 수단</p>
-          <div className="flex items-center gap-3 p-4 rounded-xl border border-cyan-500/60 bg-cyan-500/10">
-            <CreditCard className="w-6 h-6 text-cyan-400" />
-            <span className="text-sm font-medium text-white">신용 · 체크카드</span>
+        {/* 입금 계좌 정보 */}
+        <div className="bg-[#0d1117] border border-cyan-500/25 rounded-2xl p-5 mb-5">
+          <div className="flex items-center gap-2 mb-4">
+            <Building2 className="w-4 h-4 text-cyan-400" />
+            <p className="text-xs text-gray-500 uppercase tracking-widest">무통장 입금 계좌</p>
+          </div>
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-gray-500">은행</span>
+              <span className="text-sm font-medium text-white">{BANK_ACCOUNT.bank}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-gray-500">계좌번호</span>
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-mono font-bold text-cyan-400 tracking-wider">{BANK_ACCOUNT.number}</span>
+                <button
+                  onClick={handleCopy}
+                  className="p-1.5 rounded-lg bg-gray-800 hover:bg-gray-700 transition-colors text-gray-400 hover:text-white"
+                  title="복사"
+                >
+                  {copied ? <CheckCheck className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                </button>
+              </div>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-gray-500">예금주</span>
+              <span className="text-sm font-medium text-white">{BANK_ACCOUNT.holder}</span>
+            </div>
+          </div>
+          <div className="mt-4 p-3 bg-yellow-500/5 border border-yellow-500/15 rounded-xl">
+            <p className="text-xs text-yellow-400/80 leading-relaxed break-keep">
+              위 계좌로 입금 후 아래 버튼을 눌러주세요. 확인 후 구독이 활성화됩니다.
+            </p>
           </div>
         </div>
 
@@ -213,8 +225,8 @@ export default function PaymentPage() {
             </>
           ) : (
             <>
-              <CreditCard className="w-5 h-5" />
-              카드 등록 및 구독 시작
+              <Building2 className="w-5 h-5" />
+              입금 완료 후 확인 요청
             </>
           )}
         </button>
@@ -223,7 +235,7 @@ export default function PaymentPage() {
         <div className="flex items-center justify-center gap-6 mt-6">
           <div className="flex items-center gap-1.5 text-xs text-gray-600">
             <ShieldCheck className="w-3.5 h-3.5" />
-            포트원 보안 결제
+            안전한 직접 입금
           </div>
           <div className="flex items-center gap-1.5 text-xs text-gray-600">
             <RefreshCw className="w-3.5 h-3.5" />
@@ -234,7 +246,7 @@ export default function PaymentPage() {
         <p className="text-center text-xs text-gray-600 mt-4 leading-relaxed">
           구독을 시작하면 이용약관 및 개인정보처리방침에 동의하는 것으로 간주합니다.
           <br />
-          결제는 포트원(PortOne)을 통해 안전하게 처리됩니다.
+          입금 확인 후 영업일 기준 1일 이내 구독이 활성화됩니다.
         </p>
       </div>
 

@@ -2,6 +2,7 @@
 import {
   Plus, Trash2, Edit3, Save, X, LogOut,
   Loader2, Eye, EyeOff, ArrowUp, ArrowDown, ImagePlus,
+  Users, CheckCircle, RefreshCw, AlertCircle,
 } from "lucide-react"
 import { signIn, signOut, getCurrentUser, fetchAuthSession, confirmSignIn } from "aws-amplify/auth"
 import { QRCodeSVG } from "qrcode.react"
@@ -16,6 +17,7 @@ import "@uiw/react-md-editor/markdown-editor.css"
 const ADMIN_SECRET = import.meta.env.VITE_ADMIN_SECRET || ""
 const API_URL = import.meta.env.VITE_INDICATORS_API_URL
   || (import.meta.env.VITE_API_URL ? `${import.meta.env.VITE_API_URL}/indicators` : "")
+const BILLING_API_URL = (import.meta.env.VITE_BILLING_API_URL as string) || ""
 
 /* ─── 빈 인디케이터 템플릿 ─── */
 function emptyIndicator(): Indicator {
@@ -257,6 +259,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
   const [editIndex, setEditIndex] = useState<number | null>(null)
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState("")
+  const [activeTab, setActiveTab] = useState<"indicators" | "subscriptions">("indicators")
 
   /* API에서 전체 목록 로드 (관리자용: isPublished 필터 없이) */
   const loadIndicators = useCallback(async () => {
@@ -362,7 +365,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
       <header className="sticky top-0 z-50 bg-[var(--theme-bg)]/90 backdrop-blur border-b border-zinc-800">
         <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
           <h1 className="text-xl font-bold">
-            <span className="text-cyan-500">Σ</span> Indicator Admin
+            <span className="text-cyan-500">Σ</span> Admin
           </h1>
           <div className="flex items-center gap-4">
             {message && <span className="text-sm">{message}</span>}
@@ -374,9 +377,37 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
             </button>
           </div>
         </div>
+        {/* 탭 */}
+        <div className="max-w-6xl mx-auto px-6 flex gap-1 pb-0">
+          <button
+            onClick={() => setActiveTab("indicators")}
+            className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
+              activeTab === "indicators"
+                ? "border-cyan-500 text-cyan-400"
+                : "border-transparent text-gray-500 hover:text-gray-300"
+            }`}
+          >
+            인디케이터 관리
+          </button>
+          <button
+            onClick={() => setActiveTab("subscriptions")}
+            className={`flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
+              activeTab === "subscriptions"
+                ? "border-cyan-500 text-cyan-400"
+                : "border-transparent text-gray-500 hover:text-gray-300"
+            }`}
+          >
+            <Users className="h-3.5 w-3.5" />
+            구독 관리
+          </button>
+        </div>
       </header>
 
       <main className="max-w-6xl mx-auto px-6 py-8">
+        {activeTab === "subscriptions" ? (
+          <SubscriptionPanel />
+        ) : (
+          <>
         {/* 상단 도구 */}
         <div className="flex items-center justify-between mb-6">
           <p className="text-gray-400 text-sm">
@@ -430,7 +461,148 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
             ))}
           </div>
         )}
+          </>
+        )}
       </main>
+    </div>
+  )
+}
+
+/* ─── 무통장입금 구독 관리 패널 ─── */
+type PendingItem = {
+  userId: string
+  plan: string
+  billing: string
+  amount: number
+  payerEmail: string
+  createdAt: string
+}
+
+function SubscriptionPanel() {
+  const [items, setItems] = useState<PendingItem[]>([])
+  const [loading, setLoading] = useState(true)
+  const [activating, setActivating] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
+
+  const getToken = async () => {
+    const session = await fetchAuthSession()
+    return session.tokens?.idToken?.toString() || ""
+  }
+
+  const load = useCallback(async () => {
+    setLoading(true)
+    setError(null)
+    try {
+      const token = await getToken()
+      const res = await fetch(`${BILLING_API_URL}/billing/pending`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || "로드 실패")
+      setItems(data.items || [])
+    } catch (e: any) {
+      setError(e.message)
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+  useEffect(() => { load() }, [load])
+
+  const handleActivate = async (userId: string) => {
+    if (!confirm(`이 사용자의 구독을 활성화하시겠습니까?`)) return
+    setActivating(userId)
+    try {
+      const token = await getToken()
+      const res = await fetch(`${BILLING_API_URL}/billing/activate`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ userId }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || "활성화 실패")
+      await load()
+    } catch (e: any) {
+      alert(`오류: ${e.message}`)
+    } finally {
+      setActivating(null)
+    }
+  }
+
+  const PLAN_LABELS: Record<string, string> = {
+    standard: "Standard",
+    professional: "Professional",
+  }
+  const BILLING_LABELS: Record<string, string> = {
+    monthly: "월간",
+    yearly: "연간",
+  }
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h2 className="text-lg font-bold text-white">무통장입금 대기 중</h2>
+          <p className="text-xs text-gray-500 mt-0.5">입금 확인 후 '활성화' 버튼을 눌러주세요</p>
+        </div>
+        <button
+          onClick={load}
+          className="flex items-center gap-1.5 text-sm text-gray-400 hover:text-white transition-colors p-2 rounded-lg hover:bg-zinc-800"
+        >
+          <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
+          새로고침
+        </button>
+      </div>
+
+      {error && (
+        <div className="flex items-center gap-2 bg-red-500/10 border border-red-500/30 text-red-400 text-sm rounded-xl p-4 mb-4">
+          <AlertCircle className="h-4 w-4 shrink-0" />
+          {error}
+        </div>
+      )}
+
+      {loading ? (
+        <div className="flex justify-center py-20">
+          <Loader2 className="h-8 w-8 text-cyan-500 animate-spin" />
+        </div>
+      ) : items.length === 0 ? (
+        <div className="text-center py-20 text-gray-500">
+          <Users className="h-10 w-10 mx-auto mb-3 opacity-30" />
+          <p className="text-sm">대기 중인 무통장입금 신청이 없습니다</p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {items.map((item) => (
+            <div
+              key={item.userId}
+              className="bg-zinc-950 border border-zinc-800 rounded-xl px-5 py-4 flex flex-col sm:flex-row sm:items-center gap-4"
+            >
+              <div className="flex-1 min-w-0 space-y-1">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-semibold text-white truncate">{item.payerEmail}</span>
+                  <span className="text-[10px] bg-yellow-500/15 text-yellow-400 border border-yellow-500/25 px-1.5 py-0.5 rounded font-bold shrink-0">대기중</span>
+                </div>
+                <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-500">
+                  <span>{PLAN_LABELS[item.plan] ?? item.plan} · {BILLING_LABELS[item.billing] ?? item.billing}</span>
+                  <span>{(item.amount || 0).toLocaleString("ko-KR")}원</span>
+                  <span>{item.createdAt ? new Date(item.createdAt).toLocaleString("ko-KR") : "—"}</span>
+                </div>
+              </div>
+              <button
+                onClick={() => handleActivate(item.userId)}
+                disabled={activating === item.userId}
+                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/25 text-sm font-semibold transition-colors disabled:opacity-50 shrink-0"
+              >
+                {activating === item.userId ? (
+                  <><Loader2 className="h-3.5 w-3.5 animate-spin" /> 활성화 중...</>
+                ) : (
+                  <><CheckCircle className="h-3.5 w-3.5" /> 구독 활성화</>
+                )}
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   )
 }

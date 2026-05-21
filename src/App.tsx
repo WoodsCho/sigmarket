@@ -58,21 +58,32 @@ function App() {
         ref={containerRef}
         className="h-[100dvh] overflow-y-scroll md:snap-y md:snap-mandatory bg-[var(--theme-bg)] text-white"
       >
-        {SECTIONS.map(({ id, Component, lazy: isLazy }) => (
-          <section
-            key={id}
-            id={id}
-            className="md:h-[100dvh] md:snap-start md:overflow-hidden"
-          >
-            {isLazy ? (
-              <Suspense fallback={<SectionFallback />}>
+        {SECTIONS.flatMap(({ id, Component, lazy: isLazy }, index) => {
+          const sectionEl = (
+            <section
+              key={id}
+              id={id}
+              className="md:h-[100dvh] md:snap-start md:overflow-hidden"
+            >
+              {isLazy ? (
+                <Suspense fallback={<SectionFallback />}>
+                  <Component />
+                </Suspense>
+              ) : (
                 <Component />
-              </Suspense>
-            ) : (
-              <Component />
-            )}
-          </section>
-        ))}
+              )}
+            </section>
+          )
+          if (index < SECTIONS.length - 1) {
+            return [
+              sectionEl,
+              <div key={`divider-${id}`} className="md:hidden px-6">
+                <div className="h-px bg-gradient-to-r from-transparent via-gray-700/50 to-transparent" />
+              </div>,
+            ]
+          }
+          return [sectionEl]
+        })}
       </div>
 
       {/* Scroll to top */}

@@ -31,7 +31,7 @@
  */
 
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
-import { DynamoDBDocumentClient, PutCommand, GetCommand, UpdateCommand } from "@aws-sdk/lib-dynamodb";
+import { DynamoDBDocumentClient, PutCommand, GetCommand, UpdateCommand, ScanCommand } from "@aws-sdk/lib-dynamodb";
 import {
   CognitoIdentityProviderClient,
   AdminAddUserToGroupCommand,
@@ -264,6 +264,98 @@ export const handler = async (event) => {
 
       const { plan, billing, amount, status, nextPaymentAt, createdAt } = result.Item;
       return ok({ plan, billing, amount, status, nextPaymentAt, createdAt });
+    }
+
+    // ─── POST /billing/bank-transfer ────────────────────────────────────────
+    if (method === "POST" && path.endsWith("/billing/bank-transfer")) {
+      const body = event.isBase64Encoded
+        ? Buffer.from(event.body || "", "base64").toString("utf8")
+        : (event.body || "{}")
+      const { userId, plan, billing, payerEmail } = JSON.parse(body);
+      const claims = verifyTokenAndGetSub(event);
+      if (!claims || claims.sub !== userId) return err(401, "Unauthorized");
+
+      const planBillingKey = `${plan}-${billing}`;
+      const amount = PLAN_AMOUNTS[planBillingKey];
+      if (!amount) return err(400, "유효하지 않은 플랜입니다");
+
+      const now = new Date().toISOString();
+      await docClient.send(new PutCommand({
+        TableName: TABLE_NAME,
+        Item: {
+          userId,
+          plan,
+          billing,
+          amount,
+          payerEmail: payerEmail || claims.email || "",
+          status: "pending",
+          paymentMethod: "bank_transfer",
+          createdAt: now,
+          updatedAt: now,
+        },
+      }));
+
+      return ok({ success: true, message: "입금 확인 후 구독이 활성화됩니다" });
+    }
+
+    // ─── GET /billing/pending (admin) ─────────────────────────────────────
+    if (method === "GET" && path.endsWith("/billing/pending")) {
+      const claims = verifyTokenAndGetSub(event);
+      if (!claims) return err(401, "Unauthorized");
+      const groups = claims["cognito:groups"] || [];
+      if (!groups.includes("admin")) return err(403, "Forbidden");
+
+      const result = await docClient.send(new ScanCommand({
+        TableName: TABLE_NAME,
+        FilterExpression: "#status = :pending",
+        ExpressionAttributeNames: { "#status": "status" },
+        ExpressionAttributeValues: { ":pending": "pending" },
+      }));
+
+      const items = (result.Items || []).sort((a, b) =>
+        (b.createdAt || "").localeCompare(a.createdAt || "")
+      );
+      return ok({ items });
+    }
+
+    // ─── POST /billing/activate (admin) ───────────────────────────────────
+    if (method === "POST" && path.endsWith("/billing/activate")) {
+      const body = event.isBase64Encoded
+        ? Buffer.from(event.body || "", "base64").toString("utf8")
+        : (event.body || "{}")
+      const { userId } = JSON.parse(body);
+      const claims = verifyTokenAndGetSub(event);
+      if (!claims) return err(401, "Unauthorized");
+      const groups = claims["cognito:groups"] || [];
+      if (!groups.includes("admin")) return err(403, "Forbidden");
+
+      const existing = await docClient.send(new GetCommand({ TableName: TABLE_NAME, Key: { userId } }));
+      if (!existing.Item) return err(404, "구독 정보를 찾을 수 없습니다");
+      if (existing.Item.status !== "pending") return err(400, "대기 중인 구독이 아닙니다");
+
+      const { plan, billing, payerEmail } = existing.Item;
+      const cognitoUsername = await getCognitoUsernameBySubOrEmail(userId, payerEmail || "");
+      if (!cognitoUsername) return err(404, "사용자를 찾을 수 없습니다");
+
+      const nextPaymentAt = getNextPaymentAt(billing);
+      await docClient.send(new UpdateCommand({
+        TableName: TABLE_NAME,
+        Key: { userId },
+        UpdateExpression: "SET #status = :active, nextPaymentAt = :next, updatedAt = :now",
+        ExpressionAttributeNames: { "#status": "status" },
+        ExpressionAttributeValues: {
+          ":active": "active",
+          ":next": nextPaymentAt,
+          ":now": new Date().toISOString(),
+        },
+      }));
+
+      await removeFromPlanGroups(cognitoUsername);
+      await cognitoClient.send(
+        new AdminAddUserToGroupCommand({ UserPoolId: USER_POOL_ID, Username: cognitoUsername, GroupName: plan })
+      );
+
+      return ok({ success: true, plan, billing, nextPaymentAt });
     }
 
     return err(404, "Not found");
